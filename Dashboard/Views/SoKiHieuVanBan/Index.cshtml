@@ -1,0 +1,291 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Common;
+@using System.Security.Claims;
+@{
+    ViewBag.Title = "Quản lý số ký hiệu văn bản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    var isSystemUser = UserClaimHelper.GetIsSystemUser((ClaimsIdentity)User.Identity);
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-12 col-xs-12 p-t-10 p-b-10 mb-2">
+                                <div class="form-inline">
+                                    <div class="form-group mr-2">
+                                        <label class="mr-2">Năm:</label>
+                                        <select id="NamSelect" class="form-control" style="width: 100px;">
+                                        </select>
+                                    </div>
+                                    <div class="form-group mr-2">
+                                        <label class="mr-2">Hình thức văn bản:</label>
+                                        <select id="HinhThucVanBanIdSelect" class="form-control" style="width: 200px;">
+                                            <option value="0">--- Chọn hình thức ---</option>
+                                        </select>
+                                    </div>
+                                    <button id="btn-lay-so" onclick="laySo()" class="btn btn-success">
+                                        <i class="fa fa-plus"></i> Lấy số
+                                    </button>
+                                    @if (isSystemUser)
+                                    {
+                                        <button id="btn-khoi-tao" onclick="openKhoiTaoModal()" class="btn btn-warning ml-2">
+                                            <i class="fa fa-refresh"></i> Khởi tạo số ký hiệu ban đầu
+                                        </button>
+                                    }
+                                </div>
+                                <div class="mt-2">
+                                    <span id="so-ki-hieu-moi" style="display: none; color: red; font-weight: bold;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/SoKiHieuVanBan/GetAll"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayLay"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="SoKiHieu">Số ký hiệu</th>
+                                            <th data-field="Nam">Năm</th>
+                                            <th data-field="TenHinhThucVanBan">Hình thức văn bản</th>
+                                            <th data-field="TenNguoiLay">Người lấy</th>
+                                            <th data-field="NgayLayStr">Ngày lấy</th>
+                                            <th data-width="150" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div data-backdrop="static" data-keyboard="false" class="modal p-0" id="khoiTaoModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><span>Khởi tạo số ký hiệu ban đầu</span></h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label>Số ký hiệu ban đầu <span class="text-danger">*</span></label>
+                            <input type="number" id="SoKiHieuBanDau" class="form-control" min="1" placeholder="Nhập số ký hiệu ban đầu" />
+                            <span id="SoKiHieuBanDauError" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="alert alert-warning">
+                            <strong>Lưu ý:</strong> Thao tác này sẽ xóa toàn bộ dữ liệu trong bảng số ký hiệu văn bản và tạo lại với số ký hiệu ban đầu bạn nhập.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button id="btn-khoi-tao-submit" type="button" class="btn btn-warning" onclick="khoiTaoSoKiHieu()">
+                    <i class="fa fa-refresh"></i> Khởi tạo
+                </button>
+                <button id="btn-khoi-tao-loading" type="button" class="btn btn-default invisible" disabled>
+                    <img src="~/Content/img/loading.gif" height="25" />
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function queryParams(params) {
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function laySo() {
+        var nam = parseInt($("#NamSelect").val());
+        var hinhThucVanBanId = parseInt($("#HinhThucVanBanIdSelect").val());
+
+        showLoadingModal();
+
+        var fd = new FormData();
+        fd.append("Nam", nam);
+        fd.append("HinhThucVanBanId", hinhThucVanBanId);
+
+        ajaxPostFormData("/SoKiHieuVanBan/LaySo", fd, function funcCallback(data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                toastr.error(data.Errors[0].Description);
+                $("#so-ki-hieu-moi").hide();
+            } else if (data.SoKiHieu) {
+                var tenHinhThuc = $("#HinhThucVanBanIdSelect option:selected").text();
+                toastr.success(`Lấy số thành công. Số ký hiệu của bạn là: ${data.SoKiHieu} - ${tenHinhThuc} - ${nam}`);
+                $("#so-ki-hieu-moi").text(`Đã lấy số ký hiệu thành công. Số ký hiệu của bạn là: ${data.SoKiHieu} - ${tenHinhThuc} - ${nam}`).show();
+                search();
+                
+                setTimeout(function() {
+                    $("#so-ki-hieu-moi").fadeOut(500);
+                }, 5000);
+            } else {
+                toastr.error("Đã có lỗi xảy ra khi lấy số.");
+                $("#so-ki-hieu-moi").hide();
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+            $("#so-ki-hieu-moi").hide();
+        });
+    }
+
+    function operateFormatter(value, row, index) {
+        if (row.IsAllowDeleted) {
+            const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-trash'></i> Xóa</button>`;
+            return btnXoa;
+        }
+        return '';
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn có chắc chắn muốn xoá số này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/SoKiHieuVanBan/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data.Errors && data.Errors.length > 0) {
+                        toastr.error(data.Errors[0].Description);
+                    } else {
+                        toastr.success("Xoá thành công.");
+                        search();
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+                });
+            }
+        }
+    };
+
+    function openKhoiTaoModal() {
+        $("#SoKiHieuBanDau").val("");
+        $("#SoKiHieuBanDauError").text("");
+        $("#khoiTaoModal").modal("show");
+    }
+
+    function khoiTaoSoKiHieu() {
+        var soKiHieuBanDau = $("#SoKiHieuBanDau").val();
+        
+        if (!soKiHieuBanDau || soKiHieuBanDau.trim() === "") {
+            $("#SoKiHieuBanDauError").text("Vui lòng nhập số ký hiệu ban đầu.");
+            return;
+        }
+
+        var soKiHieu = parseInt(soKiHieuBanDau);
+        if (isNaN(soKiHieu) || soKiHieu < 1) {
+            $("#SoKiHieuBanDauError").text("Số ký hiệu phải là số nguyên dương.");
+            return;
+        }
+
+        if (!confirm(`Bạn có chắc chắn muốn khởi tạo lại số ký hiệu ban đầu là ${soKiHieu}? Thao tác này sẽ xóa toàn bộ dữ liệu hiện tại.`)) {
+            return;
+        }
+
+        $("#SoKiHieuBanDauError").text("");
+        $("#btn-khoi-tao-submit").prop("disabled", true);
+        $("#btn-khoi-tao-loading").removeClass("invisible");
+
+        var fd = new FormData();
+        fd.append("SoKiHieu", soKiHieu);
+
+        ajaxPostFormData("/SoKiHieuVanBan/KhoiTaoSoKiHieuBanDau", fd, function funcCallback(data) {
+            $("#btn-khoi-tao-submit").prop("disabled", false);
+            $("#btn-khoi-tao-loading").addClass("invisible");
+
+            if (data.Errors && data.Errors.length > 0) {
+                toastr.error(data.Errors[0].Description);
+            } else {
+                toastr.success("Khởi tạo số ký hiệu ban đầu thành công.");
+                $("#khoiTaoModal").modal("hide");
+                search();
+            }
+        }, function funcError() {
+            $("#btn-khoi-tao-submit").prop("disabled", false);
+            $("#btn-khoi-tao-loading").addClass("invisible");
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function loadNamSelect() {
+        var currentYear = new Date().getFullYear();
+        var startYear = 2024;
+        var html = '';
+        // Cho phép chọn từ năm hiện tại về năm 2024 (giảm dần)
+        for (var i = currentYear; i >= startYear; i--) {
+            var selected = i === currentYear ? 'selected' : '';
+            html += `<option value="${i}" ${selected}>${i}</option>`;
+        }
+        $("#NamSelect").html(html);
+    }
+
+    function loadHinhThucVanBan() {
+        ajaxGet("/SoKiHieuVanBan/GetHinhThucVanBanLookup", function funcCallback(res) {
+            if (res && res.Data && res.Data.length > 0) {
+                var html = '<option value="0">--- Chọn hình thức ---</option>';
+                res.Data.forEach(function(item) {
+                    if (item.id > 0) {
+                        html += `<option value="${item.id}">${item.text}</option>`;
+                    }
+                });
+                $("#HinhThucVanBanIdSelect").html(html);
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách hình thức văn bản.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadNamSelect();
+        loadHinhThucVanBan();
+        search();
+    });
+</script>
+
+

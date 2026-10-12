@@ -1,0 +1,83 @@
+@using Dashboard.HtmlHelpers;
+
+<div class="modal fade" id="coQuanBanHanhFormModal" tabindex="-1" role="dialog" aria-labelledby="coQuanBanHanhFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="coQuanBanHanhFormModalTitle"><b>Thêm cơ quan ban hành</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="CoQuanBanHanh_Id" value="0" type="hidden" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "CoQuanBanHanh_Ten", label: "Tên", col: 12, required: true, length: 500, moreClass: "col-sm-12 col-xs-12")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveCoQuanBanHanhForm()" class="btn btn-success" id="btnCoQuanBanHanhSave">
+                    <i class="fa fa-save"></i> <span id="btnCoQuanBanHanhSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetCoQuanBanHanhForm() {
+        $("#CoQuanBanHanh_Id").val(0);
+        $("#CoQuanBanHanh_Ten").val('');
+    }
+
+    function openCoQuanBanHanhFormModal(id) {
+        resetCoQuanBanHanhForm();
+        showLoadingModal();
+
+        ajaxGet("/CoQuanBanHanh/GetById?id=" + id, function (res) {
+            hideLoadingModal();
+            if (id > 0) {
+                $("#coQuanBanHanhFormModalTitle").html("<b>Cập nhật cơ quan ban hành</b>");
+                $("#btnCoQuanBanHanhSaveText").text("Cập nhật");
+                if (res && res.Item) {
+                    $("#CoQuanBanHanh_Id").val(res.Item.Id);
+                    $("#CoQuanBanHanh_Ten").val(res.Item.Ten || '');
+                }
+            } else {
+                $("#coQuanBanHanhFormModalTitle").html("<b>Thêm mới cơ quan ban hành</b>");
+                $("#btnCoQuanBanHanhSaveText").text("Thêm mới");
+            }
+            $("#coQuanBanHanhFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function saveCoQuanBanHanhForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#CoQuanBanHanh_Id").val());
+        fd.append("Ten", $("#CoQuanBanHanh_Ten").val());
+
+        ajaxPostFormData("/CoQuanBanHanh/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#coQuanBanHanhFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

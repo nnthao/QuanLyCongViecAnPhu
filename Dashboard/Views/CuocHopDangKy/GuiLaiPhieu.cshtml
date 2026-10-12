@@ -1,0 +1,28 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    Layout = null;
+}
+
+<div data-backdrop="static" data-keyboard="false" class="modal p-0" id="guiLaiPhieuModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gửi lại phiếu</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                Bạn muốn gửi lại phiếu này? 
+                <p id="GuiPhieuError" style="color:red"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default invisible btn-loading" data-dismiss="modal">
+                    <img src="~/Content/img/loading.gif" height="25" />
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                <button type="button" id="btn-gui-lai-phieu-submit" class="btn btn-success"><i class="fa fa-send"></i> Gửi lại</button>
+            </div>
+
+        </div>
+    </div>
+</div>

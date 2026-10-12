@@ -1,0 +1,184 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Quản lý dự án";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-2 col-xs-12">
+                                <a href="/DuAn/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 2, moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            @Html.CustomCheckBox(id: "IsThuNghiemSearch", label: "Thử nghiệm", col: 2, moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/DuAn/GetListDuAn"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="Ten"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Ten">Tên dự án</th>
+                                            <th data-field="MucDoHoTro">Mức độ hỗ trợ</th>
+                                            <th data-field="IsThuNghiem" data-formatter="thuNghiemFormatter" style="text-align: center; width: 100px;">Thử nghiệm</th>
+                                            <th data-field="DanhSachThanhVien" data-formatter="thanhVienFormatter">Thành viên</th>
+                                            <th data-field="MoTa">Mô tả</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function thuNghiemFormatter(value, row, index) {
+        if (row.IsThuNghiem === true) {
+            return '<div style="text-align: center;"><i class="fa fa-check-circle text-success" style="font-size: 18px;"></i></div>';
+        }
+        return '<div style="text-align: center;"><span class="text-muted">-</span></div>';
+    }
+
+    function thanhVienFormatter(value, row, index) {
+        if (!row.DanhSachThanhVien || row.DanhSachThanhVien.length === 0) {
+            return '<span class="text-muted">Chưa có thành viên</span>';
+        }
+
+        let items = [];
+        for (let i = 0; i < row.DanhSachThanhVien.length; i++) {
+            let item = row.DanhSachThanhVien[i];
+            if (item.IsTruongNhom) {
+                items.push(`<strong style="color: red;">${item.TenUser || ''}</strong> <span class="badge bg-danger">Trưởng nhóm</span>`);
+            } else {
+                items.push(item.TenUser || '');
+            }
+        }
+        return items.join('; ');
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<a href="/DuAn/Form?id=${row.Id}" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        if (row.IsDeleted) {
+            return [
+                btnSua + btnKhoiPhuc
+            ].join("");
+        }
+
+        return [
+            btnSua + btnXoa
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá dự án này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/DuAn/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục dự án này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/DuAn/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        }
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.IsThuNghiemSearch = $('#IsThuNghiemSearch').is(":checked");
+        return params;
+    }
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+        $("#IsThuNghiemSearch").change(function () {
+            search();
+        });
+    });
+</script>

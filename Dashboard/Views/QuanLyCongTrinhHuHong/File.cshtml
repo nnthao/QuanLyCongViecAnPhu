@@ -1,0 +1,175 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "File công trình hư hỏng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/QuanLyCongTrinhHuHong/FormFile?id=0&congTrinhHuHongId=@ViewBag.CongTrinhHuHongId" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/QuanLyCongTrinhHuHong" class="btn btn-light">
+                                    <i class="fa fa-chevron-left"></i> Quay lại
+                                </a>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,
+                                   moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-3 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/QuanLyCongTrinhHuHong/GetListFile"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="TenFile"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenFile">Tên file</th>
+                                            <th data-field="DuongDan">Đường dẫn</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+    
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<a href="/QuanLyCongTrinhHuHong/FormFile?id=${row.Id}&congTrinhHuHongId=@ViewBag.CongTrinhHuHongId" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>`;
+        
+        let btnXem = '';
+        // Chỉ hiển thị nút Xem nếu file đã lưu trên server (có DuongDan) và là word, excel, pdf hoặc image
+        if (row.DuongDan) {
+            var filePath = row.DuongDan;
+            var extension = filePath.split('.').pop().toLowerCase();
+            var allowedViewExtensions = ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+            
+            if (allowedViewExtensions.includes(extension)) {
+                btnXem = `<button onclick="openViewFileModal('${row.DuongDan}', '${row.TenFile}')" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Xem</button>`;
+            }
+        }
+        
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        if (row.IsDeleted) {
+            return [
+                btnSua + btnXem + btnKhoiPhuc
+            ].join("");
+        }
+
+        return [
+            btnSua + btnXem + btnXoa
+        ].join("");
+    }
+
+    //Open Model when update
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá file công trình hư hỏng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/QuanLyCongTrinhHuHong/XoaFile", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục file công trình hư hỏng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/QuanLyCongTrinhHuHong/KhoiPhucFile", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.CongTrinhHuHongId = @ViewBag.CongTrinhHuHongId;
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>

@@ -1,0 +1,79 @@
+﻿@using Dashboard.HtmlHelpers;
+@{
+    var action = Model != null && Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " chức danh";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<input id="Id" value="@Model" type="hidden" />
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @Html.CustomTextBox(id: "Ten", label: "Tên chức danh", col: 6, required: true, length: 100)
+                            @Html.CustomTextBox(id: "ThuTu", label: "Thứ tự", col: 6, required: false, length: 10)
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <a class="btn btn-light mr-2" href="/ChucDanh"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button id="btn-save" type="button" class="btn btn-success" onclick="addOrUpdate();"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function loadData() {
+         showLoadingModal();
+             $.get("/ChucDanh/GetById?id=" + @Model, function (res) {
+                 hideLoadingModal();
+                 
+                 if (res.Item) {
+                     setTimeout(function () {
+                         $("#Ten").val(res.Item.Ten);
+                         $("#ThuTu").val(res.Item.ThuTu || '');
+                     }, 200);
+                 }
+
+              })
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        $.post("/ChucDanh/ThemOrCapNhat", {
+            Id: $("#Id").val(),
+            Ten: $("#Ten").val(),
+            ThuTu: $("#ThuTu").val() || null,
+        }, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+
+                    return "";
+                });
+            }
+            else {
+                window.location.href="/ChucDanh";
+            }
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

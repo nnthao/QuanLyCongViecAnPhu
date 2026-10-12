@@ -1,0 +1,124 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+<style>
+    #giaoViecTiepTucModal .modal-dialog {
+        max-width: 700px;
+        width: 100%;
+        margin: 1.75rem auto;
+    }
+
+    #giaoViecTiepTucModal .modal-content {
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #giaoViecTiepTucModal .modal-body {
+        max-height: calc(90vh - 130px);
+        overflow-y: auto;
+    }
+
+    .hanXuLy label {
+        font-weight: bold !important;
+        color: #d9534f;
+    }
+
+    .hanXuLy input, .hanXuLy textarea {
+        color: #d9534f;
+        font-weight: bold;
+    }
+</style>
+
+<div class="modal fade" id="giaoViecTiepTucModal" tabindex="-1" role="dialog" aria-labelledby="giaoViecTiepTucModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="giaoViecTiepTucModalTitle"><b>Chuyển giao công việc</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="TiepTuc_GiaoViecId" type="hidden" value="0" />
+                <input id="TiepTuc_GiaoViecThanhVienId" type="hidden" value="0" />
+
+                <div class="row">
+                    @Html.CustomTextBox(id: "TiepTuc_TenCongViec", label: "Tên công việc", col: 12, isReadonly: true, length: 10000, moreClass: "col-md-12 col-sm-12 col-xs-12")
+                    @Html.CustomTextArea(id: "TiepTuc_GhiChu", label: "Ghi chú", col: 12, moreClass: "col-md-12 col-sm-12 col-xs-12", row: 2, isReadonly: true)
+                    @Html.CustomTextBox(id: "TiepTuc_HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 6, isReadonly: true, length: 100, moreClass: "col-md-6 col-sm-6 col-xs-12 hanXuLy")
+                    @Html.CustomTextBox(id: "TiepTuc_TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 6, isReadonly: true, length: 100, moreClass: "col-md-6 col-sm-6 col-xs-12 hanXuLy")
+                    @Html.CustomTextArea(id: "TiepTuc_NoiDungThanhVienCanXuLy", label: "Nội dung cần xử lý", col: 12, moreClass: "col-md-12 col-sm-12 col-xs-12 hanXuLy", row: 2, isReadonly: true)
+                </div>
+
+                @Html.Partial("~/Views/GiaoViecCanXuLy/NguoiNhanViecTiepTuc.cshtml")
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="submitChuyenGiaoViecModal()" class="btn btn-success">
+                    <i class="fa fa-save"></i> Chuyển giao
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openChuyenGiaoModal(id, giaoViecId) {
+        $("#TiepTuc_GiaoViecId").val(giaoViecId);
+        $("#TiepTuc_GiaoViecThanhVienId").val(id);
+
+        if (typeof window.clearNhanViecTiepTuc === 'function') {
+            window.clearNhanViecTiepTuc();
+        }
+
+        showLoadingModal();
+        ajaxGet("/GiaoViecCanXuLy/GetById?id=" + giaoViecId, function (res) {
+            hideLoadingModal();
+            if (res && res.Item) {
+                $("#TiepTuc_TenCongViec").val(res.Item.TenCongViec || '');
+                $("#TiepTuc_GhiChu").val(res.Item.GhiChu || '');
+                $("#TiepTuc_NoiDungThanhVienCanXuLy").val(res.Item.NoiDungThanhVienCanXuLy || '');
+                $("#TiepTuc_HanXuLyThanhVienCanXuLyStr").val(res.Item.HanXuLyThanhVienCanXuLyStr || '');
+                $("#TiepTuc_TenVaiTroXuLyThanhVienCanXuLy").val(res.Item.TenVaiTroXuLyThanhVienCanXuLy || '');
+
+                $("#giaoViecTiepTucModal").modal("show");
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function submitChuyenGiaoViecModal() {
+        var thanhViens = [];
+        if (typeof window.getThongTinNhanViecArrayTiepTuc === 'function') {
+            thanhViens = window.getThongTinNhanViecArrayTiepTuc();
+        }
+
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("GiaoViecId", $("#TiepTuc_GiaoViecId").val());
+        fd.append("GiaoViecThanhVienId", $("#TiepTuc_GiaoViecThanhVienId").val());
+        fd.append("ThanhVienStr", JSON.stringify(thanhViens));
+
+        ajaxPostFormData("/GiaoViecCanXuLy/ChuyenGiaoViecTiepTuc", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function(item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Chuyển giao công việc thành công.");
+                $("#giaoViecTiepTucModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

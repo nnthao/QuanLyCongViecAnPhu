@@ -1,0 +1,121 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@model Dashboard.Models.ViewModel.ParamControllerToView
+@{
+    var thanhVien = "";
+    var giaoViecThanhVienId = Model != null ? Model.GiaoViecThanhVienId : 0;
+
+    try
+    {
+        var thanhVienId = Request.QueryString["ThanhVienId"];
+        if (thanhVienId != null)
+        {
+            var user = Dashboard.Common.CacheManagerHelper.GetUserByIdFromCache(Convert.ToInt32(thanhVienId));
+            if (user != null)
+            {
+                thanhVien = user.Name;
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>Tiến trình thực hiện: @thanhVien </b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 col-xs-12 mt-3">
+        <div class="table-scroll">
+            <table class="table table-bordered table-striped" id="tbTienTrinhXuLy">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Thời gian </th>
+                        <th>Nội dung thực hiện</th>
+                    </tr>
+                </thead>
+                <tbody id="thongTinXuLy">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let capNhatSelectedFiles = [];
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const $fileInput = $('#capNhatFileUpload');
+        const $listFile = $('#listFile');
+
+        $('#btnAddFileDinhKem').on('click', function (e) {
+            e.preventDefault();
+            $fileInput.trigger('click');
+        });
+
+        $fileInput.on('change', function () {
+            const newlySelected = Array.from(this.files || []);
+            if (newlySelected.length > 0) {
+                capNhatSelectedFiles = capNhatSelectedFiles.concat(newlySelected);
+                renderSelectedFiles();
+                // Reset input so the same files can be selected again if needed
+                $fileInput.val('');
+            }
+        });
+
+        function renderSelectedFiles() {
+            if (!capNhatSelectedFiles || capNhatSelectedFiles.length === 0) {
+                $listFile.html('');
+                return;
+            }
+            const html = capNhatSelectedFiles.map((f, idx) => `
+                <p class="mb-1 d-flex align-items-center justify-content-between">
+                    <span class="text-primary">${f.name}</span>
+                    <button type="button" class="btn btn-sm btn-danger ml-2 btn-remove-file" data-index="${idx}">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </p>
+            `).join('');
+            $listFile.html(html);
+        }
+
+        $listFile.on('click', '.btn-remove-file', function () {
+            const idx = parseInt($(this).data('index'));
+            if (!isNaN(idx)) {
+                capNhatSelectedFiles.splice(idx, 1);
+                renderSelectedFiles();
+                $fileInput.val('');
+            }
+        });
+
+        ajaxGet(`/GiaoViecThongTinTraCuu/GetByTienTrinhCapNhatCuaThanhVien?giaoViecThanhVienId=${@giaoViecThanhVienId}`, function calFunction(res) {
+            if (res.Item) {
+                let isFirst = true;
+                for (let i = 0; i < res.Item.length; i++) {
+                    let item = res.Item[i];
+                    let itemFiles = res.Item[i].Files;
+
+                    let files = ``;
+                    for (let j = 0; j < itemFiles.length; j++) {
+                        files += `${`<p class='m-b-5'><a href="javascript:void(0)" onclick="downloadFromLink('${itemFiles[j].DuongDan}', '${itemFiles[j].TenFile}')" >
+                            ${itemFiles[j].TenFile}</a></p>`}`
+                    }
+
+                    $("#thongTinXuLy").append(`<tr>
+                         <td>${item.NgayTaoStr}</td>
+                         <td>
+                           <div class="mb-2"><b>Nội dung:</b> ${item.NoiDungXuLy || ''}</div>
+                           ${files}
+                         </td>
+                     </tr>`);
+                }
+            }
+        }, function errFunct(err) {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    });
+</script>

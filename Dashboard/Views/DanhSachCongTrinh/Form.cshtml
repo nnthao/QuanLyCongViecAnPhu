@@ -1,0 +1,586 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Form Danh sách công trình";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thông tin công trình</h3>
+            </div>
+            <div class="card-body">
+                <form id="form">
+                    <input type="hidden" id="Id" name="Id" value="@ViewBag.Id" />
+
+                    <div class="row">
+                        @Html.CustomDropDownList(id: "LoaiCongTrinh", label: "Loại công trình", col: 6, required: true, options: new List<SelectListItem> {
+                            new SelectListItem { Text = "--- Chọn ---", Value = "0" },
+                            new SelectListItem { Text = "Hồ", Value = "1" },
+                            new SelectListItem { Text = "Đập Dâng", Value = "2" },
+                            new SelectListItem { Text = "Đập Ngăn Mặn", Value = "3" },
+                            new SelectListItem { Text = "Trạm Khí Tượng", Value = "4" },
+                            new SelectListItem { Text = "Trạm Thủy Văn", Value = "5" }
+                        })
+                        @Html.CustomTextBox(id: "TenCongTrinh", label: "Tên công trình", col: 6, length: 200, required: true)
+                    </div>
+
+                    <div class="row">
+                        @Html.CustomTextBox(id: "Diadiem", label: "Địa điểm", col: 6, length: 200, required: true)
+                        @Html.CustomTextBox(id: "NamXayDung", label: "Năm xây dựng", col: 6, length: 50)
+                    </div>
+
+                    <div class="row">
+                        @Html.CustomTextBox(id: "ChuDauTu", label: "Chủ đầu tư", col: 6, length: 200)
+                        @Html.CustomTextBox(id: "QuyMo", label: "Quy mô", col: 6, length: 200)
+                    </div>
+
+                    <div class="row">
+                        @Html.CustomTextBox(id: "DienTich", label: "Diện tích", col: 6, length: 200)
+                        @Html.CustomTextBox(id: "ThongSoKiThuat", label: "Thông số kỹ thuật", col: 6, length: 200)
+                    </div>
+
+                    <div class="row">
+                        @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, row: 3, maxlength: 1000)
+                    </div>
+
+                    <!-- Các trường đặc biệt cho loại Hồ -->
+                    <div id="hoFields" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Thông tin chi tiết Hồ</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "MucNuocChet_MNC", label: "Mực nước chết - MNC (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "MucNuocDangBinhThuong_MNDBT", label: "Mực nước dâng bình thường - MNDBT (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "MucNuocLuuThietKe_MNLTK", label: "Mực nước lũ thiết kế - MNLTK (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "MucNuocLuuKiemTra", label: "Mực nước lũ kiểm tra (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "NamHoanThanhCongTrinh", label: "Năm hoàn thành công trình", col: 4, length: 10)
+                                    @Html.CustomTextBox(id: "LanNangCapSuaChua", label: "Lần nâng cấp, sửa chữa", col: 4, length: 10)
+                                    @Html.CustomTextBox(id: "NamNangCapSuaChuaGanNhat", label: "Năm nâng cấp, sửa chữa gần nhất", col: 4, length: 10)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DungTichChet_TrieuM3", label: "Dung tích chết (triệu m³)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DungTichUngVoiMNDBT_TrieuM3", label: "Dung tích ứng với MNDBT (triệu m³)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DungTichUngVoiMNLTK_TrieuM3", label: "Dung tích ứng với MNLTK (triệu m³)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DungTichHuuIch_TrieuM3", label: "Dung tích hữu ích (triệu m³)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DungTichPhongLuu_TrieuM3", label: "Dung tích phòng lũ (triệu m³)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DienTichLuuVuc_Km2", label: "Diện tích lưu vực (km²)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DienTichTuoiThietKe_Ha", label: "Diện tích tưới thiết kế (ha)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DienTichMatThoangUngVoiMNDBT_Ha", label: "Diện tích mặt thoáng ứng với MNDBT (ha)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DienTichMatThoangUngVoiMNC_Ha", label: "Diện tích mặt thoáng ứng với MNC (ha)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "XaPhuong", label: "Xã/Phường", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DonViQuanLy", label: "Đơn vị quản lý", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "NguoiDung", label: "Người dùng", col: 6, length: 200)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các trường đặc biệt cho loại Đập Dâng -->
+                    <div id="dapDangFields" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Thông tin chi tiết Đập Dâng</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "NamHoanThanhCongTrinh", label: "Năm hoàn thành công trình", col: 4, length: 10)
+                                    @Html.CustomTextBox(id: "LanNangCapSuaChua", label: "Lần nâng cấp, sửa chữa", col: 4, length: 10)
+                                    @Html.CustomTextBox(id: "NamNangCapSuaChuaGanNhat", label: "Năm nâng cấp, sửa chữa gần nhất", col: 4, length: 10)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DienTichLuuVuc_Km2", label: "Diện tích lưu vực (km²)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DienTichTuoiThietKe_Ha", label: "Diện tích tưới thiết kế (ha)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DienTichTuoiThucTe_Ha", label: "Diện tích tưới thực tế (ha)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "CaoTrinhNguongPhanKhongTran_M", label: "Cao trình ngưỡng phần không tràn (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M", label: "Chiều cao đập lớn nhất trên công trình phần không tràn (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ChieuDaiPhanKhongTran_M", label: "Chiều dài phần không tràn (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "CaoTrinhNguongPhanTran_M", label: "Cao trình ngưỡng phần tràn (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ChieuCaoDapLonNhatTrenCongTrinhPhanTran_M", label: "Chiều cao đập lớn nhất trên công trình phần tràn (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ChieuDaiPhanTran_M", label: "Chiều dài phần tràn (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "CotNuocThietKeTrenCongTrinh_M", label: "Cột nước thiết kế trên công trình (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "LuuLuongThietKe", label: "Lưu lượng thiết kế", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "CaoTrinhNguongCongXaCat_M", label: "Cao trình ngưỡng cống xả cát (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "KichThuocCongXaCat_Cm", label: "Kích thước cống xả cát (cm)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "VatLieuKetCauCongXaCat", label: "Vật liệu kết cấu cống xả cát", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "CaoTrinhNguongCongCapNuoc_M", label: "Cao trình ngưỡng cống cấp nước (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "LuuLuongThietKeCongCapNuoc", label: "Lưu lượng thiết kế cống cấp nước", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "KichThuocCongCapNuoc_Cm", label: "Kích thước cống cấp nước (cm)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "VatLieuCongCapNuoc", label: "Vật liệu cống cấp nước", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DonViQuanLyCongTrinh", label: "Đơn vị quản lý công trình", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "TinhTrangCongTrinh", label: "Tình trạng công trình", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "KinhDo_Longitude", label: "Kinh độ (Longitude)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ViDo_Latitude", label: "Vĩ độ (Latitude)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "XaPhuong", label: "Xã/Phường", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "NguoiDung", label: "Người dùng", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "TrangThai", label: "Trạng thái", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ThuTuUuTien", label: "Thứ tự ưu tiên", col: 6, length: 10)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, row: 3, maxlength: 1000)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các trường đặc biệt cho loại Đập Ngăn Mặn -->
+                    <div id="dapNganManFields" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Thông tin chi tiết Đập Ngăn Mặn</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "SoLanNangCapSuaChua", label: "Số lần nâng cấp sửa chữa", col: 6, length: 10)
+                                    @Html.CustomTextBox(id: "NamNangCapSuaChuaGanNhat", label: "Năm nâng cấp sửa chữa gần nhất", col: 6, length: 10)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "SoKhoang", label: "Số khoang", col: 6, length: 10)
+                                    @Html.CustomTextBox(id: "KichThuocKhoang_M", label: "Kích thước khoang (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "KichThuocPhanTran_M", label: "Kích thước (Phần tràn) (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "TenSong", label: "Tên sông", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ChieuCaoDinh_M", label: "Chiều cao đỉnh (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DienTichNganMan_Ha", label: "Diện tích ngăn mặn (ha)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "CaoTrinhDinhDapPhanKhongTran_M", label: "Cao trình đỉnh đập (Phần không tràn) (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "DienTichTuoiThietKe_Ha", label: "Diện tích tưới thiết kế (ha)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DienTichTuoiThucTe_Ha", label: "Diện tích tưới thực tế (ha)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "MucNuocLonNhat_M", label: "Mực nước lớn nhất (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ChieuDaiDapPhanKhongTran_M", label: "Chiều dài đập (Phần không tràn) (m)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ChieuDaiDapPhanTran_M", label: "Chiều dài đập (Phần tràn) (m)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "DonViQuanLyCongTrinh", label: "Đơn vị quản lý công trình", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "TinhTrangCongTrinh", label: "Tình trạng công trình", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "KinhDo_Longitude", label: "Kinh độ (Longitude)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ViDo_Latitude", label: "Vĩ độ (Latitude)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "XaPhuong", label: "Xã/Phường", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "NguoiDung", label: "Người dùng", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "TrangThai", label: "Trạng thái", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ThuTuUuTien", label: "Thứ tự ưu tiên", col: 6, length: 10)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các trường đặc biệt cho loại Trạm Khí Tượng -->
+                    <div id="tramKhiTuongFields" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Thông tin chi tiết Trạm Khí Tượng</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "LoaiTram", label: "Loại trạm", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "KinhDo_Longitude", label: "Kinh độ (Longitude)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ViDo_Latitude", label: "Vĩ độ (Latitude)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "Song", label: "Sông", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "XaPhuong", label: "Xã/Phường", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "Thiessen", label: "Thiessen", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "TrangThai", label: "Trạng thái", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ThuTuUuTien", label: "Thứ tự ưu tiên", col: 6, length: 10)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các trường đặc biệt cho loại Trạm Thủy Văn -->
+                    <div id="tramThuyVanFields" style="display: none;">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title">Thông tin chi tiết Trạm Thủy Văn</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "LoaiTram", label: "Loại trạm", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "KinhDo_Longitude", label: "Kinh độ (Longitude)", col: 6, length: 50)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "ViDo_Latitude", label: "Vĩ độ (Latitude)", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "Song", label: "Sông", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "XaPhuong", label: "Xã/Phường", col: 6, length: 200)
+                                    @Html.CustomTextBox(id: "Thiessen", label: "Thiessen", col: 6, length: 200)
+                                </div>
+                                <div class="row">
+                                    @Html.CustomTextBox(id: "TrangThai", label: "Trạng thái", col: 6, length: 50)
+                                    @Html.CustomTextBox(id: "ThuTuUuTien", label: "Thứ tự ưu tiên", col: 6, length: 10)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        @Html.FileDinhKem(id: "FileDinhKem")
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <a class="btn btn-primary" href="javascript:void(0)" onclick="luu()">
+                                <i class="fa fa-save"></i> Lưu
+                            </a>
+                            <a class="btn btn-light mr-2" href="/DanhSachCongTrinh">
+                                <i class="fa fa-chevron-left"></i> Quay lại
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thông báo thành công -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="successModalLabel">
+                    <i class="fa fa-check-circle"></i> Thành công
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fa fa-check-circle text-success" style="font-size: 48px;"></i>
+                </div>
+                <h4 class="text-success">Thêm mới thành công!</h4>
+                <p class="text-muted">Dữ liệu đã được lưu vào hệ thống.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" data-dismiss="modal" onclick="redirectToList()">
+                    <i class="fa fa-check"></i> Đồng ý
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thông báo lỗi -->
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="errorModalLabel">
+                    <i class="fa fa-exclamation-triangle"></i> Lỗi
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fa fa-exclamation-triangle text-danger" style="font-size: 48px;"></i>
+                </div>
+                <h4 class="text-danger">Có lỗi xảy ra!</h4>
+                <p class="text-muted" id="errorMessage">Vui lòng thử lại sau.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var id = $('#Id').val();
+        if (id > 0) {
+            loadData();
+        }
+        
+        // Show/hide fields based on LoaiCongTrinh selection
+        $('#LoaiCongTrinh').change(function() {
+            toggleSpecialFields();
+        });
+        
+        // Initial check
+        toggleSpecialFields();
+    });
+    
+    function toggleSpecialFields() {
+        var loaiCongTrinh = $('#LoaiCongTrinh').val();
+        
+        // Hide all special fields first
+        $('#hoFields').hide();
+        $('#dapDangFields').hide();
+        $('#dapNganManFields').hide();
+        $('#tramKhiTuongFields').hide();
+        $('#tramThuyVanFields').hide();
+        
+        // Show appropriate fields based on selection
+        if (loaiCongTrinh == '1') { // Hồ
+            $('#hoFields').show();
+        } else if (loaiCongTrinh == '2') { // Đập Dâng
+            $('#dapDangFields').show();
+        } else if (loaiCongTrinh == '3') { // Đập Ngăn Mặn
+            $('#dapNganManFields').show();
+        } else if (loaiCongTrinh == '4') { // Trạm Khí Tượng
+            $('#tramKhiTuongFields').show();
+        } else if (loaiCongTrinh == '5') { // Trạm Thủy Văn
+            $('#tramThuyVanFields').show();
+        }
+    }
+
+    function loadData() {
+        var id = $('#Id').val();
+        $.ajax({
+            url: '/DanhSachCongTrinh/GetById',
+            type: 'GET',
+            data: { id: id },
+            success: function (result) {
+                if (result.Item) {
+                    $('#TenCongTrinh').val(result.Item.TenCongTrinh);
+                    $('#Diadiem').val(result.Item.Diadiem);
+                    $('#LoaiCongTrinh').val(result.Item.LoaiCongTrinh);
+                    $('#NamXayDung').val(result.Item.NamXayDung);
+                    $('#ChuDauTu').val(result.Item.ChuDauTu);
+                    $('#QuyMo').val(result.Item.QuyMo);
+                    $('#DienTich').val(result.Item.DienTich);
+                    $('#ThongSoKiThuat').val(result.Item.ThongSoKiThuat);
+                    $('#GhiChu').val(result.Item.GhiChu);
+                    
+                    // Load Hồ fields
+                    $('#MucNuocChet_MNC').val(result.Item.MucNuocChet_MNC);
+                    $('#MucNuocDangBinhThuong_MNDBT').val(result.Item.MucNuocDangBinhThuong_MNDBT);
+                    $('#MucNuocLuuThietKe_MNLTK').val(result.Item.MucNuocLuuThietKe_MNLTK);
+                    $('#MucNuocLuuKiemTra').val(result.Item.MucNuocLuuKiemTra);
+                    $('#NamHoanThanhCongTrinh').val(result.Item.NamHoanThanhCongTrinh);
+                    $('#LanNangCapSuaChua').val(result.Item.LanNangCapSuaChua);
+                    $('#NamNangCapSuaChuaGanNhat').val(result.Item.NamNangCapSuaChuaGanNhat);
+                    $('#DungTichChet_TrieuM3').val(result.Item.DungTichChet_TrieuM3);
+                    $('#DungTichUngVoiMNDBT_TrieuM3').val(result.Item.DungTichUngVoiMNDBT_TrieuM3);
+                    $('#DungTichUngVoiMNLTK_TrieuM3').val(result.Item.DungTichUngVoiMNLTK_TrieuM3);
+                    $('#DungTichHuuIch_TrieuM3').val(result.Item.DungTichHuuIch_TrieuM3);
+                    $('#DungTichPhongLuu_TrieuM3').val(result.Item.DungTichPhongLuu_TrieuM3);
+                    $('#DienTichLuuVuc_Km2').val(result.Item.DienTichLuuVuc_Km2);
+                    $('#DienTichTuoiThietKe_Ha').val(result.Item.DienTichTuoiThietKe_Ha);
+                    $('#DienTichMatThoangUngVoiMNDBT_Ha').val(result.Item.DienTichMatThoangUngVoiMNDBT_Ha);
+                    $('#DienTichMatThoangUngVoiMNC_Ha').val(result.Item.DienTichMatThoangUngVoiMNC_Ha);
+                    $('#XaPhuong').val(result.Item.XaPhuong);
+                    $('#DonViQuanLy').val(result.Item.DonViQuanLy);
+                    $('#NguoiDung').val(result.Item.NguoiDung);
+                    
+                    // Load Đập Dâng fields
+                    $('#DienTichTuoiThucTe_Ha').val(result.Item.DienTichTuoiThucTe_Ha);
+                    $('#CaoTrinhNguongPhanKhongTran_M').val(result.Item.CaoTrinhNguongPhanKhongTran_M);
+                    $('#ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M').val(result.Item.ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M);
+                    $('#ChieuDaiPhanKhongTran_M').val(result.Item.ChieuDaiPhanKhongTran_M);
+                    $('#CaoTrinhNguongPhanTran_M').val(result.Item.CaoTrinhNguongPhanTran_M);
+                    $('#ChieuCaoDapLonNhatTrenCongTrinhPhanTran_M').val(result.Item.ChieuCaoDapLonNhatTrenCongTrinhPhanTran_M);
+                    $('#ChieuDaiPhanTran_M').val(result.Item.ChieuDaiPhanTran_M);
+                    $('#CotNuocThietKeTrenCongTrinh_M').val(result.Item.CotNuocThietKeTrenCongTrinh_M);
+                    $('#LuuLuongThietKe').val(result.Item.LuuLuongThietKe);
+                    $('#CaoTrinhNguongCongXaCat_M').val(result.Item.CaoTrinhNguongCongXaCat_M);
+                    $('#KichThuocCongXaCat_Cm').val(result.Item.KichThuocCongXaCat_Cm);
+                    $('#VatLieuKetCauCongXaCat').val(result.Item.VatLieuKetCauCongXaCat);
+                    $('#CaoTrinhNguongCongCapNuoc_M').val(result.Item.CaoTrinhNguongCongCapNuoc_M);
+                    $('#LuuLuongThietKeCongCapNuoc').val(result.Item.LuuLuongThietKeCongCapNuoc);
+                    $('#KichThuocCongCapNuoc_Cm').val(result.Item.KichThuocCongCapNuoc_Cm);
+                    $('#VatLieuCongCapNuoc').val(result.Item.VatLieuCongCapNuoc);
+                    $('#DonViQuanLyCongTrinh').val(result.Item.DonViQuanLyCongTrinh);
+                    $('#TinhTrangCongTrinh').val(result.Item.TinhTrangCongTrinh);
+                    $('#KinhDo_Longitude').val(result.Item.KinhDo_Longitude);
+                    $('#ViDo_Latitude').val(result.Item.ViDo_Latitude);
+                    $('#TrangThai').val(result.Item.TrangThai);
+                    $('#ThuTuUuTien').val(result.Item.ThuTuUuTien);
+                    
+                    // Load Đập Ngăn Mặn fields
+                    $('#SoLanNangCapSuaChua').val(result.Item.SoLanNangCapSuaChua);
+                    $('#SoKhoang').val(result.Item.SoKhoang);
+                    $('#KichThuocKhoang_M').val(result.Item.KichThuocKhoang_M);
+                    $('#KichThuocPhanTran_M').val(result.Item.KichThuocPhanTran_M);
+                    $('#TenSong').val(result.Item.TenSong);
+                    $('#ChieuCaoDinh_M').val(result.Item.ChieuCaoDinh_M);
+                    $('#DienTichNganMan_Ha').val(result.Item.DienTichNganMan_Ha);
+                    $('#CaoTrinhDinhDapPhanKhongTran_M').val(result.Item.CaoTrinhDinhDapPhanKhongTran_M);
+                    $('#MucNuocLonNhat_M').val(result.Item.MucNuocLonNhat_M);
+                    $('#ChieuDaiDapPhanKhongTran_M').val(result.Item.ChieuDaiDapPhanKhongTran_M);
+                    $('#ChieuDaiDapPhanTran_M').val(result.Item.ChieuDaiDapPhanTran_M);
+                    
+                    // Load Trạm Khí Tượng fields
+                    $('#LoaiTram').val(result.Item.LoaiTram);
+                    $('#Song').val(result.Item.Song);
+                    $('#Thiessen').val(result.Item.Thiessen);
+                    
+                    // Load Trạm Thủy Văn fields (sử dụng lại các trường đã có)
+                    // Các trường này đã được load ở trên: LoaiTram, Song, Thiessen, KinhDo_Longitude, ViDo_Latitude, XaPhuong, TrangThai, ThuTuUuTien
+                    
+                    // Show/hide fields based on loaded data
+                    toggleSpecialFields();
+                }
+            }
+        });
+    }
+
+    function luu() {
+        var data = {
+            Id: parseInt($('#Id').val()) || 0,
+            TenCongTrinh: $('#TenCongTrinh').val(),
+            Diadiem: $('#Diadiem').val(),
+            LoaiCongTrinh: parseInt($('#LoaiCongTrinh').val()) || 0,
+            NamXayDung: $('#NamXayDung').val(),
+            ChuDauTu: $('#ChuDauTu').val(),
+            QuyMo: $('#QuyMo').val(),
+            DienTich: $('#DienTich').val(),
+            ThongSoKiThuat: $('#ThongSoKiThuat').val(),
+            GhiChu: $('#GhiChu').val(),
+            // Hồ fields
+            MucNuocChet_MNC: parseFloat($('#MucNuocChet_MNC').val()) || null,
+            MucNuocDangBinhThuong_MNDBT: parseFloat($('#MucNuocDangBinhThuong_MNDBT').val()) || null,
+            MucNuocLuuThietKe_MNLTK: parseFloat($('#MucNuocLuuThietKe_MNLTK').val()) || null,
+            MucNuocLuuKiemTra: parseFloat($('#MucNuocLuuKiemTra').val()) || null,
+            NamHoanThanhCongTrinh: parseInt($('#NamHoanThanhCongTrinh').val()) || null,
+            LanNangCapSuaChua: parseInt($('#LanNangCapSuaChua').val()) || null,
+            NamNangCapSuaChuaGanNhat: parseInt($('#NamNangCapSuaChuaGanNhat').val()) || null,
+            DungTichChet_TrieuM3: parseFloat($('#DungTichChet_TrieuM3').val()) || null,
+            DungTichUngVoiMNDBT_TrieuM3: parseFloat($('#DungTichUngVoiMNDBT_TrieuM3').val()) || null,
+            DungTichUngVoiMNLTK_TrieuM3: parseFloat($('#DungTichUngVoiMNLTK_TrieuM3').val()) || null,
+            DungTichHuuIch_TrieuM3: parseFloat($('#DungTichHuuIch_TrieuM3').val()) || null,
+            DungTichPhongLuu_TrieuM3: parseFloat($('#DungTichPhongLuu_TrieuM3').val()) || null,
+            DienTichLuuVuc_Km2: parseFloat($('#DienTichLuuVuc_Km2').val()) || null,
+            DienTichTuoiThietKe_Ha: parseFloat($('#DienTichTuoiThietKe_Ha').val()) || null,
+            DienTichMatThoangUngVoiMNDBT_Ha: parseFloat($('#DienTichMatThoangUngVoiMNDBT_Ha').val()) || null,
+            DienTichMatThoangUngVoiMNC_Ha: parseFloat($('#DienTichMatThoangUngVoiMNC_Ha').val()) || null,
+            XaPhuong: $('#XaPhuong').val(),
+            DonViQuanLy: $('#DonViQuanLy').val(),
+            NguoiDung: $('#NguoiDung').val(),
+            // Đập Dâng fields
+            DienTichTuoiThucTe_Ha: parseFloat($('#DienTichTuoiThucTe_Ha').val()) || null,
+            CaoTrinhNguongPhanKhongTran_M: parseFloat($('#CaoTrinhNguongPhanKhongTran_M').val()) || null,
+            ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M: parseFloat($('#ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M').val()) || null,
+            ChieuDaiPhanKhongTran_M: parseFloat($('#ChieuDaiPhanKhongTran_M').val()) || null,
+            CaoTrinhNguongPhanTran_M: parseFloat($('#CaoTrinhNguongPhanTran_M').val()) || null,
+            ChieuCaoDapLonNhatTrenCongTrinhPhanTran_M: parseFloat($('#ChieuCaoDapLonNhatTrenCongTrinhPhanTran_M').val()) || null,
+            ChieuDaiPhanTran_M: parseFloat($('#ChieuDaiPhanTran_M').val()) || null,
+            CotNuocThietKeTrenCongTrinh_M: parseFloat($('#CotNuocThietKeTrenCongTrinh_M').val()) || null,
+            LuuLuongThietKe: parseFloat($('#LuuLuongThietKe').val()) || null,
+            CaoTrinhNguongCongXaCat_M: parseFloat($('#CaoTrinhNguongCongXaCat_M').val()) || null,
+            KichThuocCongXaCat_Cm: parseFloat($('#KichThuocCongXaCat_Cm').val()) || null,
+            VatLieuKetCauCongXaCat: $('#VatLieuKetCauCongXaCat').val(),
+            CaoTrinhNguongCongCapNuoc_M: parseFloat($('#CaoTrinhNguongCongCapNuoc_M').val()) || null,
+            LuuLuongThietKeCongCapNuoc: parseFloat($('#LuuLuongThietKeCongCapNuoc').val()) || null,
+            KichThuocCongCapNuoc_Cm: parseFloat($('#KichThuocCongCapNuoc_Cm').val()) || null,
+            VatLieuCongCapNuoc: $('#VatLieuCongCapNuoc').val(),
+            DonViQuanLyCongTrinh: $('#DonViQuanLyCongTrinh').val(),
+            TinhTrangCongTrinh: $('#TinhTrangCongTrinh').val(),
+            KinhDo_Longitude: parseFloat($('#KinhDo_Longitude').val()) || null,
+            ViDo_Latitude: parseFloat($('#ViDo_Latitude').val()) || null,
+            TrangThai: $('#TrangThai').val(),
+            ThuTuUuTien: parseInt($('#ThuTuUuTien').val()) || null,
+            // Đập Ngăn Mặn fields
+            SoLanNangCapSuaChua: parseInt($('#SoLanNangCapSuaChua').val()) || null,
+            SoKhoang: parseInt($('#SoKhoang').val()) || null,
+            KichThuocKhoang_M: parseFloat($('#KichThuocKhoang_M').val()) || null,
+            KichThuocPhanTran_M: parseFloat($('#KichThuocPhanTran_M').val()) || null,
+            TenSong: $('#TenSong').val(),
+            ChieuCaoDinh_M: parseFloat($('#ChieuCaoDinh_M').val()) || null,
+            DienTichNganMan_Ha: parseFloat($('#DienTichNganMan_Ha').val()) || null,
+            CaoTrinhDinhDapPhanKhongTran_M: parseFloat($('#CaoTrinhDinhDapPhanKhongTran_M').val()) || null,
+            MucNuocLonNhat_M: parseFloat($('#MucNuocLonNhat_M').val()) || null,
+            ChieuDaiDapPhanKhongTran_M: parseFloat($('#ChieuDaiDapPhanKhongTran_M').val()) || null,
+            ChieuDaiDapPhanTran_M: parseFloat($('#ChieuDaiDapPhanTran_M').val()) || null,
+            // Trạm Khí Tượng fields
+            LoaiTram: $('#LoaiTram').val(),
+            Song: $('#Song').val(),
+            Thiessen: $('#Thiessen').val(),
+            // Trạm Thủy Văn fields (sử dụng lại các trường đã có)
+            // Các trường này đã được gửi ở trên: LoaiTram, Song, Thiessen, KinhDo_Longitude, ViDo_Latitude, XaPhuong, TrangThai, ThuTuUuTien
+        };
+
+        $.ajax({
+            url: '/DanhSachCongTrinh/ThemOrCapNhat',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json; charset=utf-8',
+            success: function (result) {
+                if (result.Errors && result.Errors.length > 0) {
+                    var errorMessage = result.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('<br>');
+                    $('#errorMessage').html(errorMessage);
+                    $('#errorModal').modal('show');
+                } else {
+                    $('#successModal').modal('show');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.log('Error:', error);
+                console.log('Response:', xhr.responseText);
+                $('#errorMessage').html('Có lỗi xảy ra: ' + error);
+                $('#errorModal').modal('show');
+            }
+        });
+    }
+
+    function redirectToList() {
+        window.location.href = '/DanhSachCongTrinh';
+    }
+</script>

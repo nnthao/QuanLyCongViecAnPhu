@@ -1,0 +1,243 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Công việc cần xử lý";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao từ ", col: 2, moreClass:"col-xs-12", required: false)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 2, moreClass: "col-xs-12", required: false)
+                            <div class="col-sm-3 col-xs-12">
+                                <div class="form-group">
+                                    <label for="TrangThaiSearch">Trạng thái</label>
+                                    <select id="TrangThaiSearch" class="form-control">
+                                        <option value="0">-- Chọn --</option>
+                                        <option value="1">Đã hoàn thành</option>
+                                        <option value="2">Chưa hoàn thành</option>
+                                    </select>
+                                </div>
+                            </div>
+                             <div class="col-sm-5 col-xs-12">
+                                <div class="form-group">
+                                    <label for="txt-search" style="width:100%">&nbsp;</label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-columns-hidden="['GhiChu']"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/GiaoViecCanXuLy/GetListCongViecCanXuLy"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="NguoiGiao">Người giao viêc</th>
+                                            <th data-field="TenCongViec">Tên công việc</th>
+                                            <th data-field="NoiDung">Nội dung</th>
+                                            <th data-field="HanXuLyStr" data-formatter="hanXulyFormatter">Hạn xử lý</th>
+                                            <th data-field="GhiChu" data-formatter="ghiChuFormatter">Ghi chú</th>
+                                            <th data-field="NgayTaoStr">Ngày giao</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/GiaoViecCanXuLy/FormModal.cshtml")
+@Html.Partial("~/Views/GiaoViecCanXuLy/GiaoViecTiepTucModal.cshtml")
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    var hasQuyenChuyenGiao = @(ViewBag.HasQuyenChuyenGiao != null && (bool)ViewBag.HasQuyenChuyenGiao ? "true" : "false");
+
+    function operateFormatter(value, row, index) {
+        if (row.IsHoanThanh) {
+            var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, 0)" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Xem thông tin</button>`;
+            var btnHuyXacNhan = ` <button type="button" onclick="huyXacNhanHoanThanhGrid(${row.Id})" class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-undo'></i> Hủy xác nhận HT</button>`;
+            return btnHuyXacNhan + btnXemThongTin;
+        }
+
+        var btnXacNhan = `<button type="button" onclick="openXuLyCongViecModal(${row.Id}, ${row.GiaoViecId})" class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-check-circle'></i> Xác nhận hoàn thành</button>`;
+        var btnChuyenGiao = '';
+        if (hasQuyenChuyenGiao) {
+            btnChuyenGiao = ` <button type="button" onclick="openChuyenGiaoModal(${row.Id}, ${row.GiaoViecId})" class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-send'></i> Chuyển giao</button>`;
+        }
+        return btnXacNhan + btnChuyenGiao;
+    }
+
+    function huyXacNhanHoanThanhGrid(giaoViecThanhVienId) {
+        if (confirm("Bạn có chắc chắn muốn hủy xác nhận hoàn thành công việc này? Dữ liệu tiến trình trước đó sẽ bị xóa.")) {
+            showLoadingModal();
+            var fd = new FormData();
+            fd.append("GiaoViecThanhVienId", giaoViecThanhVienId);
+
+            ajaxPostFormData("/GiaoViecCanXuLy/HuyXacNhanHoanThanhCuaThanhVien", fd, function (data) {
+                hideLoadingModal();
+                if (data.Errors && data.Errors.length > 0) {
+                    var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                    toastr.error(msg);
+                } else {
+                    toastr.success("Hủy xác nhận thành công.");
+                    search();
+                }
+            }, function () {
+                hideLoadingModal();
+                toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+            });
+        }
+    }
+
+    function tiendoFormatter(value, row, index) {
+        if (row.IsHoanThanh) {
+            return `<span class="badge bg-success">Đã hoàn thành</span>`;
+        }
+        if (row.SoNgayConLai >= 0) {
+            return `<span class="badge bg-warning">Chưa hoàn thành</span>`;
+        }
+        return `<span class="badge bg-danger">Trễ hạn</span>`;
+    }
+
+    function hanXulyFormatter(value, row, index) {
+        var hanXuLyStr = row.HanXuLyStr || '';
+        if (row.IsHoanThanh) {
+            return `<span class="text-success text-bold">✅ Đã hoàn thành</span> - Hạn xử lý: <b>${hanXuLyStr}</b>`;
+        }
+        if (row.SoNgayConLai >= 0) {
+            return `<span class="text-warning text-bold">⏳ Chưa hoàn thành</span> - Hạn xử lý: <b>${hanXuLyStr}</b> (Còn lại ${row.SoNgayConLai} ngày)`;
+        }
+        return `<span class="text-danger text-bold">❌ Trễ hạn</span> - Hạn xử lý: <b>${hanXuLyStr}</b> (Trễ ${Math.abs(row.SoNgayConLai)} ngày)`;
+    }
+
+    function ghiChuFormatter(value, row, index) {
+        var ghiChu = value || '';
+        if (row.NguoiChuyenGiao) {
+            if (ghiChu) {
+                return `<b>- Người chuyển giao:</b> ${row.NguoiChuyenGiao}</br> <b>- Ghi chú:</b> ${ghiChu}`;
+            }
+            return `<b>- Người chuyển giao:</b> ${row.NguoiChuyenGiao}`;
+        }
+        return ghiChu;
+    }
+
+    function tiendoThanhVienFormatter(value, row, index) {
+        if (!row.GiaoViecThanhViens || row.GiaoViecThanhViens.length === 0) {
+            return '';
+        }
+
+        var html = '';
+        row.GiaoViecThanhViens.forEach(function (thanhVien) {
+            var hanXuLy = `- Hạn xử lý: <b>${thanhVien.HanXuLyStr || ''}</b>`;
+            var statusHtml = '';
+
+            if (thanhVien.IsHoanThanh) {
+                statusHtml = `<span class="text-success text-bold">✅ Đã hoàn thành</span> ${hanXuLy}`;
+            } else {
+                if (thanhVien.SoNgayConLai >= 0) {
+                    statusHtml = `<span class="text-warning text-bold">⏳ Chưa hoàn thành</span> ${hanXuLy} (Còn lại ${thanhVien.SoNgayConLai} ngày)`;
+                } else {
+                    statusHtml = `<span class="text-danger text-bold">❌ Trễ hạn</span> ${hanXuLy} (Trễ ${Math.abs(thanhVien.SoNgayConLai)} ngày)`;
+                }
+            }
+
+            html += `<p><b><a href="javascript:void(0)" onclick="openXemThongTinModal(${thanhVien.Id}, ${row.GiaoViecId}, ${thanhVien.ThanhVienId})">${thanhVien.ThanhVien || 'N/A'}</a></b> - ${statusHtml}</p>`;
+        });
+
+        return html;
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá công việc này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/GiaoViecCanXuLy/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.TrangThaiSearch = $("#TrangThaiSearch").val();
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+
+        $("#TrangThaiSearch").change(function () {
+            search();
+        });
+    });
+</script>
+
+

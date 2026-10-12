@@ -1,0 +1,4 @@
+ALTER TABLE GiaoViecGoiYNoiDung
+ADD Loai INT NULL;
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20261006183812');

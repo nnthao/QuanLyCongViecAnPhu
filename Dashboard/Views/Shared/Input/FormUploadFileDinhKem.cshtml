@@ -1,0 +1,93 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div id="@(Model.Id + "-upload-file-dinh-kem")" class="col-md-12" style="margin-top:20px">
+    <div>
+        <div class="row">
+            <label class="col-md-2" style="font-weight: unset !important;">
+                Tệp Đính Kèm
+            </label>
+            <div class="col-md-10 text-center">
+                <label class="btn btn-primary" for="@(Model.Id + "-file-upload")" style="float:left">
+                    <input id="@(Model.Id + "-file-upload")" type="file" class="d-none" multiple accept="@Dashboard.Common.BienDungChung.AllowedFileExtensions">
+                    <i class="fa fa-upload"></i> Tải lên
+                </label>
+                <p id="@(Model.Id + "-ErrorFileIdError")" class="text-danger m-b-0" style="font-style: italic;"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12 p-t-15">
+            <table id="@(Model.Id + "-bs-FileDinhKem")"
+                   data-locale="vi-VN">
+                <thead>
+                    <tr>
+                        <th data-field="Name">File đã đính kèm</th>
+                        <th data-width="100%" data-align="center" data-field="operate"
+                            data-formatter="operateFormatterFileDinhKem">&nbsp;</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    var fileDinhKemDatas = [];
+    var idBtnDeleteItemFile = '@(Model.Id + "-btn-delete-item-file")';
+    var bsFileDinhKem = '@(Model.Id + "-bs-FileDinhKem")';
+    var fileUpload = '@(Model.Id + "-file-upload")';
+
+    // START Upload File
+    function operateFormatterFileDinhKem(value, row, index) {
+        let deleteBtn = `<button id='${idBtnDeleteItemFile}' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'
+                        onclick="deleteFile(${index});">
+                    <i class='fa fa-trash'></i> Xóa
+                </button>`;
+        return [
+            deleteBtn
+        ].join("");
+    }
+
+    function deleteFile(index) {
+        $("#" + bsFileDinhKem).bootstrapTable("destroy");
+        fileDinhKemDatas.splice(index, 1);
+        $("#" + bsFileDinhKem).bootstrapTable({ data: fileDinhKemDatas });
+    }
+
+     document.addEventListener('DOMContentLoaded', function () {
+        $("#" + bsFileDinhKem).bootstrapTable({ data: fileDinhKemDatas });
+    });
+
+    $("#" + fileUpload).change(function () {
+        var errorElementId = '@(Model.Id + "-ErrorFileIdError")';
+        $('#' + errorElementId).text('');
+        
+        let input = this;
+        if (input.files && input.files.length > 0) {
+            var hasError = false;
+            for (var i = 0; i < input.files.length; i++) {
+                if (!validateFileExtension(input.files[i], errorElementId)) {
+                    hasError = true;
+                    break;
+                }
+                fileDinhKemDatas.push({
+                    "Id": 0,
+                    "Name": input.files[i].name,
+                    "File": input.files[i]
+                });
+            }
+
+            if (!hasError) {
+                $("#" + bsFileDinhKem).bootstrapTable("destroy");
+                $("#" + bsFileDinhKem).bootstrapTable({ data: fileDinhKemDatas });
+                $(this).val('');
+            } else {
+                fileDinhKemDatas = [];
+            }
+        }
+    });
+
+// END Upload File
+</script>

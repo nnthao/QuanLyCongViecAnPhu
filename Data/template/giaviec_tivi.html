@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>UBND Xã Nguyễn Nghiêm - Màn hình TV Theo dõi Nhiệm vụ</title>
+
+<!-- Fonts: Be Vietnam Pro + Outfit -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- CSS Libraries -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<style>
+  :root {
+    --bg-main: #0b1329;
+    --bg-card: #132247;
+    --bg-card-hover: #182b59;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --blue-glow: #38bdf8;
+    --blue-accent: #1d4ed8;
+    --red-glow: #f87171;
+    --red-bg: rgba(239, 68, 68, 0.18);
+    --orange-glow: #fbbf24;
+    --orange-bg: rgba(245, 158, 11, 0.18);
+    --green-glow: #34d399;
+    --green-bg: rgba(16, 185, 129, 0.18);
+    --border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--bg-main);
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(29, 78, 216, 0.2) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.8) 0px, transparent 50%);
+    color: var(--text-primary);
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 20px;
+    overflow-x: hidden;
+  }
+
+  .font-number {
+    font-family: 'Outfit', 'Be Vietnam Pro', sans-serif;
+  }
+
+  /* Header Banner */
+  .tv-header-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
+    border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    padding: 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #bgHeaderCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.35;
+    z-index: 1;
+  }
+
+  .header-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .tv-header-banner h1 {
+    font-family: 'Outfit', 'Be Vietnam Pro', sans-serif;
+    font-weight: 800;
+    font-size: 2.2rem;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .tv-header-banner h2 {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #7dd3fc;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .header-tagline {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    display: inline-block;
+    padding: 2px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .header-meta .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #ef4444;
+    animation: blink 1.2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.8); }
+  }
+
+  .header-meta .time {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    letter-spacing: 0.5px;
+  }
+
+  .header-meta .motto {
+    font-size: 0.82rem;
+    letter-spacing: 1.2px;
+    color: #93c5fd;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  /* Stat Cards */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+  }
+
+  .stat-total::before { background: var(--blue-glow); box-shadow: 0 0 10px var(--blue-glow); }
+  .stat-overdue::before { background: var(--red-glow); box-shadow: 0 0 10px var(--red-glow); }
+  .stat-upcoming::before { background: var(--orange-glow); box-shadow: 0 0 10px var(--orange-glow); }
+  .stat-done::before { background: var(--green-glow); box-shadow: 0 0 10px var(--green-glow); }
+
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .stat-total .stat-icon { background: rgba(56, 189, 248, 0.15); color: var(--blue-glow); }
+  .stat-overdue .stat-icon { background: var(--red-bg); color: var(--red-glow); }
+  .stat-upcoming .stat-icon { background: var(--orange-bg); color: var(--orange-glow); }
+  .stat-done .stat-icon { background: var(--green-bg); color: var(--green-glow); }
+
+  .stat-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #ffffff;
+  }
+
+  /* Canvas Charts Panel */
+  .chart-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5rem;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+  }
+
+  .chart-header i {
+    color: var(--blue-glow);
+  }
+
+  .chart-container {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Tables Panel */
+  .table-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 1.5rem;
+  }
+
+  .panel-header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+
+  .panel-overdue .panel-header {
+    background: linear-gradient(90deg, #991b1b 0%, #dc2626 100%);
+  }
+
+  .panel-upcoming .panel-header {
+    background: linear-gradient(90deg, #b45309 0%, #d97706 100%);
+  }
+
+  .panel-header .badge-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 10px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  table {
+    color: #e2e8f0;
+    margin-bottom: 0;
+  }
+
+  table thead th {
+    background: rgba(15, 23, 42, 0.6);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #94a3b8;
+    border-top: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+  }
+
+  table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+  }
+
+  .badge-overdue {
+    background: var(--red-bg);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    display: inline-block;
+  }
+
+  .badge-remain {
+    background: var(--orange-bg);
+    color: #fde047;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    display: inline-block;
+  }
+
+  .date-highlight {
+    color: #f87171;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .dept-name {
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+
+  .task-title {
+    font-weight: 600;
+    color: #f8fafc;
+  }
+
+  .row-icon {
+    color: #ef4444;
+    margin-right: 6px;
+  }
+
+  /* Marquee Auto Scroll */
+  .head-table, .body-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .body-scroll {
+    position: relative;
+    overflow: hidden;
+    max-height: 255px;
+  }
+
+  .body-scroll .body-table {
+    position: relative;
+  }
+
+  .body-scroll.is-scrolling .body-table {
+    animation-name: scrollUpTable;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes scrollUpTable {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+
+  @media (max-width: 767.98px) {
+    .header-meta { text-align: left; margin-top: 12px; }
+    .tv-header-banner h1 { font-size: 1.5rem; }
+    .tv-header-banner h2 { font-size: 1rem; }
+    .stat-value { font-size: 1.8rem; }
+    .chart-panel { height: 240px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container-fluid px-3 px-md-4 py-3">
+
+  <!-- Header Banner -->
+  <div class="tv-header-banner mb-4">
+    <canvas id="bgHeaderCanvas"></canvas>
+    <div class="row align-items-center header-content">
+      <div class="col-xs-12 col-md-8">
+        <div class="header-tagline mb-2">Vì Nhân dân phục vụ</div>
+        <h1>UBND XÃ NGUYỄN NGHIÊM</h1>
+        <h2>THEO DÕI NHIỆM VỤ QUÁ HẠN VÀ SẮP ĐẾN HẠN</h2>
+        <div class="mt-2 text-light small">
+          <span class="mr-2"><strong>KỶ CƯƠNG</strong></span>-
+          <span class="mx-2"><strong>TRÁCH NHIỆM</strong></span>-
+          <span class="ml-2"><strong>HIỆU QUẢ</strong></span>
+        </div>
+      </div>
+      <div class="col-xs-12 col-md-4 header-meta">
+        <div class="live-badge"><span class="live-dot"></span> MÀN HÌNH THEO DÕI REALTIME</div>
+        <div class="time" id="clock">14:30:00 | Thứ Ba, 23/09/2026</div>
+        <div class="motto mt-2">XÂY DỰNG NÔNG THÔN MỚI<br>VÌ CUỘC SỐNG TỐT ĐẸP HƠN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat Cards Row (Bootstrap 4 Grid col-xs-12 col-sm-6 col-md-3) -->
+  <div class="row mb-4">
+    <div class="col-xs-12 col-sm-6 col-md-3 mb-3 mb-md-0">
+      <div class="stat-card stat-total">
+        <div class="stat-icon"><i class="fa fa-list-alt"></i></div>
+        <div>
+          <div class="stat-label">Tổng nhiệm vụ</div>
+          <div class="stat-value">28</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3 mb-3 mb-md-0">
+      <div class="stat-card stat-overdue">
+        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
+        <div>
+          <div class="stat-label">Quá hạn</div>
+          <div class="stat-value">6</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3 mb-3 mb-md-0">
+      <div class="stat-card stat-upcoming">
+        <div class="stat-icon"><i class="fa fa-clock-o"></i></div>
+        <div>
+          <div class="stat-label">Sắp đến hạn</div>
+          <div class="stat-value">9</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3">
+      <div class="stat-card stat-done">
+        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
+        <div>
+          <div class="stat-label">Hoàn thành</div>
+          <div class="stat-value">13</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Charts Row (Bootstrap 4 Grid col-xs-12 col-sm-6 col-md-4) -->
+  <div class="row">
+    <div class="col-xs-12 col-sm-6 col-md-4">
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span><i class="fa fa-pie-chart mr-2"></i>Tỷ lệ Trạng thái</span>
+          <span class="badge badge-primary font-weight-normal">100%</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="taskStatusCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4">
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span><i class="fa fa-bar-chart mr-2"></i>Nhiệm vụ theo Đơn vị</span>
+          <span class="badge badge-info font-weight-normal">6 Đơn vị</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="deptWorkloadCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-12 col-md-4">
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span><i class="fa fa-tachometer mr-2"></i>Tỷ lệ Hoàn thành</span>
+          <span class="badge badge-success font-weight-normal">Tiến độ</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="progressGaugeCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables Row (Bootstrap 4 Grid col-xs-12 col-sm-6 col-md-6) -->
+  <div class="row">
+    <!-- Overdue Table -->
+    <div class="col-xs-12 col-sm-6 col-md-6">
+      <div class="table-panel panel-overdue">
+        <div class="panel-header">
+          <span><i class="fa fa-exclamation-triangle mr-2"></i>NHIỆM VỤ QUÁ HẠN</span>
+          <span class="badge-tag">CẦN XỬ LÝ NGAY</span>
+        </div>
+        <table class="table head-table mb-0">
+          <colgroup>
+            <col style="width:8%">
+            <col style="width:42%">
+            <col style="width:22%">
+            <col style="width:14%">
+            <col style="width:14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Nội dung</th>
+              <th>Phụ trách</th>
+              <th>Hạn xử lý</th>
+              <th>Trễ</th>
+            </tr>
+          </thead>
+        </table>
+        <div class="body-scroll" id="scrollOverdue">
+          <table class="table table-hover mb-0 body-table" id="tblOverdue">
+            <colgroup>
+              <col style="width:8%">
+              <col style="width:42%">
+              <col style="width:22%">
+              <col style="width:14%">
+              <col style="width:14%">
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><i class="fa fa-exclamation-circle row-icon"></i><span class="task-title">Báo cáo tiến độ xây dựng nông thôn mới</span></td>
+                <td><span class="dept-name">Văn phòng UBND</span></td>
+                <td class="date-highlight">20/09/2026</td>
+                <td><span class="badge-overdue">3 ngày</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><i class="fa fa-exclamation-circle row-icon"></i><span class="task-title">Hoàn thiện hồ sơ hộ tịch tồn đọng</span></td>
+                <td><span class="dept-name">Tư pháp - Hộ tịch</span></td>
+                <td class="date-highlight">18/09/2026</td>
+                <td><span class="badge-overdue">5 ngày</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><i class="fa fa-exclamation-circle row-icon"></i><span class="task-title">Tổng hợp phản ánh hiện trường</span></td>
+                <td><span class="dept-name">Bộ phận Một cửa</span></td>
+                <td class="date-highlight">19/09/2026</td>
+                <td><span class="badge-overdue">4 ngày</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><i class="fa fa-exclamation-circle row-icon"></i><span class="task-title">Cập nhật dữ liệu an sinh xã hội</span></td>
+                <td><span class="dept-name">Lao động - TBXH</span></td>
+                <td class="date-highlight">17/09/2026</td>
+                <td><span class="badge-overdue">6 ngày</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><i class="fa fa-exclamation-circle row-icon"></i><span class="task-title">Rà soát công tác vệ sinh môi trường</span></td>
+                <td><span class="dept-name">Địa chính - MT</span></td>
+                <td class="date-highlight">16/09/2026</td>
+                <td><span class="badge-overdue">7 ngày</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Table -->
+    <div class="col-xs-12 col-sm-6 col-md-6">
+      <div class="table-panel panel-upcoming">
+        <div class="panel-header">
+          <span><i class="fa fa-clock-o mr-2"></i>NHIỆM VỤ SẮP ĐẾN HẠN</span>
+          <span class="badge-tag">CHỦ ĐỘNG THỰC HIỆN</span>
+        </div>
+        <table class="table head-table mb-0">
+          <colgroup>
+            <col style="width:8%">
+            <col style="width:42%">
+            <col style="width:22%">
+            <col style="width:14%">
+            <col style="width:14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Nội dung</th>
+              <th>Phụ trách</th>
+              <th>Hạn xử lý</th>
+              <th>Còn lại</th>
+            </tr>
+          </thead>
+        </table>
+        <div class="body-scroll" id="scrollUpcoming">
+          <table class="table table-hover mb-0 body-table" id="tblUpcoming">
+            <colgroup>
+              <col style="width:8%">
+              <col style="width:42%">
+              <col style="width:22%">
+              <col style="width:14%">
+              <col style="width:14%">
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><span class="task-title">Chuẩn bị kế hoạch họp dân quý IV</span></td>
+                <td><span class="dept-name">Văn phòng UBND</span></td>
+                <td class="date-highlight">24/09/2026</td>
+                <td><span class="badge-remain">1 ngày</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="task-title">Báo cáo thu - chi ngân sách xã</span></td>
+                <td><span class="dept-name">Tài chính - KT</span></td>
+                <td class="date-highlight">25/09/2026</td>
+                <td><span class="badge-remain">2 ngày</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="task-title">Kiểm tra hồ sơ cấp giấy xác nhận</span></td>
+                <td><span class="dept-name">Bộ phận Một cửa</span></td>
+                <td class="date-highlight">26/09/2026</td>
+                <td><span class="badge-remain">3 ngày</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="task-title">Tổng hợp danh sách hỗ trợ hộ nghèo</span></td>
+                <td><span class="dept-name">Lao động - TBXH</span></td>
+                <td class="date-highlight">27/09/2026</td>
+                <td><span class="badge-remain">4 ngày</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="task-title">Báo cáo tiến độ giải quyết TTHC</span></td>
+                <td><span class="dept-name">Văn phòng UBND</span></td>
+                <td class="date-highlight">28/09/2026</td>
+                <td><span class="badge-remain">5 ngày</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Libraries: jQuery, Bootstrap, Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<script>
+  // Dynamic Realtime Clock
+  function updateClock() {
+    const now = new Date();
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dayName = days[now.getDay()];
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    $('#clock').text(`${hh}:${mm}:${ss} | ${dayName}, ${dd}/${MM}/${yyyy}`);
+  }
+
+  // Header Background Ambient Particle Canvas
+  function initHeaderCanvas() {
+    const canvas = document.getElementById('bgHeaderCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.offsetWidth;
+      canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      alpha: Math.random() * 0.5 + 0.2
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#38bdf8';
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+  // Canvas 1: Task Status Donut Chart
+  function initStatusChart() {
+    const ctx = document.getElementById('taskStatusCanvas');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Hoàn thành', 'Sắp đến hạn', 'Quá hạn'],
+        datasets: [{
+          data: [13, 9, 6],
+          backgroundColor: ['#34d399', '#fbbf24', '#f87171'],
+          borderWidth: 2,
+          borderColor: '#132247'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: '#cbd5e1',
+              font: { family: 'Be Vietnam Pro', size: 12 },
+              padding: 14,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          }
+        },
+        cutout: '68%'
+      }
+    });
+  }
+
+  // Canvas 2: Department Workload Horizontal Bar Chart
+  function initDeptChart() {
+    const ctx = document.getElementById('deptWorkloadCanvas');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['VP UBND', 'Tư pháp', 'Một cửa', 'LĐ-TBXH', 'Địa chính', 'Tài chính'],
+        datasets: [{
+          label: 'Nhiệm vụ',
+          data: [8, 5, 6, 4, 3, 2],
+          backgroundColor: '#38bdf8',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#94a3b8', font: { family: 'Outfit', size: 11 } }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#cbd5e1', font: { family: 'Be Vietnam Pro', size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  // Canvas 3: Custom Completion Gauge Canvas
+  function initGaugeCanvas() {
+    const canvas = document.getElementById('progressGaugeCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function drawGauge() {
+      const width = canvas.parentElement.offsetWidth;
+      const height = canvas.parentElement.offsetHeight;
+      canvas.width = width;
+      canvas.height = height;
+
+      const centerX = width / 2;
+      const centerY = height / 2 + 10;
+      const radius = Math.min(width, height) / 2 - 25;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Track arc
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, Math.PI * 0.85, Math.PI * 2.15);
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // Progress arc (46% completed)
+      const completionPercent = 0.46;
+      const endAngle = Math.PI * 0.85 + (Math.PI * 1.3 * completionPercent);
+
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, '#38bdf8');
+      gradient.addColorStop(1, '#34d399');
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, Math.PI * 0.85, endAngle);
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = gradient;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#34d399';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // Percentage text
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 2.2rem Outfit';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('46%', centerX, centerY - 6);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 0.85rem "Be Vietnam Pro"';
+      ctx.fillText('HOÀN THÀNH', centerX, centerY + 24);
+    }
+
+    drawGauge();
+    window.addEventListener('resize', drawGauge);
+  }
+
+  // Auto-scroll tbody continuous loop
+  function setupAutoScroll(wrapperId, tableId, pxPerSecond) {
+    const wrapper = $('#' + wrapperId);
+    const table = $('#' + tableId);
+    if (!wrapper.length || !table.length) return;
+
+    const originalHeight = table[0].scrollHeight;
+    const visibleHeight = wrapper[0].clientHeight;
+
+    if (originalHeight <= visibleHeight) return;
+
+    const tbody = table.find('tbody');
+    tbody.children().each(function() {
+      tbody.append($(this).clone());
+    });
+
+    const loopHeight = table[0].scrollHeight / 2;
+    const duration = Math.max(loopHeight / pxPerSecond, 6);
+
+    table.css('animation-duration', duration + 's');
+    wrapper.addClass('is-scrolling');
+  }
+
+  // Run on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function() {
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    initHeaderCanvas();
+    initStatusChart();
+    initDeptChart();
+    initGaugeCanvas();
+
+    setupAutoScroll('scrollOverdue', 'tblOverdue', 30);
+    setupAutoScroll('scrollUpcoming', 'tblUpcoming', 30);
+  });
+</script>
+</body>
+</html>

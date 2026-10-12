@@ -1,0 +1,42 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @if (!string.IsNullOrEmpty(@Model.Label))
+            {
+                <psan>@Model.Label:</psan>
+            }
+            else
+            {
+                <span>&nbsp;</span>
+            }
+
+            @if (Model.Required)
+            {
+                <span class="text-danger">*</span>
+            }
+        </label>
+        <div class="input-group">
+            <input @(Model.IsReadonly ? "readonly" : "") type="text" id="@Model.Id" class="form-control" />
+            <div class="input-group-append">
+                <span class="input-group-text" id="@Model.Id-Calendar"><i class="fa fa-calendar"></i></span>
+            </div>
+        </div>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+<script type="text/javascript">
+     document.addEventListener('DOMContentLoaded', function () {
+        var idElement = "#" + '@Model.Id';
+        var idContainer = "#" + '@Model.IdContainer';
+
+        $(idElement).datetimepicker({
+            autoclose: true,
+            container: idContainer,
+            use24hours: true,
+            todayHighlight: true,
+            format: 'dd/mm/yyyy hh:ii',
+        });
+    });
+</script>

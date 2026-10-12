@@ -1,0 +1,213 @@
+﻿@using Dashboard.HtmlHelpers;
+@{
+    ViewBag.Title = "Quản lý nghỉ phép - điểm danh";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var start = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy");
+    var end = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(1).AddDays(-1).ToString("dd/MM/yyyy");
+}
+
+<style>
+    .badge-sang { background-color: #ffc107; color: #000; }
+    .badge-chieu { background-color: #fd7e14; color: #fff; }
+    .badge-cangay { background-color: #dc3545; color: #fff; }
+    .badge-ditre { background-color: #17a2b8; color: #fff; }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Danh sách đăng ký nghỉ</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-4 col-xs-12 btn-add-mb">
+                                <a href="/QuanLyDiemDanh/Form" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Đăng ký nghỉ
+                                </a>
+                                <a href="/QuanLyDiemDanh/ThongKe" class="btn btn-info">
+                                    <i class="fa fa-bar-chart"></i> Thống kê
+                                </a>
+                            </div>
+                            @Html.CustomDatePicker("TuNgay", "Từ ngày", 3, moreClass: "col-sm-3 col-xs-12", value: start)
+                            @Html.CustomDatePicker("DenNgay", "Đến ngày", 3, moreClass: "col-sm-3 col-xs-12", value: end)
+                            <div class="col-sm-2 col-xs-12">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-primary btn-block" id="btnSearch" onclick="search()">
+                                        <i class="fa fa-search"></i> Tìm kiếm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="table"
+                                       data-toggle="table"
+                                       data-url="/QuanLyDiemDanh/GetList"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-query-params="queryParams"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Stt" data-formatter="sttFormatter" data-width="50">STT</th>
+                                            <th data-field="UserName">Nhân viên</th>
+                                            <th data-field="NgayNghi" data-formatter="dateFormatter">Ngày nghỉ</th>
+                                            <th data-field="LoaiNghi" data-formatter="loaiNghiFormatter">Loại nghỉ</th>
+                                            <th data-field="LyDo">Lý do</th>
+                                            <th data-field="Id" data-formatter="actionFormatter" data-width="150">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Chọn Lý Do Chuyển Nghỉ -->
+<div class="modal fade" id="modalLyDoChuyenNghi" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chọn lý do chuyển nghỉ</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="LyDoChuyenNghi">Lý do chuyển nghỉ <span class="text-danger">*</span></label>
+                    <select class="form-control" id="LyDoChuyenNghi">
+                        <option value="">-- Chọn lý do --</option>
+                        <option value="1">Đi công tác</option>
+                        <option value="2">Họp đột xuất</option>
+                        <option value="3">Bệnh đột xuất</option>
+                        <option value="4">Gia đình có việc</option>
+                        <option value="5">Lý do khác</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="GhiChuChuyenNghi">Ghi chú</label>
+                    <textarea class="form-control" id="GhiChuChuyenNghi" rows="3" placeholder="Nhập ghi chú (nếu có)"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btnXacNhanChuyenNghi">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Set default dates handled by server-side value rendering
+    });
+
+    function search() {
+        $('#table').bootstrapTable('refresh');
+    }
+
+    function queryParams(params) {
+        params.TuNgayStr = $('#TuNgay').val();
+        params.DenNgayStr = $('#DenNgay').val();
+        return params;
+    }
+
+    function sttFormatter(value, row, index) {
+        return index + 1;
+    }
+
+    function dateFormatter(value) {
+        if (!value) return '';
+        return moment(value).format('DD/MM/YYYY');
+    }
+
+    function loaiNghiFormatter(value, row) {
+        return `<span class="badge ${getBadgeClass(value)}">${row.LoaiNghiStr}</span>`;
+    }
+
+    function getBadgeClass(val) {
+        if (val == 1) return 'badge-sang';
+        if (val == 2) return 'badge-chieu';
+        if (val == 3) return 'badge-cangay';
+        if (val == 4) return 'badge-ditre';
+        return 'badge-secondary';
+    }
+
+    function actionFormatter(value, row) {
+        var btnEdit = `<a href="/QuanLyDiemDanh/Form?id=${value}" class="btn btn-sm btn-primary mr-1" title="Sửa"><i class="fa fa-edit"></i></a>`;
+        var btnDel = `<a href="javascript:void(0)" class="btn btn-sm btn-danger mr-1" onclick="deleteItem(${value})" title="Xóa"><i class="fa fa-trash"></i></a>`;
+        var btnCreateMeeting = '';
+        if (row.LoaiNghi != 4) {
+            btnCreateMeeting = `<a href="javascript:void(0)" class="btn btn-sm btn-success" onclick="taoLichHop(${value})" title="Tạo lịch họp"><i class="fa fa-calendar-plus-o"></i></a>`;
+        }
+        return btnEdit + btnDel + btnCreateMeeting;
+    }
+
+    function deleteItem(id) {
+        if (confirm("Bạn có chắc chắn muốn xóa bản ghi này?")) {
+            var fd = new FormData();
+            fd.append("id", id);
+            
+            ajaxPostFormData("/QuanLyDiemDanh/Xoa", fd, function (res) {
+                if (res.status) {
+                    toastr.success(res.message);
+                    $('#table').bootstrapTable('refresh');
+                } else {
+                    toastr.error(res.message);
+                }
+            }, function () {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        }
+    }
+
+    var currentDiemDanhId = null;
+
+    function taoLichHop(diemDanhId) {
+        currentDiemDanhId = diemDanhId;
+        $('#LyDoChuyenNghi').val('');
+        $('#GhiChuChuyenNghi').val('');
+        $('#modalLyDoChuyenNghi').modal('show');
+    }
+
+    document.getElementById('btnXacNhanChuyenNghi').addEventListener('click', function () {
+        var lyDo = $('#LyDoChuyenNghi').val();
+        if (!lyDo) {
+            toastr.warning('Vui lòng chọn lý do chuyển nghỉ.');
+            return;
+        }
+
+        $('#modalLyDoChuyenNghi').modal('hide');
+        showLoadingModal();
+
+        var fd = new FormData();
+        fd.append("diemDanhId", currentDiemDanhId);
+        fd.append("lyDoChuyenNghi", lyDo);
+        fd.append("ghiChu", $('#GhiChuChuyenNghi').val());
+
+        ajaxPostFormData("/QuanLyDiemDanh/TaoLichHopTuDiemDanh", fd, function (res) {
+            hideLoadingModal();
+            if (res.Errors && res.Errors.length > 0) {
+                toastr.error(res.Errors[0].Description);
+            } else {
+                toastr.success("Tạo lịch họp thành công!");
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    });
+
+</script>

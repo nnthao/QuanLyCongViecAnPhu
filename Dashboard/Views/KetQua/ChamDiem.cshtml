@@ -1,0 +1,293 @@
+@model int
+
+@{
+    var sangKienId = Model;
+    ViewBag.Title = "Chấm điểm sáng kiến";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var tieuChis = new[]
+    {
+        new { Id = "TinhMoi", Key = 1, Ten = "Tính mới, sáng tạo", Min = 1, Max = 25 },
+        new { Id = "TinhKhaThi", Key = 2, Ten = "Tính khả thi & phạm vi triển khai", Min = 1, Max = 20 },
+        new { Id = "TinhHieuQua", Key = 3, Ten = "Tính hiệu quả (nếu không tính giá trị làm lợi)", Min = 1, Max = 50 },
+        new { Id = "ChatLuongHoSo", Key = 4, Ten = "Chất lượng hồ sơ", Min = 1, Max = 5 }
+    };
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="SangKienId" value="@sangKienId" />
+                        @if (sangKienId > 0)
+                        {
+                            <div class="alert alert-secondary">
+                                <i class="fa fa-lightbulb-o"></i>
+                                Đang chấm điểm cho sáng kiến có mã <b>@sangKienId</b>. Bạn có thể nhập điểm và lưu lại (tính năng lưu đang phát triển).
+                            </div>
+                        }
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            Tổng cộng số điểm 4 tiêu chí cộng lại sẽ là 100 điểm. Hệ thống sẽ tự động tính tổng điểm và phân loại sáng kiến.
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="w-50">Tiêu chí</th>
+                                        <th class="w-25 text-center">Điểm (1 - 100)</th>
+                                        <th class="w-25 text-center">Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tc in tieuChis)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <label for="@tc.Id" class="mb-0 font-weight-bold">@tc.Ten</label>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <input type="number"
+                                                       class="form-control score-input text-center"
+                                                       id="@tc.Id"
+                                                       data-criteria-id="@tc.Key"
+                                                       data-min="@tc.Min"
+                                                       data-max="@tc.Max"
+                                                       name="@tc.Id"
+                                                       min="@tc.Min"
+                                                       max="@tc.Max"
+                                                       value=""
+                                                       placeholder="--" />
+                                                <small class="text-muted">Nhập số từ @tc.Min đến @tc.Max điểm</small>
+                                            </td>
+                                            <td class="align-middle">
+                                                <textarea class="form-control" rows="2" id="@($"{tc.Id}Note")" placeholder="Ghi chú (nếu có)"></textarea>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-primary"><i class="fa fa-calculator"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Tổng điểm</span>
+                                        <span class="info-box-number" id="tongDiem">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-info"><i class="fa fa-balance-scale"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Điểm trung bình</span>
+                                        <span class="info-box-number" id="diemTrungBinh">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-success"><i class="fa fa-trophy"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Phân loại</span>
+                                        <span class="info-box-number" id="phanLoai">Chưa xác định</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-warning"><i class="fa fa-info"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Trạng thái</span>
+                                        <span class="info-box-number" id="trangThaiKetQua">Chưa đánh giá</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-sm-12 text-right">
+                                <button class="btn btn-secondary mr-2" id="btnReset">
+                                    <i class="fa fa-undo"></i> Làm mới
+                                </button>
+                                <button class="btn btn-success" id="btnSave" disabled>
+                                    <i class="fa fa-save"></i> Lưu tạm (đang phát triển)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const sangKienId = parseInt('@sangKienId');
+
+    function clampScore(input) {
+        if (!input) return null;
+        const value = input.val();
+        if (!value) return null;
+        let number = parseFloat(value);
+        if (isNaN(number)) return null;
+        const min = parseFloat(input.data('min')) || 1;
+        const max = parseFloat(input.data('max')) || 100;
+        if (number < min) number = min;
+        if (number > max) number = max;
+        return number;
+    }
+
+    function evaluateScores() {
+        let total = 0;
+        let count = 0;
+        $('.score-input').each(function () {
+            let val = clampScore($(this));
+            if (val !== null) {
+                total += val;
+                count++;
+            }
+        });
+
+        $('#tongDiem').text(total.toFixed(0));
+
+        if (count === $('.score-input').length) {
+            $('#btnSave').prop('disabled', false);
+            const tongDiem = total;
+            $('#diemTrungBinh').text(tongDiem.toFixed(2));
+            let classification = '';
+            let status = '';
+
+            if (tongDiem > 75 && tongDiem <= 100) {
+                classification = 'Sáng kiến loại I';
+                status = 'Đề xuất trao thưởng cao nhất';
+            } else if (tongDiem > 65 && tongDiem <= 75) {
+                classification = 'Sáng kiến loại II';
+                status = 'Đề xuất trao thưởng';
+            } else if (tongDiem > 55 && tongDiem <= 65) {
+                classification = 'Sáng kiến loại III';
+                status = 'Đề xuất khuyến khích';
+            } else if (tongDiem >= 55) {
+                classification = 'Đạt giải';
+                status = 'Đủ điều kiện xét giải';
+            } else {
+                classification = 'Không đạt giải';
+                status = 'Cần cải thiện thêm';
+            }
+
+            $('#phanLoai').text(classification);
+            $('#trangThaiKetQua').text(status);
+        } else {
+            $('#btnSave').prop('disabled', true);
+            $('#phanLoai').text('Chưa xác định');
+            $('#trangThaiKetQua').text('Chưa đánh giá');
+            $('#diemTrungBinh').text('0.00');
+        }
+    }
+
+    function getDanhGiaChiTiet() {
+        const details = [];
+        $('.score-input').each(function () {
+            const id = $(this).data('criteria-id');
+            const val = clampScore($(this));
+            details.push({
+                id: id,
+                diem: val
+            });
+        });
+        return details;
+    }
+
+    function applyKetQuaChiTiet(jsonStr) {
+        if (!jsonStr) return;
+        try {
+            const details = JSON.parse(jsonStr);
+            details.forEach(function (item) {
+                const input = $('.score-input[data-criteria-id="' + item.id + '"]');
+                if (input.length && item.diem !== undefined && item.diem !== null) {
+                    input.val(item.diem);
+                }
+            });
+        } catch (e) {
+            console.warn("Không thể parse KetQuaChiTiet:", e);
+        }
+        evaluateScores();
+    }
+
+    function loadChamDiem() {
+        if (!sangKienId || sangKienId <= 0) {
+            return;
+        }
+        $.get("/KetQua/GetChamDiemBySangKien", { sangKienId: sangKienId }, function (res) {
+            if (res && res.Item) {
+                applyKetQuaChiTiet(res.Item.KetQuaChiTiet);
+            }
+        }).fail(function () {
+            toastr.error("Không thể tải dữ liệu chấm điểm. Vui lòng thử lại.");
+        });
+    }
+
+    function saveChamDiem() {
+        if (!sangKienId || sangKienId <= 0) {
+            toastr.warning("Không xác định được sáng kiến cần chấm.");
+            return;
+        }
+
+        const details = getDanhGiaChiTiet();
+        if (details.some(item => item.diem === null)) {
+            toastr.warning("Vui lòng nhập điểm cho tất cả tiêu chí.");
+            return;
+        }
+
+        const payload = {
+            SangKienId: sangKienId,
+            KetQuaChiTiet: JSON.stringify(details)
+        };
+
+        $('#btnSave').prop('disabled', true);
+        $.post("/KetQua/LuuChamDiem", payload, function () {
+            toastr.success("Lưu chấm điểm thành công.");
+        }).fail(function () {
+            toastr.error("Đã có lỗi xảy ra khi lưu chấm điểm. Vui lòng thử lại.");
+        }).always(function () {
+            evaluateScores();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $('.score-input').on('input', function () {
+            const val = clampScore($(this));
+            if (val === null) {
+                $(this).val('');
+            } else {
+                $(this).val(val);
+            }
+            evaluateScores();
+        });
+
+        $('#btnReset').click(function () {
+            $('.score-input').val('');
+            $('textarea').val('');
+            evaluateScores();
+        });
+
+        $('#btnSave').click(function () {
+            saveChamDiem();
+        });
+
+        evaluateScores();
+        loadChamDiem();
+    });
+</script>
+

@@ -1,0 +1,833 @@
+@using Dashboard.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê dự án";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .stat-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .stat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-bottom: none;
+    }
+
+    .stat-header h5 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stat-header h5 i {
+        font-size: 20px;
+    }
+
+    .stat-table {
+        margin: 0;
+    }
+
+    .stat-table thead th {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: #2d3748;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 12px;
+    }
+
+    .stat-table tbody tr,
+    .stat-table tbody tr:hover,
+    .stat-table tbody td,
+    .stat-table tbody td:hover {
+        transition: none !important;
+    }
+
+    .stat-table tbody td {
+        padding: 12px;
+        vertical-align: middle;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .badge-count {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 13px;
+        min-width: 30px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .badge-count:hover {
+        opacity: 0.8;
+    }
+
+    .level-1 {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .level-2 {
+        background-color: #bbdefb;
+        color: #1565c0;
+    }
+
+    .level-3 {
+        background-color: #90caf9;
+        color: #0d47a1;
+    }
+
+    .level-4 {
+        background-color: #64b5f6;
+        color: #0d47a1;
+    }
+
+    .level-5 {
+        background-color: #42a5f5;
+        color: white;
+    }
+
+    .level-6-plus {
+        background-color: #2196f3;
+        color: white;
+    }
+
+    .row-level-1 {
+        background-color: #fef3e2;
+    }
+
+    .row-level-2 {
+        background-color: #ffe0b2;
+    }
+
+    .row-level-3 {
+        background-color: #ffcc80;
+    }
+
+    .row-level-4 {
+        background-color: #ffb74d;
+    }
+
+    .row-level-5 {
+        background-color: #ffa726;
+    }
+
+    .row-level-6-plus {
+        background-color: #ff9800;
+    }
+
+    .loading-text {
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                        <div class="card-title" style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+                            <b style="font-size: 18px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fa fa-bar-chart"></i> @ViewBag.Title
+                            </b>
+                            <button onclick="xuatExcel()" class="btn btn-success" style="background-color: #28a745; border: none;">
+                                <i class="fa fa-file-excel-o"></i> Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 20px;">
+                        <div class="row">
+                            <div class="col-md-4 col-sm-12">
+                                <div class="stat-card">
+                                    <div class="stat-header">
+                                        <h5>
+                                            <i class="fa fa-users"></i>
+                                            Thống kê thành viên tham gia dự án
+                                        </h5>
+                                        <small style="opacity: 0.9; display: block; margin-top: 5px;">
+                                            Sắp xếp theo số lượng dự án tham gia tăng dần
+                                        </small>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table stat-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 60px;">STT</th>
+                                                    <th>Tên thành viên</th>
+                                                    <th style="width: 120px; text-align: center;">Số dự án</th>
+                                                    <th>Dự án tham gia</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody-tham-gia">
+                                                <tr>
+                                                    <td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 col-sm-12">
+                                <div class="stat-card">
+                                    <div class="stat-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                        <h5>
+                                            <i class="fa fa-line-chart"></i>
+                                            Thống kê tổng mức độ hỗ trợ
+                                        </h5>
+                                        <small style="opacity: 0.9; display: block; margin-top: 5px;">
+                                            Sắp xếp theo tổng mức độ hỗ trợ tăng dần
+                                        </small>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table stat-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 60px;">STT</th>
+                                                    <th>Tên thành viên</th>
+                                                    <th style="width: 100px; text-align: center;">Số dự án</th>
+                                                    <th style="width: 120px; text-align: center;">Mức độ hỗ trợ</th>
+                                                    <th>Dự án tham gia</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody-muc-do-ho-tro">
+                                                <tr>
+                                                    <td colspan="5" class="text-center loading-text">Đang tải dữ liệu...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 col-sm-12">
+                                <div class="stat-card">
+                                    <div class="stat-header" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                        <h5>
+                                            <i class="fa fa-flask"></i>
+                                            Thống kê thành viên tham gia dự án thử nghiệm
+                                        </h5>
+                                        <small style="opacity: 0.9; display: block; margin-top: 5px;">
+                                            Sắp xếp theo số lượng dự án thử nghiệm tham gia tăng dần
+                                        </small>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table stat-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 60px;">STT</th>
+                                                    <th>Tên thành viên</th>
+                                                    <th style="width: 120px; text-align: center;">Số dự án</th>
+                                                    <th>Dự án thử nghiệm</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody-tham-gia-thu-nghiem">
+                                                <tr>
+                                                    <td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-sm-12">
+                                <div class="stat-card">
+                                    <div class="stat-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                        <h5>
+                                            <i class="fa fa-building"></i>
+                                            Thống kê dự án theo số thành viên
+                                        </h5>
+                                        <small style="opacity: 0.9; display: block; margin-top: 5px;">
+                                            Sắp xếp theo số lượng thành viên tăng dần
+                                        </small>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table stat-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 60px;">STT</th>
+                                                    <th>Tên dự án</th>
+                                                    <th style="width: 120px; text-align: center;">Mức độ hỗ trợ</th>
+                                                    <th style="width: 120px; text-align: center;">Số thành viên</th>
+                                                    <th>Tên các thành viên</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody-du-an">
+                                                <tr>
+                                                    <td colspan="5" class="text-center loading-text">Đang tải dữ liệu...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/DuAnThongKe/_QuanLyDuAnThanhVienModal.cshtml")
+
+<div class="modal fade" id="modalChiTietDuAnThuNghiem" tabindex="-1" role="dialog" aria-labelledby="modalChiTietDuAnThuNghiemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <h5 class="modal-title" id="modalChiTietDuAnThuNghiemLabel">
+                    <i class="fa fa-folder-open"></i> Chi tiết dự án thử nghiệm
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6 style="margin-bottom: 15px;"><b>Thành viên: <span id="modalTenUser" style="color: #667eea;"></span></b></h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">STT</th>
+                                <th>Tên dự án</th>
+                                <th style="width: 120px; text-align: center;">Mức độ hỗ trợ</th>
+                                <th style="width: 120px; text-align: center;">Vai trò</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyChiTietDuAn">
+                            <tr>
+                                <td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="tfootChiTietDuAn" style="display: none;">
+                            <tr style="background-color: #f8f9fa; font-weight: 600;">
+                                <td colspan="2" style="text-align: right; padding-right: 20px;">Tổng mức độ hỗ trợ:</td>
+                                <td id="tongMucDoHoTro" style="text-align: center; color: #e74c3c; font-size: 16px;">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalChiTietThanhVien" tabindex="-1" role="dialog" aria-labelledby="modalChiTietThanhVienLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
+                <h5 class="modal-title" id="modalChiTietThanhVienLabel">
+                    <i class="fa fa-users"></i> Chi tiết thành viên dự án
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6 style="margin-bottom: 15px;"><b>Dự án: <span id="modalTenDuAn" style="color: #4facfe;"></span></b></h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">STT</th>
+                                <th>Tên thành viên</th>
+                                <th style="width: 120px; text-align: center;">Vai trò</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyChiTietThanhVien">
+                            <tr>
+                                <td colspan="3" class="text-center loading-text">Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var quanLyDuAnThanhVienState = {
+        userId: 0,
+        tenUser: '',
+        allProjects: [],
+        currentProjects: [],
+        originalProjectIds: []
+    };
+
+    $(document).ready(function () {
+        loadThongKeThanhVienThamGiaNhieuNhat();
+        loadThongKeThanhVienMucDoHoTroCaoNhat();
+        loadThongKeThanhVienThamGiaThuNghiemNhieuNhat();
+        loadThongKeDuAnTheoSoThanhVien();
+    });
+
+    function loadThongKeThanhVienThamGiaNhieuNhat() {
+        ajaxGet('/DuAnThongKe/GetThongKeThanhVienThamGiaNhieuNhat', function (res) {
+            var tbody = $('#tbody-tham-gia');
+            tbody.empty();
+
+            if (res && res.length > 0) {
+                res.forEach(function (item, index) {
+                    var soNhom = item.SoNhomThamGia || 0;
+                    var level = Math.min(soNhom, 6);
+                    var levelClass = level >= 6 ? 'level-6-plus' : 'level-' + level;
+                    var rowLevelClass = level >= 6 ? 'row-level-6-plus' : 'row-level-' + level;
+                    var danhSachDuAn = item.DanhSachTenDuAn || [];
+                    var duAnText = danhSachDuAn.length > 0 ? danhSachDuAn.join(', ') : '';
+
+                    var row = `<tr class="${rowLevelClass}">
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td style="font-weight: 500;">${item.TenUser || ''}</td>
+                        <td style="text-align: center;">
+                            <span class="badge-count ${levelClass}" onclick="openQuanLyDuAnThanhVien(${item.UserId}, '${(item.TenUser || '').replace(/'/g, "\\'")}')">${soNhom}</span>
+                        </td>
+                        <td style="font-size: 12px; color: #666;" title="${duAnText}">${duAnText}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            $('#tbody-tham-gia').html('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function loadThongKeThanhVienMucDoHoTroCaoNhat() {
+        ajaxGet('/DuAnThongKe/GetThongKeThanhVienMucDoHoTroCaoNhat', function (res) {
+            var tbody = $('#tbody-muc-do-ho-tro');
+            tbody.empty();
+
+            if (res && res.length > 0) {
+                res.forEach(function (item, index) {
+                    var soNhom = item.SoNhomThamGia || 0;
+                    var level = Math.min(soNhom, 6);
+                    var levelClass = level >= 6 ? 'level-6-plus' : 'level-' + level;
+                    var rowLevelClass = level >= 6 ? 'row-level-6-plus' : 'row-level-' + level;
+                    var tongMucDo = item.TongMucDoHoTro || 0;
+                    var danhSachDuAn = item.DanhSachTenDuAn || [];
+                    var duAnText = danhSachDuAn.length > 0 ? danhSachDuAn.join(', ') : '';
+
+                    var row = `<tr class="${rowLevelClass}">
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td style="font-weight: 500;">${item.TenUser || ''}</td>
+                        <td style="text-align: center;">
+                            <span class="badge-count ${levelClass}" onclick="openQuanLyDuAnThanhVien(${item.UserId}, '${(item.TenUser || '').replace(/'/g, "\\'")}')">${soNhom}</span>
+                        </td>
+                        <td style="text-align: center; font-weight: 600; color: #e74c3c;">${tongMucDo}</td>
+                        <td style="font-size: 12px; color: #666;" title="${duAnText}">${duAnText}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append('<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            $('#tbody-muc-do-ho-tro').html('<tr><td colspan="5" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function loadThongKeThanhVienThamGiaThuNghiemNhieuNhat() {
+        ajaxGet('/DuAnThongKe/GetThongKeThanhVienThamGiaThuNghiemNhieuNhat', function (res) {
+            var tbody = $('#tbody-tham-gia-thu-nghiem');
+            tbody.empty();
+
+            if (res && res.length > 0) {
+                res.forEach(function (item, index) {
+                    var soNhom = item.SoNhomThamGia || 0;
+                    var level = Math.min(soNhom, 6);
+                    var levelClass = level >= 6 ? 'level-6-plus' : 'level-' + level;
+                    var rowLevelClass = level >= 6 ? 'row-level-6-plus' : 'row-level-' + level;
+                    var danhSachDuAn = item.DanhSachTenDuAn || [];
+                    var duAnText = danhSachDuAn.length > 0 ? danhSachDuAn.join(', ') : '';
+
+                    var row = `<tr class="${rowLevelClass}">
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td style="font-weight: 500;">${item.TenUser || ''}</td>
+                        <td style="text-align: center;">
+                            <span class="badge-count ${levelClass}" onclick="showChiTietDuAnThuNghiem(${item.UserId}, '${(item.TenUser || '').replace(/'/g, "\\'")}')">${soNhom}</span>
+                        </td>
+                        <td style="font-size: 12px; color: #666;" title="${duAnText}">${duAnText}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            $('#tbody-tham-gia-thu-nghiem').html('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function loadThongKeDuAnTheoSoThanhVien() {
+        ajaxGet('/DuAnThongKe/GetThongKeDuAnTheoSoThanhVien', function (res) {
+            var tbody = $('#tbody-du-an');
+            tbody.empty();
+
+            if (res && res.length > 0) {
+                res.forEach(function (item, index) {
+                    var soThanhVien = item.SoThanhVien || 0;
+                    var level = Math.min(soThanhVien, 6);
+                    var levelClass = level >= 6 ? 'level-6-plus' : 'level-' + level;
+                    var rowLevelClass = level >= 6 ? 'row-level-6-plus' : 'row-level-' + level;
+                    var mucDoHoTro = item.MucDoHoTro || 0;
+                    var danhSachThanhVien = item.DanhSachTenThanhVien || [];
+                    var thanhVienText = danhSachThanhVien.length > 0 ? danhSachThanhVien.join(', ') : '';
+                    var tenDuAnLink = item.DuAnId
+                        ? `<a href="/DuAn/Form?id=${item.DuAnId}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;" title="Click để xem chi tiết dự án">${item.TenDuAn || ''}</a>`
+                        : (item.TenDuAn || '');
+
+                    var row = `<tr class="${rowLevelClass}">
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td style="font-weight: 500;">${tenDuAnLink}</td>
+                        <td style="text-align: center; font-weight: 600;">${mucDoHoTro}</td>
+                        <td style="text-align: center;">
+                            <span class="badge-count ${levelClass}" onclick="showChiTietThanhVien(${item.DuAnId}, '${(item.TenDuAn || '').replace(/'/g, "\\'")}')">${soThanhVien}</span>
+                        </td>
+                        <td style="font-size: 12px; color: #666;" title="${thanhVienText}">${thanhVienText}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append('<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            $('#tbody-du-an').html('<tr><td colspan="5" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function openQuanLyDuAnThanhVien(userId, tenUser) {
+        quanLyDuAnThanhVienState.userId = userId;
+        quanLyDuAnThanhVienState.tenUser = tenUser || '';
+
+        $('#modalQuanLyTenUser').text(tenUser || '');
+        $('#modalQuanLyDuAnSummary').text('Đang tải dữ liệu...');
+        $('#tbodyQuanLyDuAnThanhVien').html('<tr><td colspan="6" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+        $('#btnLuuQuanLyDuAnThanhVien').prop('disabled', true);
+        $('#modalQuanLyDuAnThanhVien').modal('show');
+
+        $.when(
+            $.ajax({ url: '/DuAnThongKe/GetListAllDuAnActive', type: 'GET' }),
+            $.ajax({ url: `/DuAnThongKe/GetListAllDuAnByUserId?userId=${userId}`, type: 'GET' })
+        ).done(function (allProjectsRes, currentProjectsRes) {
+            quanLyDuAnThanhVienState.allProjects = allProjectsRes[0] || [];
+            quanLyDuAnThanhVienState.currentProjects = currentProjectsRes[0] || [];
+            quanLyDuAnThanhVienState.originalProjectIds = quanLyDuAnThanhVienState.currentProjects.map(function (item) { return item.Id; });
+
+            renderQuanLyDuAnThanhVienTable();
+            $('#btnLuuQuanLyDuAnThanhVien').prop('disabled', false);
+        }).fail(function () {
+            $('#tbodyQuanLyDuAnThanhVien').html('<tr><td colspan="6" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+            $('#modalQuanLyDuAnSummary').text('Không tải được dữ liệu');
+            toastr.error('Không tải được danh sách dự án.');
+        });
+    }
+
+    function renderQuanLyDuAnThanhVienTable() {
+        var tbody = $('#tbodyQuanLyDuAnThanhVien');
+        tbody.empty();
+
+        var currentProjectMap = {};
+        (quanLyDuAnThanhVienState.currentProjects || []).forEach(function (item) {
+            currentProjectMap[item.Id] = item;
+        });
+
+        var allProjects = quanLyDuAnThanhVienState.allProjects || [];
+        if (allProjects.length === 0) {
+            tbody.html('<tr><td colspan="6" class="text-center">Không có dữ liệu</td></tr>');
+            $('#modalQuanLyDuAnSummary').text('0 dự án');
+            return;
+        }
+
+        allProjects.forEach(function (item, index) {
+            var currentProject = currentProjectMap[item.Id];
+            var checked = currentProject ? 'checked' : '';
+            var mucDoHoTro = currentProject && currentProject.MucDoHoTro != null ? currentProject.MucDoHoTro : '<span class="text-muted">-</span>';
+            var vaiTro = currentProject
+                ? (currentProject.IsTruongNhom ? '<span class="badge badge-danger">Trưởng nhóm</span>' : '<span class="badge badge-info">Thành viên</span>')
+                : '<span class="text-muted">Chưa tham gia</span>';
+            var ghiChu = currentProject
+                ? 'Giữ nguyên mức độ hỗ trợ và vai trò hiện tại.'
+                : 'Thêm mới sẽ gán là thành viên.';
+            var tenDuAnLink = item.Id
+                ? `<a href="/DuAn/Form?id=${item.Id}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;">${item.Ten || ''}</a>`
+                : (item.Ten || '');
+
+            var row = `<tr>
+                <td style="font-weight: 600;">${index + 1}</td>
+                <td>${tenDuAnLink}</td>
+                <td style="text-align: center;">
+                    <input type="checkbox" class="project-membership-toggle" data-project-id="${item.Id}" ${checked} />
+                </td>
+                <td style="text-align: center;">${mucDoHoTro}</td>
+                <td style="text-align: center;">${vaiTro}</td>
+                <td style="font-size: 12px; color: #666;">${ghiChu}</td>
+            </tr>`;
+
+            tbody.append(row);
+        });
+
+        $('#modalQuanLyDuAnSummary').text(`${quanLyDuAnThanhVienState.originalProjectIds.length} dự án hiện tại`);
+    }
+
+    function luuQuanLyDuAnThanhVien() {
+        var selectedProjectIds = $('.project-membership-toggle:checked').map(function () {
+            return parseInt($(this).data('project-id'));
+        }).get();
+
+        var originalProjectIds = quanLyDuAnThanhVienState.originalProjectIds || [];
+        var changedProjectIds = [];
+
+        selectedProjectIds.forEach(function (id) {
+            if (originalProjectIds.indexOf(id) === -1) {
+                changedProjectIds.push(id);
+            }
+        });
+
+        originalProjectIds.forEach(function (id) {
+            if (selectedProjectIds.indexOf(id) === -1) {
+                changedProjectIds.push(id);
+            }
+        });
+
+        if (changedProjectIds.length === 0) {
+            $('#modalQuanLyDuAnThanhVien').modal('hide');
+            return;
+        }
+
+        $('#btnLuuQuanLyDuAnThanhVien').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang lưu');
+
+        saveProjectMembershipChanges(changedProjectIds, selectedProjectIds, 0, function () {
+            $('#btnLuuQuanLyDuAnThanhVien').prop('disabled', false).html('<i class="fa fa-save"></i> Lưu thay đổi');
+            $('#modalQuanLyDuAnThanhVien').modal('hide');
+            toastr.success('Đã cập nhật danh sách dự án.');
+            loadThongKeThanhVienThamGiaNhieuNhat();
+            loadThongKeThanhVienMucDoHoTroCaoNhat();
+            loadThongKeDuAnTheoSoThanhVien();
+        }, function (message) {
+            $('#btnLuuQuanLyDuAnThanhVien').prop('disabled', false).html('<i class="fa fa-save"></i> Lưu thay đổi');
+            toastr.error(message || 'Không thể lưu thay đổi.');
+        });
+    }
+
+    function saveProjectMembershipChanges(changedProjectIds, selectedProjectIds, index, onSuccess, onError) {
+        if (index >= changedProjectIds.length) {
+            onSuccess();
+            return;
+        }
+
+        var projectId = changedProjectIds[index];
+        $.ajax({
+            url: `/DuAn/GetById?id=${projectId}`,
+            type: 'GET'
+        }).done(function (res) {
+            var item = res && res.Item ? res.Item : null;
+            if (!item) {
+                onError('Không lấy được thông tin dự án.');
+                return;
+            }
+
+            var currentMembers = (item.DanhSachThanhVien || []).map(function (member) {
+                return {
+                    UserId: member.UserId,
+                    MucDoHoTro: member.MucDoHoTro,
+                    IsTruongNhom: member.IsTruongNhom === true
+                };
+            });
+
+            var shouldJoin = selectedProjectIds.indexOf(projectId) !== -1;
+            var currentMemberIndex = currentMembers.findIndex(function (member) {
+                return member.UserId === quanLyDuAnThanhVienState.userId;
+            });
+
+            if (shouldJoin && currentMemberIndex === -1) {
+                currentMembers.push({
+                    UserId: quanLyDuAnThanhVienState.userId,
+                    MucDoHoTro: null,
+                    IsTruongNhom: false
+                });
+            }
+
+            if (!shouldJoin && currentMemberIndex !== -1) {
+                if (currentMembers[currentMemberIndex].IsTruongNhom) {
+                    onError(`Không thể bỏ "${quanLyDuAnThanhVienState.tenUser}" khỏi dự án "${item.Ten}" vì đang là trưởng nhóm. Vui lòng chuyển trưởng nhóm tại màn hình dự án trước.`);
+                    return;
+                }
+
+                currentMembers.splice(currentMemberIndex, 1);
+            }
+
+            if (currentMembers.length === 0) {
+                onError(`Không thể để dự án "${item.Ten}" không còn thành viên.`);
+                return;
+            }
+
+            var truongNhom = currentMembers.find(function (member) {
+                return member.IsTruongNhom === true;
+            });
+
+            if (!truongNhom) {
+                onError(`Dự án "${item.Ten}" không còn trưởng nhóm sau khi cập nhật. Vui lòng chỉnh tại màn hình dự án.`);
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('Id', item.Id);
+            formData.append('Ten', item.Ten || '');
+            formData.append('MoTa', item.MoTa || '');
+            formData.append('IsThuNghiem', item.IsThuNghiem === true ? 'true' : 'false');
+            formData.append('UserIds', currentMembers.map(function (member) { return member.UserId; }).join(','));
+            formData.append('TruongNhomIds', truongNhom.UserId);
+            formData.append('ThanhVienMucDoHoTroJson', JSON.stringify(currentMembers.map(function (member) {
+                return {
+                    UserId: member.UserId,
+                    MucDoHoTro: member.MucDoHoTro
+                };
+            })));
+            formData.append('TaiLieuDinhKemIds', (item.DuAnFiles || []).map(function (file) { return file.Id; }).join(','));
+
+            $.ajax({
+                url: '/DuAn/ThemOrCapNhat',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false
+            }).done(function (saveRes) {
+                if (saveRes && saveRes.Errors && saveRes.Errors.length > 0) {
+                    onError(saveRes.Errors.map(function (error) {
+                        return error.Description;
+                    }).join(' '));
+                    return;
+                }
+
+                saveProjectMembershipChanges(changedProjectIds, selectedProjectIds, index + 1, onSuccess, onError);
+            }).fail(function () {
+                onError(`Không thể lưu dự án "${item.Ten}".`);
+            });
+        }).fail(function () {
+            onError('Không lấy được chi tiết dự án để cập nhật.');
+        });
+    }
+
+    function showChiTietDuAnThuNghiem(userId, tenUser) {
+        $('#modalTenUser').text(tenUser);
+        $('#modalChiTietDuAnThuNghiem').modal('show');
+
+        var tbody = $('#tbodyChiTietDuAn');
+        tbody.html('<tr><td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+
+        ajaxGet(`/DuAnThongKe/GetListDuAnThuNghiemByUserId?userId=${userId}`, function (res) {
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+
+            if (res && res.length > 0) {
+                var tongMucDoHoTro = 0;
+
+                res.forEach(function (item, index) {
+                    var vaiTro = item.IsTruongNhom
+                        ? '<span class="badge badge-danger">Trưởng nhóm</span>'
+                        : '<span class="badge badge-info">Thành viên</span>';
+                    var mucDoHoTro = item.MucDoHoTro || 0;
+                    var tenDuAnLink = item.Id
+                        ? `<a href="/DuAn/Form?id=${item.Id}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;" title="Click để xem chi tiết dự án">${item.Ten || ''}</a>`
+                        : (item.Ten || '');
+
+                    tongMucDoHoTro += mucDoHoTro;
+
+                    tbody.append(`<tr>
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td>${tenDuAnLink}</td>
+                        <td style="text-align: center; font-weight: 600;">${mucDoHoTro}</td>
+                        <td style="text-align: center;">${vaiTro}</td>
+                    </tr>`);
+                });
+
+                $('#tongMucDoHoTro').text(tongMucDoHoTro);
+                $('#tfootChiTietDuAn').show();
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            tbody.html('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+            $('#tfootChiTietDuAn').hide();
+        });
+    }
+
+    function showChiTietThanhVien(duAnId, tenDuAn) {
+        $('#modalTenDuAn').text(tenDuAn);
+        $('#modalChiTietThanhVien').modal('show');
+
+        var tbody = $('#tbodyChiTietThanhVien');
+        tbody.html('<tr><td colspan="3" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+
+        ajaxGet(`/DuAnThongKe/GetListThanhVienByDuAnId?duAnId=${duAnId}`, function (res) {
+            tbody.empty();
+
+            if (res && res.length > 0) {
+                res.sort(function (a, b) {
+                    if (a.IsTruongNhom && !b.IsTruongNhom) return -1;
+                    if (!a.IsTruongNhom && b.IsTruongNhom) return 1;
+                    return (a.TenUser || '').localeCompare(b.TenUser || '');
+                });
+
+                res.forEach(function (item, index) {
+                    var vaiTro = item.IsTruongNhom
+                        ? '<span class="badge badge-danger">Trưởng nhóm</span>'
+                        : '<span class="badge badge-info">Thành viên</span>';
+
+                    tbody.append(`<tr>
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td style="font-weight: ${item.IsTruongNhom ? '600' : '500'}; color: ${item.IsTruongNhom ? '#e74c3c' : 'inherit'};">${item.TenUser || ''}</td>
+                        <td style="text-align: center;">${vaiTro}</td>
+                    </tr>`);
+                });
+            } else {
+                tbody.append('<tr><td colspan="3" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function () {
+            tbody.html('<tr><td colspan="3" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function xuatExcel() {
+        showLoadingModal();
+        ajaxGet('/DuAnThongKe/XuatExcelThongKeDuAn', function (res) {
+            hideLoadingModal();
+            if (res.success) {
+                window.open(res.url, '_blank');
+                toastr.success('Xuất Excel thành công!');
+            } else {
+                toastr.error(res.message || 'Đã có lỗi xảy ra khi xuất Excel');
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error('Đã có lỗi xảy ra khi xuất Excel');
+        });
+    }
+</script>

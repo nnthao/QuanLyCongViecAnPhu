@@ -1,0 +1,362 @@
+<style>
+    html.modal-open,
+    body.modal-open {
+        overflow: hidden !important;
+    }
+    #modalChiTietCongViecDashboard {
+        overflow: hidden !important;
+    }
+    #modalChiTietCongViecDashboard .modal-dialog {
+        max-width: 1200px;
+        height: calc(100vh - 60px);
+        max-height: calc(100vh - 60px);
+        margin: 30px auto;
+    }
+    #modalChiTietCongViecDashboard .modal-content {
+        height: 100%;
+        max-height: calc(100vh - 60px);
+        display: flex;
+        flex-direction: column;
+    }
+    #modalChiTietCongViecDashboard .modal-header,
+    #modalChiTietCongViecDashboard .modal-footer {
+        flex-shrink: 0;
+    }
+    #modalChiTietCongViecDashboard .modal-body {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+    #modalChiTietCongViecDashboard .modal-body > .row,
+    #modalChiTietCongViecDashboard .modal-body > .d-flex {
+        flex-shrink: 0;
+    }
+    #modalChiTietCongViecDashboard .table-responsive {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    #modalChiTietCongViecDashboard .table-dashboard-detail {
+        margin-bottom: 0;
+    }
+    #modalChiTietCongViecDashboard .table-dashboard-detail thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #e9ecef;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+    #modalChiTietCongViecDashboard .status-filter-tabs {
+        background-color: #f1f5f9;
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        display: inline-flex;
+    }
+    #modalChiTietCongViecDashboard .status-filter-tabs .nav-link {
+        color: #475569;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 7px 16px;
+        border-radius: 6px;
+        margin-right: 2px;
+        transition: all 0.2s ease-in-out;
+    }
+    #modalChiTietCongViecDashboard .status-filter-tabs .nav-link:hover {
+        color: #0f172a;
+        background-color: #e2e8f0;
+    }
+    #modalChiTietCongViecDashboard .status-filter-tabs .nav-link.active {
+        color: #ffffff !important;
+        background-color: #0284c7 !important;
+        font-weight: 700;
+        box-shadow: 0 3px 8px rgba(2, 132, 199, 0.4);
+    }
+    #modalChiTietCongViecDashboard .table-dashboard-detail td,
+    #modalChiTietCongViecDashboard .table-dashboard-detail th {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    #modalChiTietCongViecDashboard a:hover,
+    #modalChiTietCongViecDashboard a:focus {
+        text-decoration: none !important;
+    }
+    #modalChiTietCongViecDashboard .btn-xem-thong-tin-cv {
+        color: #0284c7;
+        cursor: pointer;
+        text-decoration: none !important;
+        transition: color 0.15s ease-in-out;
+    }
+    #modalChiTietCongViecDashboard .btn-xem-thong-tin-cv:hover,
+    #modalChiTietCongViecDashboard .btn-xem-thong-tin-cv:focus {
+        color: #0369a1;
+        text-decoration: none !important;
+    }
+</style>
+
+<div class="modal fade" id="modalChiTietCongViecDashboard" tabindex="-1" role="dialog" aria-labelledby="modalChiTietCongViecDashboardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div>
+                    <h5 class="modal-title font-weight-bold text-navy" id="modalChiTietCongViecDashboardLabel">
+                        <i class="fa fa-list-alt text-primary mr-2"></i> Danh sách công việc đã giao
+                    </h5>
+                    <small class="text-muted" id="lblModalYearRange">Từ đầu năm đến cuối năm</small>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-8 col-sm-12 col-xs-12 mb-2 mb-md-0">
+                        <ul class="nav nav-pills status-filter-tabs" id="ulStatusFilterTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="javascript:void(0)" data-status="All">Tất cả</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0)" data-status="DangThucHien">Đang thực hiện</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0)" data-status="DaHoanThanh">Đã hoàn thành</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0)" data-status="SapDenHan">Sắp đến hạn</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0)" data-status="TreHan">Trễ hạn</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 col-sm-12 col-xs-12">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="txtModalSearch" placeholder="Tìm kiếm công việc...">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="btnModalSearch">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-style: italic; font-size: 13px;">Click vào <b>Tên công việc</b> để xem chi tiết công việc</div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-dashboard-detail mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th>Tên công việc</th>
+                                <th>Phòng ban</th>
+                                <th>Người thực hiện</th>
+                                <th class="text-center" style="width: 130px;">Ngày giao</th>
+                                <th class="text-center" style="width: 110px;">Hạn xử lý</th>
+                                <th class="text-center" style="width: 130px;">Ngày hoàn thành</th>
+                                <th class="text-center" style="width: 130px;">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyModalCongViec">
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted"><i class="fa fa-spinner fa-spin mr-1"></i> Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted small" id="lblModalPaginationInfo">Hiển thị 0 / 0 công việc</div>
+                    <ul class="pagination pagination-sm m-0" id="ulModalPagination"></ul>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var modalState = {
+            nam: new Date().getFullYear(),
+            phongBanId: null,
+            thanhVienId: null,
+            isCaNhan: false,
+            statusFilter: "All",
+            searchText: "",
+            offset: 0,
+            limit: 10,
+            currentPage: 1
+        };
+
+        window.openModalChiTietCongViecDashboard = function (options) {
+            options = options || {};
+            modalState.nam = options.nam || $('#filterNam').val() || new Date().getFullYear();
+            modalState.phongBanId = options.phongBanId || $('#filterPhongBan').val() || null;
+            modalState.thanhVienId = options.thanhVienId || null;
+            modalState.isCaNhan = options.isCaNhan !== undefined ? options.isCaNhan : $('#chkFilterCaNhan').is(':checked');
+            modalState.statusFilter = options.statusFilter || "All";
+            modalState.searchText = "";
+            modalState.offset = 0;
+            modalState.currentPage = 1;
+
+            $('#txtModalSearch').val('');
+            $('#ulStatusFilterTabs .nav-link').removeClass('active');
+            $(`#ulStatusFilterTabs .nav-link[data-status="${modalState.statusFilter}"]`).addClass('active');
+
+            var labelYearStr = `Danh sách công việc đã giao từ 01/01/${modalState.nam} đến 31/12/${modalState.nam}`;
+            $('#lblModalYearRange').text(labelYearStr);
+
+            loadModalData();
+            $('#modalChiTietCongViecDashboard').modal('show');
+        };
+
+        function loadModalData() {
+            var $tbody = $('#tbodyModalCongViec');
+            $tbody.html('<tr><td colspan="8" class="text-center py-4 text-muted"><i class="fa fa-spinner fa-spin mr-1"></i> Đang tải dữ liệu...</td></tr>');
+
+            var params = {
+                Nam: modalState.nam,
+                PhongBanId: modalState.phongBanId,
+                ThanhVienId: modalState.thanhVienId,
+                IsCaNhan: modalState.isCaNhan,
+                StatusFilter: modalState.statusFilter,
+                SearchText: modalState.searchText,
+                Offset: modalState.offset,
+                Limit: modalState.limit
+            };
+
+            ajaxGet('/Dashboard/GetListChiTietCongViecDashboard', params, function (res) {
+                var rows = res.rows || [];
+                var total = res.total || 0;
+
+                if (!rows || rows.length === 0) {
+                    $tbody.html('<tr><td colspan="8" class="text-center py-4 text-muted">Không tìm thấy công việc nào</td></tr>');
+                    $('#lblModalPaginationInfo').text('Hiển thị 0 công việc');
+                    $('#ulModalPagination').empty();
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var item = rows[i];
+                    var stt = modalState.offset + i + 1;
+                    var tenPhongBanStr = item.TenPhongBan ? item.TenPhongBan : 'Chưa phân phong';
+                    var tenThanhVienStr = item.TenThanhVien ? item.TenThanhVien : 'Chưa gán';
+
+                    html += `<tr>
+                        <td class="text-center font-weight-bold text-muted">${stt}</td>
+                        <td>
+                            <div>
+                                <a href="javascript:void(0)" class="font-weight-bold btn-xem-thong-tin-cv" data-giaoviecthanhvienid="${item.GiaoViecThanhVienId || 0}" data-giaoviecid="${item.GiaoViecId || 0}" data-thanhvienid="${item.ThanhVienId || 0}" title="Xem chi tiết công việc">
+                                    ${item.TenCongViec}
+                                </a>
+                            </div>
+                            ${item.NoiDung ? `<small class="text-muted">${item.NoiDung}</small>` : ''}
+                        </td>
+                        <td>${tenPhongBanStr}</td>
+                        <td>${tenThanhVienStr}</td>
+                        <td class="text-center small">${item.NgayGiaoViecStr || '--'}</td>
+                        <td class="text-center small font-weight-bold">${item.HanXuLyStr || '--'}</td>
+                        <td class="text-center small">${item.NgayHoanThanhStr || '--'}</td>
+                        <td class="text-center">
+                            <span class="badge ${item.TrangThaiBadgeClass} px-2 py-1">${item.TrangThaiText}</span>
+                        </td>
+                    </tr>`;
+                }
+
+                $tbody.html(html);
+
+                var fromNum = total > 0 ? modalState.offset + 1 : 0;
+                var toNum = Math.min(modalState.offset + modalState.limit, total);
+                $('#lblModalPaginationInfo').text(`Hiển thị ${fromNum} - ${toNum} trong tổng số ${total} công việc`);
+
+                renderPagination(total);
+            }, function (err) {
+                $tbody.html('<tr><td colspan="8" class="text-center py-4 text-danger">Lỗi khi tải dữ liệu công việc</td></tr>');
+            });
+        }
+
+        function renderPagination(total) {
+            var $ul = $('#ulModalPagination');
+            $ul.empty();
+
+            var totalPages = Math.ceil(total / modalState.limit);
+            if (totalPages <= 1) return;
+
+            var currentPage = modalState.currentPage;
+
+            var prevDisabled = currentPage === 1 ? 'disabled' : '';
+            $ul.append(`<li class="page-item ${prevDisabled}"><a class="page-link" href="javascript:void(0)" data-page="${currentPage - 1}">Trước</a></li>`);
+
+            var startPage = Math.max(1, currentPage - 2);
+            var endPage = Math.min(totalPages, currentPage + 2);
+
+            for (var p = startPage; p <= endPage; p++) {
+                var activeClass = p === currentPage ? 'active' : '';
+                $ul.append(`<li class="page-item ${activeClass}"><a class="page-link" href="javascript:void(0)" data-page="${p}">${p}</a></li>`);
+            }
+
+            var nextDisabled = currentPage === totalPages ? 'disabled' : '';
+            $ul.append(`<li class="page-item ${nextDisabled}"><a class="page-link" href="javascript:void(0)" data-page="${currentPage + 1}">Sau</a></li>`);
+        }
+
+        $('#ulStatusFilterTabs').on('click', '.nav-link', function () {
+            $('#ulStatusFilterTabs .nav-link').removeClass('active');
+            $(this).addClass('active');
+            modalState.statusFilter = $(this).data('status');
+            modalState.offset = 0;
+            modalState.currentPage = 1;
+            loadModalData();
+        });
+
+        $('#btnModalSearch').on('click', function () {
+            modalState.searchText = $('#txtModalSearch').val().trim();
+            modalState.offset = 0;
+            modalState.currentPage = 1;
+            loadModalData();
+        });
+
+        $('#txtModalSearch').on('keyup', function (e) {
+            if (e.key === 'Enter') {
+                $('#btnModalSearch').click();
+            }
+        });
+
+        $('#ulModalPagination').on('click', '.page-link', function () {
+            var page = $(this).data('page');
+            if (!page || $(this).parent().hasClass('disabled') || $(this).parent().hasClass('active')) return;
+
+            modalState.currentPage = page;
+            modalState.offset = (page - 1) * modalState.limit;
+            loadModalData();
+        });
+
+        $('#tbodyModalCongViec').on('click', '.btn-xem-thong-tin-cv', function () {
+            var gvtvId = $(this).data('giaoviecthanhvienid') || 0;
+            var gvId = $(this).data('giaoviecid') || 0;
+            var tvId = $(this).data('thanhvienid') || 0;
+            if (typeof openXemThongTinModal === 'function') {
+                openXemThongTinModal(gvtvId, gvId, tvId);
+            }
+        });
+
+        $(document).on('show.bs.modal', '.modal', function () {
+            var zIndex = 1040 + (10 * $('.modal:visible').length);
+            $(this).css('z-index', zIndex);
+            setTimeout(function () {
+                $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+            }, 0);
+        });
+
+        $(document).on('hidden.bs.modal', '.modal', function () {
+            if ($('.modal:visible').length) {
+                $(document.body).addClass('modal-open');
+            }
+        });
+    });
+</script>

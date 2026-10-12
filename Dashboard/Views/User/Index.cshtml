@@ -1,0 +1,297 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.Entities;
+@using System.Linq;
+@{
+
+    ViewBag.Title = "Người dùng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>Người dùng</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-2 col-xs-12 p-t-10 p-b-10 btn-add-mb">
+                                <button type="button" class="btn btn-success" onclick="openUserFormModal(0);">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </button>
+                                <button class="btn btn-success" onclick="importDanhSach();">
+                                    <i class="fa fa-plus"></i> Import danh sách
+                                </button>
+                                <button type="button" class="btn btn-info" onclick="openImportSoDienThoaiModal();">
+                                    <i class="fa fa-phone"></i> Cập nhật SĐT từ Excel
+                                </button>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 1, moreClass: "col-sm-2 col-xs-12 p-t-15")
+                            @Html.CustomCheckBox(id: "ChuaKetNoiTelegramSearch", label: "Chưa kết nối Telegram", col: 1, moreClass: "col-sm-2 col-xs-12 p-t-15")
+                            @Html.CustomCheckBox(id: "TaiKhoanBiKhoaSearch", label: "Tài khoản bị khoá", col: 1, moreClass: "col-sm-2 col-xs-12 p-t-15")
+                            @Html.CustomSelect2Empty(id: "PhongBanIdSearch", label: "Phòng ban", col: 3, moreClass: "col-sm-2 col-xs-12", allowClear: true)
+
+                            <div class="col-sm-4 col-xs-12 p-b-10 input-search-mt">
+                                <div class="form-group" data-select2-id="12">
+                                    <label style="width:100%">
+                                        &nbsp;
+                                    </label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/User/GetAll"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="Name"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Name">Tên</th>
+                                            <th data-field="Email">Email</th>
+                                            <th data-field="Phone">Sđt</th>
+                                            <th data-field="TelegramId">TelegramId</th>
+                                            <th data-field="UserZaloId">ZaloId</th>
+                                            <th data-field="TenVaiTro">Vai trò</th>
+                                            <th data-field="PhongBan">Phòng ban</th>
+                                            <th data-field="ChucDanh">Chức danh</th>
+                                            <th data-field="LoginFail" data-formatter="trangThaiFormatter">Trạng thái</th>
+                                            <th data-width="200" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@Html.Partial("ImportExcel")
+@Html.Partial("FormModal")
+@Html.Partial("ImportSoDienThoaiModal")
+
+<script>
+    function trangThaiFormatter(value, row, index) {
+        if (row.LoginFail != null && row.LoginFail >= 5) {
+            return `<span class="badge bg-danger">Bị khoá</span>`;
+        }
+        return `<span class="badge bg-success">Hoạt động</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<button type="button" onclick="openUserFormModal(${row.Id})" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-pencil'></i> Sửa</button>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-refresh'></i> Khôi phục</button>`;
+        const btnMoKhoa = `<button id='btn-mo-khoa-item' class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-unlock'></i> Mở khóa</button>`;
+        const btnResetMK = `<button id='btn-reset-mk-item' class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-key'></i> Reset MK</button>`;
+
+        var buttons = btnSua;
+        if (row.IsDeleted) {
+            buttons += btnKhoiPhuc;
+        } else {
+            buttons += btnXoa;
+        }
+        if (row.LoginFail != null && row.LoginFail >= 5) {
+            buttons += btnMoKhoa;
+        }
+        buttons += btnResetMK;
+        return buttons;
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá người dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/user/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục người dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/user/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-mo-khoa-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn mở khóa tài khoản này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/user/MoKhoaTaiKhoan", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Mở khóa tài khoản thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-reset-mk-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn reset mật khẩu về '123456' cho tài khoản này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/user/ResetMatKhau", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Reset mật khẩu thành công. Mật khẩu mới là: 123456");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.ChuaKetNoiTelegramSearch = $('#ChuaKetNoiTelegramSearch').is(":checked");
+        params.TaiKhoanBiKhoaSearch = $('#TaiKhoanBiKhoaSearch').is(":checked");
+        params.PhongBanId = $("#PhongBanIdSearch").val() || 0;
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    function importDanhSach() {
+        $("#importExcelModal").modal("show");
+    }
+
+    function taiFileMau() {
+        window.open("/User/TaiFileMau", "_blank");
+    }
+
+    function loadPhongBan() {
+        ajaxGet("/PhongBan/PhongBanLookup", function funcCallback(res) {
+            $("#PhongBanIdSearch").select2({
+                data: res.Data,
+                language: "vi",
+                allowClear: true
+            });
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách phòng ban.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadPhongBan();
+
+        $("#VaiTroRiengId, #DaXoaSearch, #ChuaKetNoiTelegramSearch, #TaiKhoanBiKhoaSearch, #PhongBanIdSearch").change(function () {
+            search();
+        });
+
+        $("#btn-Import").click(function () {
+            var fileInput = $("#FileDinhKem")[0];
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                $("#customFileError").text("Vui lòng chọn file để import.");
+                return;
+            }
+
+            $("#customFileError").text("");
+            $("#btn-Import").prop("disabled", true);
+            $("#btn-loading").removeClass("invisible");
+
+            var fd = new FormData();
+            fd.append("file", fileInput.files[0]);
+
+            ajaxPostFormData("/User/ImportDanhSach", fd, function funcCallback(response) {
+                $("#btn-Import").prop("disabled", false);
+                $("#btn-loading").addClass("invisible");
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('\n');
+                    $("#customFileError").text(errorMessages);
+                } else if (response.Data) {
+                    var thanhCong = response.Data.filter(function (item) {
+                        return item.Loi && item.Loi.indexOf("thành công") >= 0;
+                    }).length;
+                    var thatBai = response.Data.filter(function (item) {
+                        return item.Loi && item.Loi.indexOf("thành công") < 0;
+                    }).length;
+
+                    var message = "Import hoàn tất. Thành công: " + thanhCong + ", Thất bại: " + thatBai;
+                    if (thatBai > 0) {
+                        toastr.warning(message);
+                    } else {
+                        toastr.success(message);
+                    }
+
+                    $("#importExcelModal").modal("hide");
+                    $("#FileDinhKem").val("");
+                    search();
+                }
+            }, function funcError() {
+                $("#btn-Import").prop("disabled", false);
+                $("#btn-loading").addClass("invisible");
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        });
+    });
+</script>

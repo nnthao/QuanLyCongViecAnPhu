@@ -1,0 +1,25 @@
+@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger" id="@Model.Id-Required">*</span>
+            }
+        </label>
+
+        <textarea class="form-control" id="@Model.Id" cols="@Model.Col" rows="@Model.Row" maxlength="@Model.MaxLength"
+               placeholder="@Model.PlaceHolderText" @(Model.IsReadonly ? "readonly" : "")>@(Model.value ?? "")</textarea>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+
+<script>
+      if (@Model.Ckeditor.ToString().ToLower())
+    {
+        var editor = CKEDITOR.replace('@Model.Id');
+        //CKFinder.setupCKEditor( editor );
+    }
+</script>

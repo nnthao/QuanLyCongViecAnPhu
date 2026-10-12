@@ -1,0 +1,133 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using Dashboard.Common
+@using Dashboard.Models.Entities
+@{
+    Layout = null;
+}
+<style>
+</style>
+
+<div class="row">
+    <div class="col-sm-12">
+        <table id="bs-table"
+               data-mobile-responsive="true"
+               data-check-on-init="true"
+               data-toggle="table"
+               data-toolbar="#get"
+               data-url="/CuocHopDangKy/GetAll"
+               data-pagination="true"
+               data-side-pagination="server"
+               data-page-size="30"
+               data-page-list="[30, 50, 100, 200]"
+               data-locale="vi-VN"
+               data-query-params="queryParams"
+               data-sort-name="NgayTao"
+               data-sort-order="desc"
+               data-virtual-scroll="true"
+               data-fixed-columns="true"
+               data-fixed-number="1"
+               data-fixed-right-number="1">
+            <thead>
+                <tr>
+                    <th data-field="TenCuocHop">Tên cuộc họp</th>
+                    <th data-field="Id" data-formatter="thongTinCuocHopFormatter">Thông tin</th>
+                    <th data-width="180" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<script>
+    function thongTinCuocHopFormatter(value, row, index) {
+        let thanhPhan = row.NguoiThamGiaKhac || [row.NguoiThamGiaStr, row.NguoiThamGia, row.PhongBanThamGia].filter(Boolean).join('; ') || "";
+        let info = `
+        ${row.NguoiTao ? `<p><b>Người tạo: </b> ${row.NguoiTao}</p>` : ""}
+        <p><b>Ngày diễn ra: </b> ${row.NgayDienRaStr} - <b>Thời gian: </b> ${row.BatDauStr} - ${row.KetThucStr ? row.KetThucStr : "..."}</p>
+        <p><b>Thành phần tham dự: </b> ${thanhPhan}</p>
+        <p><b>Phòng họp: </b> ${row.PhongHopTxt || ""}</p>
+        `;
+
+        if (row.TaiLieuCuocHops && row.TaiLieuCuocHops.length > 0) {
+            let taiLieuHtml = '<p><b>File đính kèm: </b>';
+            let taiLieuList = [];
+            for (let i = 0; i < row.TaiLieuCuocHops.length; i++) {
+                let file = row.TaiLieuCuocHops[i];
+                if (file.DuongDan) {
+                    let viewBtn = '';
+                    var filePath = file.DuongDan;
+                    var extension = filePath.split('.').pop().toLowerCase();
+                    var allowedViewExtensions = ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+
+                    if (allowedViewExtensions.includes(extension)) {
+                        viewBtn = `<button onclick="openViewFileModal('${file.DuongDan}', '${file.Name}')" class='btn btn-info btn-xs m-l-5 m-r-5' title='Xem'><i class='fa fa-eye'></i> Xem</button>`;
+                    }
+
+                    let downloadBtn = `<button onclick="downloadFromLink('${file.DuongDan}', '${file.Name}')" class='btn btn-primary btn-xs m-l-5 m-r-5' title='Tải xuống'><i class='fa fa-download'></i> Tải xuống</button>`;
+                    taiLieuList.push(`<span title="${file.Name}"><i class="fa fa-file"></i> ${file.Name} ${viewBtn}${downloadBtn}</span>`);
+                } else {
+                    taiLieuList.push(`<span title="${file.Name}"><i class="fa fa-file"></i> ${file.Name}</span>`);
+                }
+            }
+            taiLieuHtml += taiLieuList.join(', ') + '</p>';
+            info += taiLieuHtml;
+        }
+
+        return info;
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnThongTin = `<button id='btn-info-item' class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+         <i class='fa fa-eye'></i> Thông tin</button>`;
+        const btnSua = `<button type="button" onclick="openCuocHopFormModal(${row.Id})" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-pencil'></i> Sửa</button>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+        <i class='fa fa-trash'></i> Xóa</button>`;
+
+        return [btnThongTin, btnSua, btnXoa].join(" ");
+    }
+
+    window.operateEvents = {
+        'click #btn-info-item': function (e, value, row, index) {
+            moFormChiTiet(row.Id);
+        },
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá lịch này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/CuocHopDangKy/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data) {
+                        toastr.success("Xoá thành công.");
+                        search();
+                    } else {
+                        toastr.error("Bạn không có quyền xoá cuộc họp này hoặc cuộc họp không tồn tại.");
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        }
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+</script>

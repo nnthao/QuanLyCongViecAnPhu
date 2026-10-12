@@ -1,0 +1,687 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Điểm danh";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+<style>
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+        overflow-x: hidden;
+    }
+
+    .content {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        padding: 20px;
+        margin: 0;
+    }
+
+    .diem-danh-wrapper {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .diem-danh-container {
+        width: 100%;
+        padding: 0;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        margin: 0;
+        width: 100%;
+        border: none;
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .logo img {
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 20px;
+    }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        font-size: 14px;
+        border-radius: 8px;
+        padding: 10px 15px;
+        box-sizing: border-box;
+        line-height: 1.5;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 42px !important;
+    }
+
+    .select2-container .select2-selection--multiple {
+        min-height: 42px !important;
+    }
+
+    .select2-container .select2-selection {
+        font-size: 14px;
+        border-radius: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection,
+    .select2-container--default.select2-container--open .select2-selection {
+        border: 1px solid #ced4da !important;
+        outline: none !important;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #ced4da !important;
+        outline: none !important;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border: 1px solid #ced4da !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .select2-selection__rendered {
+        line-height: 40px !important;
+        padding-left: 15px;
+        padding-right: 30px;
+        font-size: 14px;
+    }
+
+    .select2-selection__arrow {
+        height: 40px !important;
+        top: 1px;
+        right: 10px;
+    }
+
+    .select2-selection__arrow b {
+        border-color: #6c757d transparent transparent transparent;
+        border-width: 5px 4px 0 4px;
+        margin-top: -2px;
+    }
+
+    #btnDiemDanh {
+        width: 100%;
+        height: 42px;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 8px;
+        margin-top: 40px;
+        padding: 0;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+    }
+
+    #errorMessage {
+        font-size: 14px;
+        padding: 10px;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 5px;
+        margin-top: 15px;
+    }
+
+    #successMessage {
+        padding: 20px;
+    }
+
+    #successMessage h2 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    #successMessage .fa-check-circle {
+        font-size: 48px;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+
+    .btn-navigation {
+        display: inline-block;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        transition: all 0.3s ease;
+        border: none;
+        margin: 0 5px;
+        flex: 1;
+        text-align: center;
+    }
+
+    .btn-navigation:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-navigation i {
+        margin-right: 6px;
+    }
+
+    .radio-item {
+        transition: background-color 0.2s ease;
+    }
+
+    .radio-item:hover:not(.disabled-radio) {
+        background-color: #e9ecef;
+    }
+
+    .radio-item.disabled-radio {
+        opacity: 0.6;
+    }
+
+    .radio-item input[type="radio"] {
+        cursor: pointer;
+    }
+
+    .radio-item.disabled-radio input[type="radio"] {
+        cursor: not-allowed;
+    }
+
+    .btn-navigation-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        width: 100%;
+    }
+
+    @@media (max-width: 576px) {
+        body {
+            overflow-x: hidden;
+            overflow-y: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        html {
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        .content {
+            padding: 15px;
+            align-items: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .diem-danh-wrapper {
+            max-width: 100%;
+        }
+
+        .card-header h3 {
+            font-size: 20px;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .logo img {
+            max-height: 150px;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 40px;
+            font-size: 14px;
+            box-sizing: border-box;
+            line-height: 1.5;
+            padding: 8px 12px;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+
+        .select2-container .select2-selection--multiple {
+            min-height: 40px !important;
+        }
+
+        .select2-container .select2-selection {
+            font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid #ced4da;
+        }
+
+        .select2-selection__rendered {
+            line-height: 38px !important;
+            padding-left: 12px;
+            padding-right: 30px;
+            font-size: 14px;
+        }
+
+        .select2-selection__arrow {
+            height: 38px !important;
+            top: 1px;
+            right: 10px;
+        }
+
+        #btnDiemDanh {
+            width: 100%;
+            height: 40px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        #btnDiemDanh {
+            font-size: 16px;
+            min-height: 48px;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+        }
+
+        #successMessage h2 {
+            font-size: 18px;
+        }
+
+        #diemDanhForm label{
+            font-weight: bold;
+            font-size: 120%;
+        }
+
+        .btn-navigation-container {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-navigation {
+            width: 100%;
+            margin: 0;
+            padding: 12px 20px;
+            font-size: 13px;
+        }
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid diem-danh-wrapper">
+        <div class="diem-danh-container">
+            <div class="card card-primary">
+                <div class="card-header text-center">
+                    <h3 class="card-title">
+                        <b style="text-transform: uppercase">Điểm danh đại hội</b>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="diemDanhForm">
+                        <div class="logo">
+                            <img src="@Url.VersionedContent("~/Content/img/daihoi.png")" />
+                        </div>
+                        <div class="form-group">
+                            @Html.CustomSelect2Empty(id: "DonViDoanId", label: "Đơn vị", col: 12, moreClass: "col-xs-12 p-0 ", required: true)
+                        </div>
+                        <div class="form-group" id="doanVienListContainer" style="display: none;">
+                            <label class="col-xs-12 p-0" style="font-weight: bold; font-size: 120%; margin-bottom: 10px;">Chọn đoàn viên:</label>
+                            <div id="doanVienListLoading" style="text-align: center; padding: 20px; display: none;">
+                                <i class="fa fa-spinner fa-spin" style="font-size: 24px; color: #007bff;"></i>
+                                <p style="margin-top: 10px;">Đang tải danh sách...</p>
+                            </div>
+                            <div id="doanVienList" class="col-xs-12 p-0" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;">
+                            </div>
+                        </div>
+                        <div class="form-group nt-4">
+                            <button id="btnDiemDanh" onclick="diemDanh()" class="btn btn-success btn-lg btn-block">
+                                <i class="fa fa-check"></i>&nbsp; Điểm danh
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <p id="errorMessage" class="text-danger text-center" style="display: none;"></p>
+                        </div>
+                    </div>
+                    <div id="successMessage" style="display: none;">
+                        <div class="text-center">
+                            <div class="btn-navigation-container">
+                                <a href="/DiemDanh/TaiLieuDaiHoi" class="btn-navigation">
+                                    <i class="fa fa-file-text"></i> Tài liệu đại hội
+                                </a>
+                                <a href="/DiemDanh/ThongKeDaiHoi" class="btn-navigation">
+                                    <i class="fa fa-bar-chart"></i> Thống kê đại hội
+                                </a>
+                            </div>
+                            <i class="fa fa-check-circle"></i>
+                            <h2 class="text-success">
+                                Điểm danh thành công!
+                            </h2>
+                            <div id="fireworks"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <div style="text-align: center; padding: 15px 0; color: white; font-size: 12px;margin-top: 20px;">
+        Sản phẩm của <img src="https://ebill.vnpt.vn/images/logo-mb.png" style="width: 100px; height: auto;margin-left: 10px;"/>
+    </div>
+    </div>
+   
+</section>
+
+<script>
+    var donViDoanData = [];
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadDonViDoan();
+    })
+
+    function loadDonViDoan() {
+        ajaxGet("/DiemDanh/DonViDoanLookup", function (res) {
+            if (res && res.Data) {
+                donViDoanData = res.Data;
+                var options = '<option value="">--- Chọn ---</option>';
+                res.Data.forEach(function (item) {
+                    options += `<option value="${item.id}">${item.text}</option>`;
+                });
+                $("#DonViDoanId").html(options);
+                $("#DonViDoanId").select2({
+                    placeholder: "--- Chọn ---",
+                    allowClear: true,
+                    language: "vi",
+                    dropdownParent: $(".diem-danh-container")
+                });
+
+                $("#DonViDoanId").on("change", function () {
+                    var donViDoanId = $(this).val();
+                    if (donViDoanId && donViDoanId !== "" && donViDoanId !== "0") {
+                        loadDoanVienByDonViDoanId(parseInt(donViDoanId));
+                    } else {
+                        $("#doanVienListContainer").hide();
+                        $("#doanVienList").html("");
+                        $("input[name='DoanVienId']").prop("checked", false);
+                    }
+                });
+            }
+        }, function err() {
+
+        });
+    }
+
+    function loadDoanVienByDonViDoanId(donViDoanId) {
+        $("#doanVienListContainer").show();
+        $("#doanVienListLoading").show();
+        $("#doanVienList").hide();
+        $("input[name='DoanVienId']").prop("checked", false);
+
+        ajaxGet(`/DiemDanh/GetDoanVienByDonViDoanId?donViDoanId=${donViDoanId}`, function (res) {
+            $("#doanVienListLoading").hide();
+            $("#doanVienList").show();
+
+            if (res && res.Data && res.Data.length > 0) {
+                var html = "";
+                res.Data.forEach(function (item) {
+                    var isChecked = item.ThoiGianDiemDanh ? "disabled" : "";
+                    var checkedAttr = isChecked ? "" : "";
+                    var disabledClass = isChecked ? "disabled-radio" : "";
+                    var daDiemDanhText = item.ThoiGianDiemDanh ? " <span style='color: #28a745; font-size: 12px;'>(Đã điểm danh)</span>" : "";
+                    html += `<div class="radio-item ${disabledClass}" style="padding: 8px; margin-bottom: 5px; border-radius: 5px; ${isChecked ? 'background-color: #f8f9fa;' : ''}">
+                        <label style="margin: 0; cursor: ${isChecked ? 'not-allowed' : 'pointer'}; display: flex; align-items: center;">
+                            <input type="radio" name="DoanVienId" value="${item.Id}" ${checkedAttr} ${isChecked} style="margin-right: 10px;">
+                            <span>${item.HoTen}${daDiemDanhText}</span>
+                        </label>
+                    </div>`;
+                });
+                $("#doanVienList").html(html);
+            } else {
+                $("#doanVienList").html("<p style='text-align: center; padding: 20px; color: #6c757d;'>Không có đoàn viên nào trong đơn vị này.</p>");
+            }
+        }, function () {
+            $("#doanVienListLoading").hide();
+            $("#doanVienList").show();
+            $("#doanVienList").html("<p style='text-align: center; padding: 20px; color: #dc3545;'>Đã có lỗi xảy ra khi tải danh sách. Vui lòng thử lại.</p>");
+        });
+    }
+
+    function diemDanh() {
+        var donViDoanId = $("#DonViDoanId").val();
+        var doanVienId = $("input[name='DoanVienId']:checked").val();
+
+        $("#errorMessage").hide();
+
+        if (!donViDoanId || donViDoanId === "" || donViDoanId === "0" || parseInt(donViDoanId) === 0) {
+            $("#errorMessage").text("Vui lòng chọn đơn vị đoàn.").show();
+            return;
+        }
+
+        if (!doanVienId || doanVienId === "" || doanVienId === "0" || parseInt(doanVienId) === 0) {
+            $("#errorMessage").text("Vui lòng chọn đoàn viên.").show();
+            return;
+        }
+
+        showLoadingModal();
+
+        var fd = new FormData();
+        fd.append("DoanVienId", doanVienId);
+
+        ajaxPostFormData("/DiemDanh/DiemDanhById", fd, function (response) {
+            hideLoadingModal();
+
+            if (response.Errors && response.Errors.length > 0) {
+                var errorMsg = response.Errors.map(function (e) { return e.Description; }).join("\n");
+                $("#errorMessage").text(errorMsg).show();
+            } else if (response.Success) {
+                $("#diemDanhForm").hide();
+                $("#successMessage").show();
+                showFireworks();
+            }
+        }, function () {
+            hideLoadingModal();
+            $("#errorMessage").text("Đã có lỗi xảy ra. Vui lòng thử lại.").show();
+        });
+    }
+
+    function showFireworks() {
+        var canvas = document.createElement('canvas');
+        canvas.id = 'fireworksCanvas';
+        canvas.width = Math.max(window.innerWidth, 320);
+        canvas.height = Math.max(window.innerHeight, 480);
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '9999';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        document.body.appendChild(canvas);
+
+        var ctx = canvas.getContext('2d');
+        var fireworks = [];
+        var particles = [];
+
+        function Firework(sx, sy, tx, ty) {
+            this.x = sx;
+            this.y = sy;
+            this.sx = sx;
+            this.sy = sy;
+            this.tx = tx;
+            this.ty = ty;
+            this.distanceToTarget = Math.sqrt(Math.pow(tx - sx, 2) + Math.pow(ty - sy, 2));
+            this.distanceTraveled = 0;
+            this.coordinates = [];
+            this.coordinateCount = 3;
+            while (this.coordinateCount--) {
+                this.coordinates.push([this.x, this.y]);
+            }
+            this.angle = Math.atan2(ty - sy, tx - sx);
+            this.speed = 2;
+            this.acceleration = 1.05;
+            this.brightness = Math.random() * 50 + 50;
+            this.targetRadius = 1;
+        }
+
+        Firework.prototype.update = function (index) {
+            this.coordinates.pop();
+            this.coordinates.unshift([this.x, this.y]);
+
+            if (this.targetRadius < 8) {
+                this.targetRadius += 0.3;
+            } else {
+                this.targetRadius = 1;
+            }
+
+            this.speed *= this.acceleration;
+
+            var vx = Math.cos(this.angle) * this.speed;
+            var vy = Math.sin(this.angle) * this.speed;
+
+            this.distanceTraveled = Math.sqrt(Math.pow(this.x - this.sx, 2) + Math.pow(this.y - this.sy, 2));
+
+            if (this.distanceTraveled >= this.distanceToTarget) {
+                createParticles(this.tx, this.ty);
+                fireworks.splice(index, 1);
+            } else {
+                this.x += vx;
+                this.y += vy;
+            }
+        };
+
+        Firework.prototype.draw = function () {
+            ctx.beginPath();
+            ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = 'hsl(' + Math.random() * 60 + ', 100%, ' + this.brightness + '%)';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(this.tx, this.ty, this.targetRadius, 0, Math.PI * 2);
+            ctx.stroke();
+        };
+
+        function Particle(x, y) {
+            this.x = x;
+            this.y = y;
+            this.coordinates = [];
+            this.coordinateCount = 5;
+            while (this.coordinateCount--) {
+                this.coordinates.push([this.x, this.y]);
+            }
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = Math.random() * 10 + 5;
+            this.friction = 0.95;
+            this.gravity = 1;
+            this.hue = Math.random() * 50 + 50;
+            this.brightness = Math.random() * 50 + 50;
+            this.alpha = 1;
+            this.decay = Math.random() * 0.015 + 0.005;
+        }
+
+        Particle.prototype.update = function (index) {
+            this.coordinates.pop();
+            this.coordinates.unshift([this.x, this.y]);
+            this.speed *= this.friction;
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed + this.gravity;
+            this.alpha -= this.decay;
+
+            if (this.alpha <= this.decay) {
+                particles.splice(index, 1);
+            }
+        };
+
+        Particle.prototype.draw = function () {
+            ctx.beginPath();
+            ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = 'hsla(' + this.hue + ', 100%, ' + this.brightness + '%, ' + this.alpha + ')';
+            ctx.stroke();
+        };
+
+        function createParticles(x, y) {
+            var particleCount = 50;
+            while (particleCount--) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function loop() {
+            requestAnimationFrame(loop);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            var i = fireworks.length;
+            while (i--) {
+                fireworks[i].draw();
+                fireworks[i].update(i);
+            }
+
+            var i = particles.length;
+            while (i--) {
+                particles[i].draw();
+                particles[i].update(i);
+            }
+
+            if (Math.random() < 0.08 && fireworks.length < 15) {
+                fireworks.push(new Firework(
+                    Math.random() * canvas.width,
+                    canvas.height,
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height / 2
+                ));
+            }
+        }
+
+        loop();
+
+        setTimeout(function () {
+            document.body.removeChild(canvas);
+        }, 3000);
+    }
+</script>

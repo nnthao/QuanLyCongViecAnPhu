@@ -1,0 +1,280 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers.Input;
+@using Dashboard.Common;
+@using Dashboard.Models.Entities;
+
+@{
+    Layout = null;
+
+    var now = DateTime.Now;
+    var thang = now.ToString("MM/yyyy");
+}
+
+<style>
+    #monthView {
+        table-layout: fixed;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    #monthView thead tr, #monthView thead th {
+        background: #1667b0;
+        color: #fff;
+        text-align: center;
+        font-weight: bold;
+        vertical-align: middle;
+        padding: 8px 4px;
+    }
+
+    #monthView tbody td {
+        min-height: 120px;
+        width: 14.28%;
+        padding: 6px;
+        vertical-align: top;
+        background-color: #fff;
+    }
+
+    #monthView tbody td.bg-empty-day {
+        background-color: #f8f9fa;
+    }
+
+    .cell-content {
+        min-height: 110px;
+    }
+
+    .cell-header {
+        margin-bottom: 4px;
+        padding-bottom: 2px;
+        font-size: 13px;
+        color: #212529;
+    }
+
+    .cell-day-today {
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    #monthView .lichItem {
+        background-color: #014b92;
+        margin-bottom: 6px;
+        padding: 6px 8px;
+        color: #fff;
+        cursor: pointer;
+        border-radius: 2px;
+        word-break: break-word;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    #monthView .lichItem:hover {
+        opacity: 0.9;
+    }
+
+    #monthView .lichItem .time {
+        margin-bottom: 4px;
+        padding-bottom: 3px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: space-between; 
+        align-items: center;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    #monthView .lichItem a, #monthView .lichItem a:hover {
+        color: #fff;
+    }
+
+    #monthView .lichItem .lich-title {
+        font-size: 12px;
+        line-height: 1.35;
+        color: #fff;
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-4 col-sm-4 col-xs-12 d-flex align-items-center">
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12">
+        <div class="form-group">
+            <div class="input-group date" id="thangPicker">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-empty"><b>Chọn tháng:</b></span>
+                </div>
+                <input type="text" id="thangPicker-Input" class="form-control" value="@thang" />
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-4 col-xs-12 text-right">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Xuất dữ liệu
+            </button>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                <button class="dropdown-item" onclick="xuatFile(@BienDungChung.LOAI_LICH_THANG,@BienDungChung.LOAI_FILE_EXCEL);">Xuất Excel</button>
+                <button class="dropdown-item" onclick="xuatFile(@BienDungChung.LOAI_LICH_THANG,@BienDungChung.LOAI_FILE_PDF);">Xuất PDF</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div id="calendarContainer" class="table-responsive"></div>
+    </div>
+</div>
+
+<script>
+    function themItemVaoLichThang(idElm, datas) {
+        if (datas && datas.length > 0) {
+            for (let j = 0; j < datas.length; j++) {
+                let item = datas[j];
+
+                let tenCuocHop = item.TenCuocHop ? item.TenCuocHop : ``;
+                let thoiGianBatDau = item.BatDauStr ? item.BatDauStr : ``;
+                let thoiGianKetThuc = item.KetThucStr ? item.KetThucStr : ``;
+                let thoiGian = thoiGianBatDau ? `${thoiGianBatDau} - ${thoiGianKetThuc ? thoiGianKetThuc : '...'}` : (thoiGianKetThuc ? `... - ${thoiGianKetThuc}` : ``);
+                let iconCar = item.DieuHanhXeId ? `<a href="javascript:void(0);" onclick="event.stopPropagation(); moFormChiTietThongTinXe(${item.DieuHanhXeId})" class="text-white ml-1"><i class="fa fa-car"></i></a>` : ``;
+
+                let html = `<div class="lichItem" style="background-color: #014b92 !important;" onclick="moFormChiTiet(${item.Id})">`;
+                if (thoiGian || iconCar) {
+                    html += `<div class="time"><span>${thoiGian}</span> ${iconCar}</div>`;
+                }
+                if (tenCuocHop) {
+                    html += `<div class="lich-title">${tenCuocHop}</div>`;
+                }
+                html += `</div>`;
+                $("#" + idElm).append(html);
+            }
+        }
+    }
+
+    function getDanhSanhThang() {
+        showLoadingModal();
+        const formData = new FormData();
+        formData.append("ThangHienTai", $("#thangPicker-Input").val());
+        formData.append("IsLichCaNhan", String($("#IsLichCaNhan").prop("checked")));
+        formData.append("CoQuanCurrentId", $("#CoQuanCurrentId").val());
+        ajaxPostFormData("/LichHop/GetListLichHopTheoThang", formData, function (res) {
+            hideLoadingModal();
+            let endOfMonth = parseInt(getLastDayOfMonth($("#thangPicker-Input").val()));
+
+            for (let i = 1; i <= endOfMonth; i++) {
+                $("#content-" + i).empty();
+            }
+
+            if (res && res.length > 0) {
+                for (let i = 1; i <= endOfMonth; i++) {
+                    const result = res.find(item => item.NgayOnlyStr == i);
+                    if (result) {
+                        themItemVaoLichThang("content-" + i, result.Sangs);
+                        themItemVaoLichThang("content-" + i, result.Chieus);
+                    }
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getLastDayOfMonth(mmYYYY) {
+        const [m, y] = mmYYYY.split("/");
+        const month = parseInt(m, 10);
+        const year = parseInt(y, 10);
+        return new Date(year, month, 0).getDate();
+    }
+
+    function handleDraw() {
+        const input = $("#thangPicker-Input").val().trim();
+        const parts = input.split('/');
+        if (parts.length !== 2) {
+            alert("Vui lòng nhập đúng định dạng MM/YYYY");
+            return;
+        }
+
+        const month = parseInt(parts[0], 10);
+        const year = parseInt(parts[1], 10);
+
+        if (isNaN(month) || isNaN(year) || month < 1 || month > 12) {
+            alert("Tháng hoặc năm không hợp lệ.");
+            return;
+        }
+
+        drawCalendar(year, month - 1);
+    }
+
+    function drawCalendar(year, month) {
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0);
+        const daysInMonth = endDate.getDate();
+
+        let startDay = (startDate.getDay() + 6) % 7;
+
+        let today = new Date();
+        let isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+        let todayDate = isCurrentMonth ? today.getDate() : -1;
+
+        let html = '<table class="table table-bordered" id="monthView">';
+        html += '<thead><tr>';
+        html += '<th style="width: 14.28%;">Thứ 2</th>';
+        html += '<th style="width: 14.28%;">Thứ 3</th>';
+        html += '<th style="width: 14.28%;">Thứ 4</th>';
+        html += '<th style="width: 14.28%;">Thứ 5</th>';
+        html += '<th style="width: 14.28%;">Thứ 6</th>';
+        html += '<th style="width: 14.28%;">Thứ 7</th>';
+        html += '<th style="width: 14.28%;">Chủ nhật</th>';
+        html += '</tr></thead><tbody>';
+
+        let day = 1;
+        html += '<tr>';
+
+        for (let i = 0; i < startDay; i++) {
+            html += '<td class="bg-empty-day"><div class="cell-content">&nbsp;</div></td>';
+        }
+
+        for (let i = startDay; i < 7; i++) {
+            let isToday = (day === todayDate);
+            let dayNumberHtml = isToday ? `<span class="cell-day-today">${day} (Hôm nay)</span>` : `<span>${day}</span>`;
+            html += `<td><div class="cell-content" data-id="${day}"><div class="cell-header">${dayNumberHtml}</div><div id="content-${day}"></div></div></td>`;
+            day++;
+        }
+        html += '</tr>';
+
+        while (day <= daysInMonth) {
+            html += '<tr>';
+            for (let i = 0; i < 7; i++) {
+                if (day <= daysInMonth) {
+                    let isToday = (day === todayDate);
+                    let dayNumberHtml = isToday ? `<span class="cell-day-today">${day} (Hôm nay)</span>` : `<span>${day}</span>`;
+                    html += `<td><div class="cell-content" data-id="${day}"><div class="cell-header">${dayNumberHtml}</div><div id="content-${day}"></div></div></td>`;
+                    day++;
+                } else {
+                    html += '<td class="bg-empty-day"><div class="cell-content">&nbsp;</div></td>';
+                }
+            }
+            html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+        document.getElementById('calendarContainer').innerHTML = html;
+
+        getDanhSanhThang();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#thangPicker").datetimepicker({
+            "allowInputToggle": true,
+            "showClose": true,
+            "showClear": true,
+            "showTodayButton": true,
+            "format": "MM/YYYY"
+        });
+
+        $('#thangPicker').on('dp.change', function (e) {
+            handleDraw();
+        });
+
+        handleDraw();
+    });
+</script>

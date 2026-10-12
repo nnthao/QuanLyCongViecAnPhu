@@ -1,0 +1,73 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using Dashboard.Common
+@{
+    Layout = null;
+}
+
+<link href="~/Content/vendor/timepicker/assets/timepicker.css" rel="stylesheet" />
+<script src="~/Content/vendor/timepicker/assets/timepicker.js"></script>
+
+<div class="row">
+    <input type="hidden" id="Id" value="0" />
+    @Html.CustomTextBox(id: "TenCuocHop", label: "Tên cuộc họp", col: 12, isReadonly: true, length: 150)
+</div>
+<div class="row">
+    @Html.CustomTextBox(id: "NguoiChuTri", label: "Chủ trì", col: 12, isReadonly: true, length: 2000)
+    @Html.CustomTextArea(id: "NguoiThamGia", label: "Thành phần tham gia ", col: 12, isReadonly: true, row: 5)
+</div>
+<div class="row">
+    @Html.CustomDatePicker(id: "NgayDienRaStr", label: "Ngày diễn ra", col: 4,
+           isReadonly: true, moreClass: "col-sm-6 col-xs-12")
+    <div class="col-sm-2">
+        <div class="form-group">
+            <label for="id_end_time">Bắt đầu: <span class="text-danger" id="NguoiThamGia-Required">*</span></label>
+            <div class="input-group date" id="BatDauStr">
+                <input type="text" name="end_time" class="form-control" disabled>
+                <div class="input-group-addon input-group-append">
+                    <div class="input-group-text">
+                        <i class="glyphicon glyphicon-time fa fa-clock-o"></i>
+                    </div>
+                </div>
+            </div>
+            <p id="BatDauStrError" class="text-danger m-b-0"></p>
+        </div>
+    </div>
+    <div class="col-sm-2">
+        <div class="form-group">
+            <label for="id_end_time">Kết thúc:</label>
+            <div class="input-group date" id="KetThucStr">
+                <input type="text" name="end_time" class="form-control" disabled>
+                <div class="input-group-addon input-group-append">
+                    <div class="input-group-text">
+                        <i class="glyphicon glyphicon-time fa fa-clock-o"></i>
+                    </div>
+                </div>
+            </div>
+            <p id="KetThucStrError" class="text-danger m-b-0"></p>
+        </div>
+    </div>
+</div>
+<div class="row">
+    @Html.CustomTextBox(id: "PhongHopTxt", label: "Phòng họp", col: 12, isReadonly: true, length: 2000)
+    @Html.CustomTextArea(id: "NoiDung", label: "Nội dung", col: 12, row: 4,
+   moreClass: "col-sm-12 col-xs-12", isReadonly: true)
+</div>
+
+<div class="row">
+    @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, row: 3, isReadonly: true,
+   moreClass: "col-sm-12 col-xs-12")
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        $('#BatDauStr, #KetThucStr').datetimepicker({
+            allowInputToggle: true,
+            showClose: true,
+            showClear: true,
+            showTodayButton: true,
+            format: "HH:mm",
+        });
+    });
+</script>

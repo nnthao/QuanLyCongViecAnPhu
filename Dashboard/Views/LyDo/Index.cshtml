@@ -1,0 +1,140 @@
+﻿@using Dashboard.HtmlHelpers;
+@{
+    ViewBag.Title = "Lý do";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>Lý do</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/LyDo/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/LyDo/GetListLyDo"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-sort-name="Ten"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Ten">Lý do</th>
+                                            <th data-field="MaMau" data-formatter="maMauFormatter">Mã màu</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+
+    function maMauFormatter(value, row, index) {
+        if (!value || value.trim() === '') {
+            return '---';
+        }
+        var colorValue = value.trim();
+        return `<div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-block; width: 30px; height: 30px; background-color: ${colorValue}; border: 1px solid #ccc; border-radius: 4px;"></span>
+                    <span>${colorValue}</span>
+                </div>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<a href="/LyDo/Form?id=${row.Id}" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+        if (row.IsDeleted) {
+            return btnSua + btnKhoiPhuc;
+        }
+        return btnSua + btnXoa;
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xóa lý do này?")) {
+                $.post("/LyDo/Xoa", { Id: row.Id }, function (data) {
+                    if (data) {
+                        $('#bs-table').bootstrapTable('refresh');
+                        toastr.success("Xóa thành công");
+                    } else {
+                        toastr.error("Lỗi xảy ra");
+                    }
+                });
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục lý do này?")) {
+                $.post("/LyDo/KhoiPhuc", { Id: row.Id }, function (data) {
+                    if (data) {
+                        $('#bs-table').bootstrapTable('refresh');
+                        toastr.success("Khôi phục thành công");
+                    } else {
+                        toastr.error("Lỗi xảy ra");
+                    }
+                });
+            }
+        }
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        })
+    });
+</script>

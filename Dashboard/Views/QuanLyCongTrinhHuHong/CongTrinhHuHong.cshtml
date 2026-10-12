@@ -1,0 +1,127 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Công trình hư hỏng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/QuanLyCongTrinhHuHong/FormCongTrinhHuHong?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới hư hỏng
+                                </a>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,
+                                   moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/QuanLyCongTrinhHuHong/GetListCongTrinhHuHong"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="TenCongTrinh"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenCongTrinh">Tên công trình</th>
+                                            <th data-field="Diadiem">Địa điểm</th>
+                                            <th data-field="LoaiCongTrinh">Loại công trình</th>
+                                            <th data-field="NamXayDung">Năm xây dựng</th>
+                                            <th data-field="ChuDauTu">Chủ đầu tư</th>
+                                            <th data-field="QuyMo">Quy mô</th>
+                                            <th data-field="DienTich">Diện tích</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+    
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnThemHuHong = `<button id='btn-add-damage' class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-exclamation-triangle'></i> Thêm hư hỏng</button>`;
+        const btnXemChiTiet = `<a href="/QuanLyCongTrinhHuHong/ChiTiet?congTrinhHuHongId=${row.Id}" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-list'></i> Chi tiết</a>`;
+        const btnXemFile = `<a href="/QuanLyCongTrinhHuHong/File?congTrinhHuHongId=${row.Id}" class='btn btn-secondary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-file'></i> File</a>`;
+
+        return [
+            btnThemHuHong + btnXemChiTiet + btnXemFile
+        ].join("");
+    }
+
+    //Open Model when update
+    window.operateEvents = {
+        'click #btn-add-damage': function (e, value, row, index) {
+            // Redirect to form with project ID to add damage details
+            window.location.href = `/QuanLyCongTrinhHuHong/FormCongTrinhHuHong?id=${row.Id}`;
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>

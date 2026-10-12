@@ -1,0 +1,240 @@
+@using Dashboard.Common;
+<style>
+    .clipboard-upload-zone {
+        margin-top: 10px;
+        padding: 16px;
+        border: 2px dashed #17a2b8;
+        border-radius: 6px;
+        background-color: #f4fbfd;
+        color: #0c5460;
+        text-align: center;
+        cursor: text;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .clipboard-upload-zone:focus,
+    .clipboard-upload-zone.is-active {
+        outline: none;
+        background-color: #e8f7fb;
+        border-color: #138496;
+    }
+
+    .clipboard-upload-zone.is-dragover {
+        background-color: #dff3f8;
+        border-color: #0f6f7e;
+    }
+
+    .clipboard-upload-zone .hint {
+        margin: 0;
+    }
+</style>
+<div class="row">
+    <div class="col-sm-12 col-xs-12 text-right">
+        <label class="btn btn-primary m-b-0" for="TaiLieuDinhKemUpload">
+            <input id="TaiLieuDinhKemUpload" type="file" class="d-none" multiple accept="@BienDungChung.AllowedFileExtensions">
+            <i class="fa fa-upload"></i> Thêm file đính kèm
+        </label>
+        <p id="TaiLieuDinhKemError" class="text-danger m-b-0"></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <div id="ClipboardUploadZone" class="clipboard-upload-zone" contenteditable="true" tabindex="0">
+            <p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 p-t-15 tb-height-auto">
+        <table id="bsTaiLieuDinhKem"
+               data-locale="vi-VN">
+            <thead class="thead-light">
+                <tr>
+                    <th data-field="TenFile">File</th>
+                    <th data-width="200" data-align="center" data-field="operate"
+                        data-formatter="actionTaiLieuDinhKem">&nbsp;</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    var TaiLieuDinhKemDatas = [];
+
+    function renderTaiLieuDinhKemTable() {
+        $("#bsTaiLieuDinhKem").bootstrapTable("destroy");
+        $("#bsTaiLieuDinhKem").bootstrapTable({ data: TaiLieuDinhKemDatas });
+    }
+
+    function addTaiLieuDinhKem(files) {
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        $("#TaiLieuDinhKemError").text("");
+
+        for (var i = 0; i < files.length; i++) {
+            TaiLieuDinhKemDatas.unshift({
+                "Id": (taoChuoiThoiGian() + i) * -1,
+                "TenFile": files[i].name,
+                "File": files[i],
+                "IsUpload": false
+            });
+        }
+
+        renderTaiLieuDinhKemTable();
+    }
+
+    function getClipboardImageExtension(mimeType) {
+        if (!mimeType) {
+            return "png";
+        }
+
+        var mimeParts = mimeType.split("/");
+        if (mimeParts.length < 2) {
+            return "png";
+        }
+
+        return mimeParts[1].replace("jpeg", "jpg");
+    }
+
+    function resetClipboardUploadZone() {
+        $("#ClipboardUploadZone").html('<p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>');
+    }
+
+    renderTaiLieuDinhKemTable();
+
+    $("#TaiLieuDinhKemUpload").change(function () {
+        let input = this;
+        if (input.files && input.files.length > 0) {
+            addTaiLieuDinhKem(input.files);
+        }
+
+        input.value = "";
+    });
+
+    $("#ClipboardUploadZone")
+        .on("focus", function () {
+            $(this).addClass("is-active");
+        })
+        .on("blur", function () {
+            $(this).removeClass("is-active");
+            resetClipboardUploadZone();
+        })
+        .on("dragenter dragover", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass("is-dragover");
+        })
+        .on("dragleave", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass("is-dragover");
+        })
+        .on("drop", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass("is-dragover");
+
+            let dropEvent = e.originalEvent || e;
+            let files = dropEvent.dataTransfer ? dropEvent.dataTransfer.files : null;
+
+            resetClipboardUploadZone();
+
+            if (!files || files.length === 0) {
+                $("#TaiLieuDinhKemError").text("Không có file nào được kéo thả.");
+                return;
+            }
+
+            addTaiLieuDinhKem(files);
+        })
+        .on("paste", function (e) {
+            let clipboardEvent = e.originalEvent || e;
+            let clipboardData = clipboardEvent.clipboardData;
+            let files = [];
+
+            if (!clipboardData || !clipboardData.items) {
+                $("#TaiLieuDinhKemError").text("Trình duyệt không hỗ trợ dán ảnh từ clipboard.");
+                return;
+            }
+
+            for (var i = 0; i < clipboardData.items.length; i++) {
+                let item = clipboardData.items[i];
+                if (item.kind === "file" && item.type.indexOf("image/") === 0) {
+                    let blob = item.getAsFile();
+                    if (blob) {
+                        let extension = getClipboardImageExtension(blob.type);
+                        let fileName = "clipboard-image-" + taoChuoiThoiGian() + "-" + i + "." + extension;
+                        files.push(new File([blob], fileName, { type: blob.type }));
+                    }
+                }
+            }
+
+            e.preventDefault();
+            resetClipboardUploadZone();
+
+            if (files.length === 0) {
+                $("#TaiLieuDinhKemError").text("Clipboard hiện không có ảnh để dán.");
+                return;
+            }
+
+            addTaiLieuDinhKem(files);
+        });
+
+    function actionTaiLieuDinhKem(value, row, index) {
+        let deleteBtn =
+            `<button onclick="xoaTaiLieuDinhKem(${row.Id}, ${row.IsUpload} )" class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-trash'></i> Xóa</button>`;
+
+        let downloadBtn = '';
+        if (row.DuongDan && row.IsUpload) {
+            downloadBtn = `<button onclick="downloadFromLink('${row.DuongDan}', '${row.TenFile}')" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-download'></i> Tải xuống</button>`;
+        }
+
+        if (row.IsUpload) {
+            return downloadBtn + deleteBtn;
+        }
+
+        return deleteBtn;
+    }
+
+    function xoaTaiLieuDinhKem(id, isUpload) {
+        if (confirm("Bạn có muốn xóa tài liệu này?") == true) {
+            var index = TaiLieuDinhKemDatas.findIndex(x => x.Id === id);
+
+            if (index >= 0) {
+                TaiLieuDinhKemDatas.splice(index, 1);
+            }
+
+            renderTaiLieuDinhKemTable();
+        }
+    };
+
+    function ajaxTaiLieuDinhKemServer() {
+        TaiLieuDinhKemDatas = [];
+        renderTaiLieuDinhKemTable();
+
+        if ($("#Id").val() && $("#Id").val() > 0) {
+            $.ajax({
+                url: "/QuanLyThongTinTraCuu/GetFileDinhKemById?id=" + $("#Id").val(),
+                processData: false,
+                type: "GET",
+                success: function (data) {
+                    TaiLieuDinhKemDatas = data;
+                    renderTaiLieuDinhKemTable();
+                },
+                error: function () {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                }
+            });
+        }
+        else {
+            renderTaiLieuDinhKemTable();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        ajaxTaiLieuDinhKemServer();
+    })
+</script>

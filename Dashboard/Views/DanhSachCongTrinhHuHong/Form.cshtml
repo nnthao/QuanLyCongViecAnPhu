@@ -1,0 +1,364 @@
+@{
+    ViewBag.Title = "Thông tin công trình hư hỏng";
+}
+
+<div class="content">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Thông tin công trình hư hỏng</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="/DanhSachCongTrinhHuHong">Danh sách công trình hư hỏng</a></li>
+                        <li class="breadcrumb-item active">Thông tin công trình hư hỏng</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Thông tin công trình hư hỏng</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="form">
+                                <input type="hidden" id="Id" name="Id" value="@ViewBag.Id" />
+
+                                <!-- Filter theo loại công trình -->
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="card border-primary">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fa fa-filter"></i> Lọc công trình theo loại
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="LoaiCongTrinhFilter" class="form-label">
+                                                            <i class="fa fa-tag"></i> Loại công trình
+                                                        </label>
+                                                        <select id="LoaiCongTrinhFilter" class="form-control">
+                                                            <option value="0">--- Tất cả loại công trình ---</option>
+                                                            <option value="1">Hồ</option>
+                                                            <option value="2">Đập Dâng</option>
+                                                            <option value="3">Đập Ngăn Mặn</option>
+                                                            <option value="4">Trạm Khí Tượng</option>
+                                                            <option value="5">Trạm Thủy Văn</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="CongTrinhId" class="form-label">
+                                                            <i class="fa fa-building"></i> Chọn công trình
+                                                        </label>
+                                                        <select id="CongTrinhId" class="form-control" required>
+                                                            <option value="0">--- Chọn công trình ---</option>
+                                                        </select>
+                                                        <small class="form-text text-muted">
+                                                            <i class="fa fa-info-circle"></i> Chọn loại công trình trước để lọc danh sách
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Thông tin công trình được chọn -->
+                                <div id="congTrinhInfo" class="row mb-3" style="display: none;">
+                                    <div class="col-12">
+                                        <div class="card border-info">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fa fa-info-circle"></i> Thông tin công trình được chọn
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <strong>Tên công trình:</strong> <span id="tenCongTrinh"></span>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <strong>Địa điểm:</strong> <span id="diadiem"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-md-6">
+                                                        <strong>Loại công trình:</strong> <span id="loaiCongTrinh"></span>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <strong>Chủ đầu tư:</strong> <span id="chuDauTu"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Thông tin hư hỏng -->
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="card border-warning">
+                                            <div class="card-header bg-warning text-dark">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fa fa-exclamation-triangle"></i> Thông tin hư hỏng
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="MucDoHuHong" class="form-label">
+                                                            <i class="fa fa-signal"></i> Mức độ hư hỏng <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select id="MucDoHuHong" class="form-control" required>
+                                                            <option value="">--- Chọn mức độ ---</option>
+                                                            <option value="Nhẹ">Nhẹ</option>
+                                                            <option value="Trung bình">Trung bình</option>
+                                                            <option value="Nặng">Nặng</option>
+                                                            <option value="Rất nặng">Rất nặng</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="NgayPhatHienHuHong" class="form-label">
+                                                            <i class="fa fa-calendar"></i> Ngày phát hiện hư hỏng
+                                                        </label>
+                                                        <input type="date" id="NgayPhatHienHuHong" class="form-control" />
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                    <label for="NguyenNhanHuHong" class="form-label">
+                                                        <i class="fa fa-question-circle"></i> Nguyên nhân hư hỏng
+                                                    </label>
+                                                    <textarea id="NguyenNhanHuHong" class="form-control" rows="3" maxlength="1000" placeholder="Mô tả chi tiết nguyên nhân gây ra hư hỏng..."></textarea>
+                                                    <small class="form-text text-muted">
+                                                        <i class="fa fa-info-circle"></i> Tối đa 1000 ký tự
+                                                    </small>
+                                                </div>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-md-6">
+                                                        <label for="TrangThaiXuLy" class="form-label">
+                                                            <i class="fa fa-cogs"></i> Trạng thái xử lý <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select id="TrangThaiXuLy" class="form-control" required>
+                                                            <option value="">--- Chọn trạng thái ---</option>
+                                                            <option value="Chưa xử lý">Chưa xử lý</option>
+                                                            <option value="Đang xử lý">Đang xử lý</option>
+                                                            <option value="Đã xử lý">Đã xử lý</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <a class="btn btn-primary" href="javascript:void(0)" onclick="luu()">
+                                            <i class="fa fa-save"></i> Lưu
+                                        </a>
+                                        <a class="btn btn-light mr-2" href="/DanhSachCongTrinhHuHong">
+                                            <i class="fa fa-chevron-left"></i> Quay lại
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    $(document).ready(function () {
+        loadDanhSachCongTrinh();
+        loadData();
+        
+        // Event listener cho filter loại công trình
+        $('#LoaiCongTrinhFilter').change(function() {
+            loadDanhSachCongTrinh();
+        });
+        
+        // Event listener cho chọn công trình
+        $('#CongTrinhId').change(function() {
+            showCongTrinhInfo();
+        });
+    });
+
+    function loadDanhSachCongTrinh() {
+        var loaiCongTrinh = $('#LoaiCongTrinhFilter').val();
+        $.ajax({
+            url: '/DanhSachCongTrinhHuHong/DanhSachCongTrinhLookup',
+            type: 'GET',
+            data: { 
+                search: '',
+                loaiCongTrinh: loaiCongTrinh
+            },
+            success: function (result) {
+                var options = '<option value="0">--- Chọn công trình ---</option>';
+                for (var i = 0; i < result.length; i++) {
+                    options += '<option value="' + result[i].id + '" data-loai="' + result[i].loaiCongTrinh + '" data-diadiem="' + (result[i].diadiem || '') + '" data-chuDauTu="' + (result[i].chuDauTu || '') + '">' + result[i].text + '</option>';
+                }
+                $('#CongTrinhId').html(options);
+                $('#congTrinhInfo').hide();
+            }
+        });
+    }
+
+    function showCongTrinhInfo() {
+        var selectedOption = $('#CongTrinhId option:selected');
+        if (selectedOption.val() != '0') {
+            var loaiCongTrinhMap = {
+                1: 'Hồ',
+                2: 'Đập Dâng', 
+                3: 'Đập Ngăn Mặn',
+                4: 'Trạm Khí Tượng',
+                5: 'Trạm Thủy Văn'
+            };
+            
+            $('#tenCongTrinh').text(selectedOption.text());
+            $('#diadiem').text(selectedOption.data('diadiem') || 'Chưa có thông tin');
+            $('#loaiCongTrinh').text(loaiCongTrinhMap[selectedOption.data('loai')] || 'Chưa xác định');
+            $('#chuDauTu').text(selectedOption.data('chuDauTu') || 'Chưa có thông tin');
+            $('#congTrinhInfo').show();
+        } else {
+            $('#congTrinhInfo').hide();
+        }
+    }
+
+    function loadData() {
+        var id = $('#Id').val();
+        if (id && id != '0') {
+            $.ajax({
+                url: '/DanhSachCongTrinhHuHong/GetById',
+                type: 'GET',
+                data: { id: id },
+                success: function (result) {
+                    if (result.Item) {
+                        $('#CongTrinhId').val(result.Item.Id);
+                        $('#MucDoHuHong').val(result.Item.MucDoHuHong);
+                        $('#NgayPhatHienHuHong').val(formatDateForInput(result.Item.NgayPhatHienHuHong));
+                        $('#NguyenNhanHuHong').val(result.Item.NguyenNhanHuHong);
+                        $('#TrangThaiXuLy').val(result.Item.TrangThaiXuLy);
+                    }
+                }
+            });
+        }
+    }
+
+    function formatDateForInput(dateValue) {
+        if (!dateValue) return '';
+        
+        try {
+            // Nếu là định dạng dd/mm/yyyy
+            if (typeof dateValue === 'string' && dateValue.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                var parts = dateValue.split('/');
+                var date = new Date(parts[2], parts[1] - 1, parts[0]);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString().split('T')[0];
+                }
+            }
+            // Nếu là định dạng khác, thử parse
+            else {
+                var date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString().split('T')[0];
+                }
+            }
+        } catch (error) {
+            console.log('Error formatting date for input:', error, 'for value:', dateValue);
+        }
+        return '';
+    }
+
+    function formatDateForServer(dateString) {
+        try {
+            // Nếu là định dạng yyyy-mm-dd từ input date
+            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                var parts = dateString.split('-');
+                return parts[2] + '/' + parts[1] + '/' + parts[0]; // Chuyển thành dd/mm/yyyy
+            }
+            // Nếu đã là định dạng dd/mm/yyyy
+            else if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dateString;
+            }
+            // Nếu là định dạng khác, thử parse
+            else {
+                var date = new Date(dateString);
+                if (!isNaN(date.getTime())) {
+                    var day = String(date.getDate()).padStart(2, '0');
+                    var month = String(date.getMonth() + 1).padStart(2, '0');
+                    var year = date.getFullYear();
+                    return day + '/' + month + '/' + year;
+                }
+            }
+        } catch (error) {
+            console.log('Error formatting date for server:', error);
+        }
+        return dateString;
+    }
+
+    function luu() {
+        var data = {
+            Id: parseInt($('#CongTrinhId').val()) || 0, // Sử dụng ID của công trình được chọn
+            MucDoHuHong: $('#MucDoHuHong').val(),
+            NgayPhatHienHuHong: $('#NgayPhatHienHuHong').val() ? formatDateForServer($('#NgayPhatHienHuHong').val()) : null,
+            NguyenNhanHuHong: $('#NguyenNhanHuHong').val(),
+            TrangThaiXuLy: $('#TrangThaiXuLy').val()
+        };
+
+        console.log('Data being sent:', data); // Debug log
+
+        if (data.Id == 0) {
+            alert('Vui lòng chọn công trình!');
+            return;
+        }
+
+        if (!data.MucDoHuHong) {
+            alert('Vui lòng chọn mức độ hư hỏng!');
+            return;
+        }
+
+        if (!data.TrangThaiXuLy) {
+            alert('Vui lòng chọn trạng thái xử lý!');
+            return;
+        }
+
+        $.ajax({
+            url: '/DanhSachCongTrinhHuHong/ThemOrCapNhat',
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json; charset=utf-8',
+            success: function (result) {
+                console.log('Server response:', result); // Debug log
+                if (result.Errors && result.Errors.length > 0) {
+                    var errorMessage = result.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('\n');
+                    alert(errorMessage);
+                } else {
+                    alert('Cập nhật thông tin hư hỏng thành công!');
+                    window.location.href = '/DanhSachCongTrinhHuHong';
+                }
+            },
+            error: function (xhr, status, error) {
+                console.log('Error:', error);
+                console.log('Response:', xhr.responseText);
+                alert('Có lỗi xảy ra: ' + error);
+            }
+        });
+    }
+</script>

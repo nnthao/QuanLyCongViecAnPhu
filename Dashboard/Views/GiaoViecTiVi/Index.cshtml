@@ -1,0 +1,1293 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<title>Sở Văn hóa, Thể thao và Du lịch - Màn hình TV Theo dõi Nhiệm vụ</title>
+
+<!-- Fonts: Roboto -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+
+<!-- CSS Libraries -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<style>
+  :root {
+    --bg-main: #eef5fc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --blue-glow: #2563eb;
+    --red-glow: #dc2626;
+    --orange-glow: #d97706;
+    --green-glow: #16a34a;
+    --border-color: #cbd5e1;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #eef5fc;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-primary);
+    touch-action: manipulation;
+  }
+
+  /* Khung chính 1920x1080 tỉ lệ chuẩn TV, tự động scale GPU theo kích thước màn hình và zoom */
+  .tv-dashboard-wrapper {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #eef5fc;
+  }
+
+  /* Header Banner */
+  .tv-header-banner {
+    background: linear-gradient(135deg, #092c64 0%, #0e4896 50%, #0c5ca8 100%);
+    border-bottom: 4px solid #3b82f6;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 5px 20px rgba(14, 72, 150, 0.25);
+    padding: 12px 24px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+
+  #bgHeaderCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.25;
+    z-index: 1;
+  }
+
+  .header-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .header-quochuy-img {
+    height: 62px;
+    width: auto;
+    object-fit: contain;
+    margin-right: 18px;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+    flex-shrink: 0;
+  }
+
+  .tv-header-banner h1 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: 0.6px;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+
+  .tv-header-banner h2 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: #60a5fa;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .header-meta .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(239, 68, 68, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .btn-fullscreen {
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-fullscreen:hover {
+    background: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+  }
+
+  .live-dot {
+    width: 9px;
+    height: 9px;
+    background: #ef4444;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ef4444;
+    animation: blink 1.2s infinite;
+  }
+
+  @@keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.8); }
+  }
+
+  .header-meta .time {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+
+  /* Stat Cards Row */
+  .stat-cards-row {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+    margin-left: -5px;
+    margin-right: -5px;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  .stat-cards-row > div {
+    padding-left: 5px;
+    padding-right: 5px;
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+
+  .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-total {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+  }
+
+  .stat-overdue {
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+  }
+
+  .stat-upcoming {
+    background: #fffbe6;
+    border: 1px solid #fef08a;
+  }
+
+  .stat-done {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+  }
+
+  .stat-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-total .stat-icon { background: #2563eb; }
+  .stat-overdue .stat-icon { background: #dc2626; }
+  .stat-upcoming .stat-icon { background: #d97706; }
+  .stat-done .stat-icon { background: #16a34a; }
+
+  .stat-label {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+  }
+
+  .stat-total .stat-label { color: #1e3a8a; }
+  .stat-overdue .stat-label { color: #dc2626; }
+  .stat-upcoming .stat-label { color: #d97706; }
+  .stat-done .stat-label { color: #15803d; }
+
+  .stat-value {
+    font-family: 'Roboto', sans-serif;
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .stat-total .stat-value { color: #0f172a; }
+  .stat-overdue .stat-value { color: #dc2626; }
+  .stat-upcoming .stat-value { color: #d97706; }
+  .stat-done .stat-value { color: #16a34a; }
+
+  /* Tables Layout (3 Columns Row) */
+  .tables-row {
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 0;
+    margin-left: -5px;
+    margin-right: -5px;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  .table-col {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-left: 5px;
+    padding-right: 5px;
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    width: 33.333333%;
+  }
+
+  .table-panel {
+    background: #ffffff;
+    border: 1px solid #d0e3ff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .panel-header {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 17.5px;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+  }
+
+  .panel-schedule .panel-header {
+    background: linear-gradient(90deg, #0284c7 0%, #1d4ed8 100%);
+  }
+
+  .panel-overdue .panel-header {
+    background: linear-gradient(90deg, #c5221f 0%, #ea3838 100%);
+  }
+
+  .panel-upcoming .panel-header {
+    background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
+  }
+
+  /* Schedule Cards Styles */
+  .schedule-list-wrapper {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .schedule-card-item {
+    background: #ffffff;
+    border: 1px solid #e0e7ff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  }
+
+  .schedule-stt-badge {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+    flex-shrink: 0;
+  }
+
+  .schedule-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .schedule-top-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 8px;
+    margin-bottom: 3px;
+  }
+
+  .schedule-time {
+    color: #0284c7;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .schedule-title {
+    color: #0f2b5c;
+    font-weight: 800;
+    font-size: 16.5px;
+    letter-spacing: 0.2px;
+  }
+
+  .schedule-desc {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 3px;
+  }
+
+  .schedule-bottom-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    font-size: 14px;
+    color: #475569;
+  }
+
+  .schedule-meta-item {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+  }
+
+  .schedule-meta-item i {
+    color: #0284c7;
+    font-size: 14.5px;
+    margin-right: 5px;
+  }
+
+  .schedule-sep {
+    color: #cbd5e1;
+    font-weight: 300;
+  }
+
+  /* Tables Styles */
+  table {
+    color: #0f172a;
+    margin-bottom: 0;
+  }
+
+  .head-table {
+    flex-shrink: 0;
+  }
+
+  table thead th {
+    background: #e0f2fe;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f3460;
+    border-top: none;
+    border-bottom: 1px solid #bae6fd;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  table thead th.th-left {
+    text-align: left;
+    padding-left: 10px;
+  }
+
+  table td {
+    vertical-align: middle;
+    font-size: 14.5px;
+    border-top: 1px solid #e2e8f0;
+    padding: 10px 6px;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .badge-overdue {
+    background: #dc2626;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 13px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .badge-remain {
+    background: #fef08a;
+    color: #854d0e;
+    border: 1px solid #fde047;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .badge-pill-danger {
+    background: #dc2626;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 13px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .badge-pill-warning {
+    background: #f59e0b;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 13px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .badge-pill-success {
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 13px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .date-highlight {
+    color: #dc2626;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .dept-name {
+    color: #334155;
+    font-weight: 500;
+  }
+
+  .task-title {
+    font-weight: 700;
+    color: #0f2b5c;
+  }
+
+  .row-icon {
+    color: #dc2626;
+    margin-right: 5px;
+  }
+
+  /* Task cards for overdue and upcoming panels */
+  .panel-overdue .head-table,
+  .panel-upcoming .head-table {
+    display: none;
+  }
+
+  #scrollOverdue,
+  #scrollUpcoming {
+    padding: 10px;
+  }
+
+  #scrollOverdue {
+    background: #fff4f5;
+  }
+
+  #scrollUpcoming {
+    background: #fffbeb;
+  }
+
+  #tblOverdue,
+  #tblUpcoming {
+    display: block;
+  }
+
+  #tblOverdue colgroup,
+  #tblUpcoming colgroup {
+    display: none;
+  }
+
+  #tblOverdue tbody,
+  #tblUpcoming tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #tblOverdue tbody tr,
+  #tblUpcoming tbody tr {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    column-gap: 14px;
+    row-gap: 5px;
+    align-items: center;
+    min-height: 126px;
+    padding: 12px 14px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+  }
+
+  #tblOverdue tbody tr {
+    background: linear-gradient(135deg, #ffffff 0%, #fff7f8 100%);
+    border-color: #fecdd3;
+  }
+
+  #tblUpcoming tbody tr {
+    background: linear-gradient(135deg, #ffffff 0%, #fffdf3 100%);
+    border-color: #fde68a;
+  }
+
+  #tblOverdue tbody tr:hover,
+  #tblUpcoming tbody tr:hover {
+    color: #0f172a;
+  }
+
+  #tblOverdue tbody tr:hover {
+    background: linear-gradient(135deg, #fff7f8 0%, #ffecef 100%);
+  }
+
+  #tblUpcoming tbody tr:hover {
+    background: linear-gradient(135deg, #fffdf3 0%, #fff7d6 100%);
+  }
+
+  #tblOverdue tbody td,
+  #tblUpcoming tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+    font-size: 15px;
+  }
+
+  #tblOverdue tbody td:nth-child(1),
+  #tblUpcoming tbody td:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    align-self: start;
+    width: 58px;
+    height: 58px;
+    border-radius: 11px;
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 58px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16);
+  }
+
+  #tblOverdue tbody td:nth-child(1) {
+    background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+  }
+
+  #tblUpcoming tbody td:nth-child(1) {
+    background: linear-gradient(135deg, #fde047 0%, #fbbf24 100%);
+    color: #0f2b5c;
+  }
+
+  #tblOverdue tbody td:nth-child(2),
+  #tblUpcoming tbody td:nth-child(2) {
+    grid-column: 2 / 4;
+    grid-row: 1;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  #tblOverdue .task-title,
+  #tblUpcoming .task-title {
+    color: #0f2b5c;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  #tblOverdue .row-icon {
+    display: none;
+  }
+
+  #tblOverdue tbody td:nth-child(3),
+  #tblUpcoming tbody td:nth-child(3) {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    color: #31517d;
+  }
+
+  #tblOverdue tbody td:nth-child(3)::before,
+  #tblUpcoming tbody td:nth-child(3)::before {
+    content: "\f007";
+    margin-right: 7px;
+    color: #1565c0;
+    font-family: FontAwesome;
+    font-size: 16px;
+  }
+
+  #tblOverdue tbody td:nth-child(4),
+  #tblUpcoming tbody td:nth-child(4) {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+    position: relative;
+    min-height: 18px;
+    padding-left: 66px;
+    color: #dc2626;
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  #tblUpcoming tbody td:nth-child(4) {
+    color: #c65d00;
+  }
+
+  #tblOverdue tbody td:nth-child(4)::before,
+  #tblUpcoming tbody td:nth-child(4)::before {
+    content: "\f073";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: FontAwesome;
+    font-size: 17px;
+  }
+
+  #tblOverdue tbody td:nth-child(4)::after,
+  #tblUpcoming tbody td:nth-child(4)::after {
+    content: "Hạn:";
+    position: absolute;
+    left: 25px;
+    top: 0;
+  }
+
+  #tblOverdue tbody td:nth-child(5),
+  #tblUpcoming tbody td:nth-child(5) {
+    grid-column: 3;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  #tblOverdue .badge-overdue,
+  #tblOverdue .badge-pill-danger,
+  #tblOverdue .badge-pill-warning,
+  #tblOverdue .badge-pill-success,
+  #tblUpcoming .badge-remain {
+    border: 0;
+    border-radius: 18px;
+    padding: 7px 14px;
+    font-size: 14px;
+    box-shadow: none;
+  }
+
+  #tblOverdue .badge-overdue,
+  #tblOverdue .badge-pill-danger {
+    background: #ffe0e5;
+    color: #dc2626;
+  }
+
+  #tblUpcoming .badge-remain {
+    background: #ffec99;
+    color: #7c3f00;
+  }
+
+  #tblOverdue tbody tr > td[colspan],
+  #tblUpcoming tbody tr > td[colspan] {
+    grid-column: 1 / 4;
+    grid-row: 1;
+    width: auto;
+    height: auto;
+    background: transparent;
+    box-shadow: none;
+    color: #64748b;
+    line-height: normal;
+  }
+
+  /* Marquee Auto Scroll Full Height */
+  .head-table, .body-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .body-scroll {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .body-scroll .body-table {
+    position: relative;
+  }
+
+  .body-scroll.is-scrolling .body-table {
+    animation-name: scrollUpTable;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @@keyframes scrollUpTable {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="tv-dashboard-wrapper">
+
+  <!-- Header Banner -->
+  <div class="tv-header-banner">
+    <canvas id="bgHeaderCanvas"></canvas>
+    <div class="row align-items-center header-content">
+      <div class="col-xs-12 col-md-8 d-flex align-items-center">
+        <img src="/Content/img/quochuy.png" alt="Quốc Huy" class="header-quochuy-img" />
+        <div>
+          <h1>SỞ VĂN HÓA, THỂ THAO VÀ DU LỊCH</h1>
+          <h2>THEO DÕI NHIỆM VỤ QUÁ HẠN VÀ SẮP ĐẾN HẠN</h2>
+        </div>
+      </div>
+      <div class="col-xs-12 col-md-4 header-meta">
+        <div class="d-flex align-items-center justify-content-end mb-1">
+          <button type="button" class="btn btn-fullscreen mr-2" id="btnFullscreen" title="Bật/Tắt Toàn màn hình">
+            <i class="fa fa-arrows-alt mr-1"></i>Toàn màn hình
+          </button>
+          <div class="live-badge"><span class="live-dot"></span> MÀN HÌNH THEO DÕI REALTIME</div>
+        </div>
+        <div class="time" id="clock">14:30:00 | Thứ Ba, 23/09/2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat Cards Row (Bootstrap 4 Grid col-xs-12 col-sm-6 col-md-3) -->
+  <div class="row stat-cards-row">
+    <div class="col-xs-12 col-sm-6 col-md-3">
+      <div class="stat-card stat-total">
+        <div class="stat-icon"><i class="fa fa-tasks"></i></div>
+        <div>
+          <div class="stat-label">Đang thực hiện</div>
+          <div class="stat-value" id="valDangThucHien">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3">
+      <div class="stat-card stat-done">
+        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
+        <div>
+          <div class="stat-label">Đã hoàn thành</div>
+          <div class="stat-value" id="valHoanThanh">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3">
+      <div class="stat-card stat-upcoming">
+        <div class="stat-icon"><i class="fa fa-clock-o"></i></div>
+        <div>
+          <div class="stat-label">Sắp đến hạn</div>
+          <div class="stat-value" id="valSapDenHan">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-3">
+      <div class="stat-card stat-overdue">
+        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
+        <div>
+          <div class="stat-label">Quá hạn</div>
+          <div class="stat-value" id="valQuaHan">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables Row (3 Columns: Lịch công tác, Quá hạn, Sắp đến hạn) -->
+  <div class="row tables-row">
+    <!-- 1. Lịch công tác trong ngày Panel -->
+    <div class="col-xs-12 col-sm-4 col-md-4 table-col">
+      <div class="table-panel panel-schedule">
+        <div class="panel-header">
+          <span><i class="fa fa-calendar-check-o mr-2"></i>LỊCH CÔNG TÁC TRONG NGÀY</span>
+        </div>
+        <div class="body-scroll" id="scrollSchedule">
+          <div class="schedule-list-wrapper body-table" id="listSchedule">
+            <!-- Dynamic schedule cards from DB -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Overdue Table Panel -->
+    <div class="col-xs-12 col-sm-4 col-md-4 table-col">
+      <div class="table-panel panel-overdue">
+        <div class="panel-header">
+          <span><i class="fa fa-exclamation-triangle mr-2"></i>NHIỆM VỤ QUÁ HẠN</span>
+        </div>
+        <table class="table head-table mb-0">
+          <colgroup>
+            <col style="width:9%">
+            <col style="width:43%">
+            <col style="width:20%">
+            <col style="width:14%">
+            <col style="width:14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th class="th-left">Nội dung</th>
+              <th class="th-left">Phụ trách</th>
+              <th>Hạn xử lý</th>
+              <th>Trễ</th>
+            </tr>
+          </thead>
+        </table>
+        <div class="body-scroll" id="scrollOverdue">
+          <table class="table table-hover mb-0 body-table" id="tblOverdue">
+            <colgroup>
+              <col style="width:9%">
+              <col style="width:43%">
+              <col style="width:20%">
+              <col style="width:14%">
+              <col style="width:14%">
+            </colgroup>
+            <tbody>
+              <!-- Dynamic rows from DB -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Upcoming Table Panel -->
+    <div class="col-xs-12 col-sm-4 col-md-4 table-col">
+      <div class="table-panel panel-upcoming">
+        <div class="panel-header">
+          <span><i class="fa fa-clock-o mr-2"></i>NHIỆM VỤ SẮP ĐẾN HẠN</span>
+        </div>
+        <table class="table head-table mb-0">
+          <colgroup>
+            <col style="width:9%">
+            <col style="width:43%">
+            <col style="width:20%">
+            <col style="width:14%">
+            <col style="width:14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th class="th-left">Nội dung</th>
+              <th class="th-left">Phụ trách</th>
+              <th>Hạn xử lý</th>
+              <th>Còn lại</th>
+            </tr>
+          </thead>
+        </table>
+        <div class="body-scroll" id="scrollUpcoming">
+          <table class="table table-hover mb-0 body-table" id="tblUpcoming">
+            <colgroup>
+              <col style="width:9%">
+              <col style="width:43%">
+              <col style="width:20%">
+              <col style="width:14%">
+              <col style="width:14%">
+            </colgroup>
+            <tbody>
+              <!-- Dynamic rows from DB -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.min.js"></script>
+
+<script>
+  function ajaxGet(url, successCallback, errorCallback) {
+    $.ajax({
+      type: "GET",
+      url: url,
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function(response) {
+        if (successCallback) successCallback(response);
+      },
+      error: function(err) {
+        if (errorCallback) errorCallback(err);
+      }
+    });
+  }
+
+  function adjustDynamicScale() {
+    const wrapper = document.querySelector('.tv-dashboard-wrapper');
+    if (!wrapper) return;
+
+    const baseW = 1920;
+    const baseH = 1080;
+    const currentW = window.innerWidth || document.documentElement.clientWidth || baseW;
+    const currentH = window.innerHeight || document.documentElement.clientHeight || baseH;
+
+    const scaleX = currentW / baseW;
+    const scaleY = currentH / baseH;
+
+    wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
+  }
+
+  function toggleFullScreen() {
+    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      } else if (docEl = document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dayName = days[now.getDay()];
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    $('#clock').text(`${hh}:${mm}:${ss} | ${dayName}, ${dd}/${MM}/${yyyy}`);
+  }
+
+  function initHeaderCanvas() {
+    const canvas = document.getElementById('bgHeaderCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.offsetWidth;
+      canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      alpha: Math.random() * 0.5 + 0.2
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#ffffff';
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+  function getOverdueBadgeHtml(text) {
+    if (!text) return `<span class="badge-overdue">Quá hạn</span>`;
+    const lower = text.toLowerCase();
+    if (lower.includes('cao')) {
+      return `<span class="badge-pill-danger">${text}</span>`;
+    } else if (lower.includes('trung bình') || lower.includes('trung binh')) {
+      return `<span class="badge-pill-warning">${text}</span>`;
+    } else if (lower.includes('thấp') || lower.includes('thap')) {
+      return `<span class="badge-pill-success">${text}</span>`;
+    }
+    return `<span class="badge-overdue">${text}</span>`;
+  }
+
+  function setupAutoScroll(wrapperId, targetId, pxPerSecond) {
+    const wrapper = $('#' + wrapperId);
+    const target = $('#' + targetId);
+    if (!wrapper.length || !target.length) return;
+
+    wrapper.removeClass('is-scrolling');
+
+    const isTable = target.is('table');
+    const container = isTable ? target.find('tbody') : target;
+
+    const originalItemsCount = container.children('[data-original="true"]').length;
+    if (originalItemsCount > 0) {
+      container.children(':not([data-original="true"])').remove();
+    }
+
+    const originalHeight = target[0].scrollHeight;
+    const visibleHeight = wrapper[0].clientHeight;
+
+    if (originalHeight <= visibleHeight) return;
+
+    container.children('[data-original="true"]').each(function() {
+      container.append($(this).clone().removeAttr('data-original'));
+    });
+
+    const loopHeight = target[0].scrollHeight / 2;
+    const duration = Math.max(loopHeight / pxPerSecond, 6);
+
+    target.css('animation-duration', duration + 's');
+    wrapper.addClass('is-scrolling');
+  }
+
+  function loadRealDataFromDB() {
+    ajaxGet('/GiaoViecTiVi/GetThongTinTiVi', function(res) {
+      if (res && res.success && res.data) {
+        const d = res.data;
+
+        $('#valDangThucHien').text(d.DangThucHien || 0);
+        $('#valHoanThanh').text(d.HoanThanh || 0);
+        $('#valSapDenHan').text(d.SapDenHan || 0);
+        $('#valQuaHan').text(d.QuaHan || 0);
+
+        // 1. Populate Schedule List
+        const listSchedule = $('#listSchedule');
+        listSchedule.empty();
+        if (d.DsLichCongTac && d.DsLichCongTac.length > 0) {
+          d.DsLichCongTac.forEach(row => {
+            const descHtml = (row.NoiDung && row.NoiDung !== 'undefined' && row.NoiDung.trim() !== '') 
+              ? `<div class="schedule-desc">${row.NoiDung}</div>` 
+              : '';
+            const diaDiem = (row.DiaDiem && row.DiaDiem !== 'undefined' && row.DiaDiem.trim() !== '') 
+              ? row.DiaDiem 
+              : 'Tại đơn vị';
+            const thanhPhan = (row.ThanhPhanThamDu || row.NguoiThamGiaKhac || row.ChuTriHoacThamGia || '').trim() || 'Toàn thể đơn vị';
+
+            listSchedule.append(`
+              <div class="schedule-card-item" data-original="true">
+                <div class="schedule-stt-badge">${row.SttStr}</div>
+                <div class="schedule-content">
+                  <div class="schedule-top-row">
+                    <span class="schedule-time"><i class="fa fa-clock-o mr-1"></i>${row.ThoiGianStr}</span>
+                    <span class="schedule-sep">|</span>
+                    <span class="schedule-title">${row.TenCuocHop}</span>
+                  </div>
+                  ${descHtml}
+                  <div class="schedule-bottom-row">
+                    <span class="schedule-meta-item"><i class="fa fa-map-marker align-self-start mt-1"></i>${diaDiem}</span>
+                    <span class="schedule-sep">|</span>
+                    <span class="schedule-meta-item" title="Thành phần tham dự"><i class="fa fa-users align-self-start mt-1"></i>${thanhPhan}</span>
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+        } else {
+          listSchedule.append(`
+            <div class="text-center text-muted py-5" data-original="true">
+              <i class="fa fa-calendar-o fa-2x mb-2 d-block text-secondary opacity-50"></i>
+              <span>Không có lịch công tác trong ngày</span>
+            </div>
+          `);
+        }
+
+        // 2. Populate Overdue Table
+        const tbodyOverdue = $('#tblOverdue tbody');
+        tbodyOverdue.empty();
+        if (d.DsNhiemVuQuaHan && d.DsNhiemVuQuaHan.length > 0) {
+          d.DsNhiemVuQuaHan.forEach(row => {
+            const badgeHtml = getOverdueBadgeHtml(row.BadgeText);
+            tbodyOverdue.append(`
+              <tr data-original="true">
+                <td class="text-center font-weight-bold">${row.STT}</td>
+                <td><i class="fa fa-exclamation-triangle row-icon"></i><span class="task-title">${row.TenCongViec}</span></td>
+                <td><span class="dept-name">${row.TenPhuTrach}</span></td>
+                <td class="text-center date-highlight">${row.HanXuLyStr}</td>
+                <td class="text-center">${badgeHtml}</td>
+              </tr>
+            `);
+          });
+        } else {
+          tbodyOverdue.append('<tr data-original="true"><td colspan="5" class="text-center text-muted py-4">Không có nhiệm vụ quá hạn</td></tr>');
+        }
+
+        // 3. Populate Upcoming Table
+        const tbodyUpcoming = $('#tblUpcoming tbody');
+        tbodyUpcoming.empty();
+        if (d.DsNhiemVuSapDenHan && d.DsNhiemVuSapDenHan.length > 0) {
+          d.DsNhiemVuSapDenHan.forEach(row => {
+            tbodyUpcoming.append(`
+              <tr data-original="true">
+                <td class="text-center font-weight-bold">${row.STT}</td>
+                <td><span class="task-title">${row.TenCongViec}</span></td>
+                <td><span class="dept-name">${row.TenPhuTrach}</span></td>
+                <td class="text-center date-highlight">${row.HanXuLyStr}</td>
+                <td class="text-center"><span class="badge-remain">${row.BadgeText}</span></td>
+              </tr>
+            `);
+          });
+        } else {
+          tbodyUpcoming.append('<tr data-original="true"><td colspan="5" class="text-center text-muted py-4">Không có nhiệm vụ sắp đến hạn</td></tr>');
+        }
+
+        setupAutoScroll('scrollSchedule', 'listSchedule', 25);
+        setupAutoScroll('scrollOverdue', 'tblOverdue', 30);
+        setupAutoScroll('scrollUpcoming', 'tblUpcoming', 30);
+      }
+    });
+  }
+
+  // Tự động scale ngay khi script chạy
+  adjustDynamicScale();
+
+  document.addEventListener('DOMContentLoaded', function() {
+    adjustDynamicScale();
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    initHeaderCanvas();
+    loadRealDataFromDB();
+
+    // 10 phút lấy lại dữ liệu mới 1 lần
+    setInterval(loadRealDataFromDB, 10 * 60 * 1000);
+
+    // Gắn sự kiện nút toàn màn hình và nhấp đúp vào banner
+    $('#btnFullscreen').on('click', function(e) {
+      e.preventDefault();
+      toggleFullScreen();
+    });
+
+    $('.tv-header-banner').on('dblclick', function() {
+      toggleFullScreen();
+    });
+
+    // Chặn phím tắt zoom và hỗ trợ phím F để bật toàn màn hình trên TV
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+        e.preventDefault();
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+
+    window.addEventListener('wheel', function(e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    window.addEventListener('resize', function() {
+      adjustDynamicScale();
+      setupAutoScroll('scrollSchedule', 'listSchedule', 25);
+      setupAutoScroll('scrollOverdue', 'tblOverdue', 30);
+      setupAutoScroll('scrollUpcoming', 'tblUpcoming', 30);
+    });
+
+    document.addEventListener('fullscreenchange', function() {
+      setTimeout(function() {
+        adjustDynamicScale();
+        setupAutoScroll('scrollSchedule', 'listSchedule', 25);
+        setupAutoScroll('scrollOverdue', 'tblOverdue', 30);
+        setupAutoScroll('scrollUpcoming', 'tblUpcoming', 30);
+      }, 150);
+    });
+  });
+</script>
+</body>
+</html>

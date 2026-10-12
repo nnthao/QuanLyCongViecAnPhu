@@ -1,0 +1,179 @@
+﻿@{
+    ViewBag.Title = "Danh sách công trình hư hỏng";
+}
+
+<div class="content">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Danh sách công trình hư hỏng</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Danh sách công trình hư hỏng</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách công trình hư hỏng</h3>
+                            <div class="card-tools">
+                                <a class="btn btn-primary" href="/DanhSachCongTrinhHuHong/Form?id=0">
+                                    <i class="fa fa-plus"></i> Thêm mới công trình hư hỏng
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table id="table" 
+                                   data-toggle="table"
+                                   data-url="/DanhSachCongTrinhHuHong/GetAll"
+                                   data-pagination="true"
+                                   data-side-pagination="server"
+                                   data-page-list="[30, 50, 100, 200]"
+                                   data-search="true"
+                                   data-show-refresh="true"
+                                   data-show-toggle="true"
+                                   data-show-columns="true"
+                                   data-sort-name="Id"
+                                   data-sort-order="desc">
+                                <thead>
+                                    <tr>
+                                        <th data-field="Id" data-sortable="true" data-visible="false">ID</th>
+                                        <th data-field="TenCongTrinh" data-sortable="true">Tên công trình</th>
+                                        <th data-field="Diadiem" data-sortable="true">Địa điểm</th>
+                                        <th data-field="LoaiCongTrinh" data-sortable="true" data-formatter="loaiCongTrinhFormatter">Loại công trình</th>
+                                        <th data-field="ChuDauTu" data-sortable="true">Chủ đầu tư</th>
+                                        <th data-field="QuyMo" data-sortable="true">Quy mô</th>
+                                        <th data-field="DienTich" data-sortable="true">Diện tích</th>
+                                        <th data-field="MucDoHuHong" data-sortable="true">Mức độ hư hỏng</th>
+                                        <th data-field="NgayPhatHienHuHong" data-sortable="true" data-formatter="dateFormatter">Ngày phát hiện</th>
+                                        <th data-field="NguyenNhanHuHong" data-sortable="true">Nguyên nhân</th>
+                                        <th data-field="TrangThaiXuLy" data-sortable="true" data-formatter="trangThaiXuLyFormatter">Trạng thái xử lý</th>
+                                        <th data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">Thao tác</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function loaiCongTrinhFormatter(value, row, index) {
+        var loaiCongTrinhMap = {
+            0: '--- Chọn ---',
+            1: 'Hồ',
+            2: 'Đập Dâng',
+            3: 'Đập Ngăn Mặn',
+            4: 'Trạm Khí Tượng',
+            5: 'Trạm Thủy Văn'
+        };
+        return loaiCongTrinhMap[value] || value;
+    }
+
+    function trangThaiXuLyFormatter(value, row, index) {
+        console.log('trangThaiXuLyFormatter called with value:', value, 'row:', row); // Debug log
+        
+        if (!value) return '<span class="badge badge-secondary">Chưa xử lý</span>';
+        
+        switch(value.toLowerCase()) {
+            case 'đã xử lý':
+                return '<span class="badge badge-success">Đã xử lý</span>';
+            case 'đang xử lý':
+                return '<span class="badge badge-warning">Đang xử lý</span>';
+            case 'chưa xử lý':
+                return '<span class="badge badge-secondary">Chưa xử lý</span>';
+            default:
+                return '<span class="badge badge-secondary">' + value + '</span>';
+        }
+    }
+
+    function dateFormatter(value, row, index) {
+        if (!value) return 'invalid';
+        
+        try {
+            // Nếu value là DateTime object
+            if (value instanceof Date) {
+                return value.toLocaleDateString('vi-VN');
+            }
+            // Nếu value là string
+            else if (typeof value === 'string') {
+                var date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('vi-VN');
+                }
+            }
+            
+            return 'invalid';
+        } catch (error) {
+            return 'invalid';
+        }
+    }
+
+    function operateFormatter(value, row, index) {
+        return [
+            '<a class="btn btn-info btn-sm" href="/DanhSachCongTrinhHuHong/Form?id=' + row.Id + '">',
+            '<i class="fa fa-edit"></i> Sửa',
+            '</a>',
+            '<a class="btn btn-danger btn-sm ml-1" href="javascript:void(0)" onclick="xoa(' + row.Id + ')">',
+            '<i class="fa fa-trash"></i> Xóa',
+            '</a>'
+        ].join('');
+    }
+
+    window.operateEvents = {
+        'click .btn-info': function (e, value, row, index) {
+            window.location.href = '/DanhSachCongTrinhHuHong/Form?id=' + row.Id;
+        }
+    };
+
+    function xoa(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa công trình hư hỏng này?')) {
+            $.ajax({
+                url: '/DanhSachCongTrinhHuHong/Xoa',
+                type: 'POST',
+                data: { id: id },
+                success: function (result) {
+                    if (result.Success) {
+                        alert('Xóa thành công!');
+                        $('#table').bootstrapTable('refresh');
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa!');
+                    }
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra khi xóa!');
+                }
+            });
+        }
+    }
+    
+    $(document).ready(function() {
+        // Add event listener for table refresh
+        $('#table').on('refresh.bs.table', function() {
+            // Table refreshed
+        });
+        
+        // Add event listener for table load success
+        $('#table').on('load-success.bs.table', function(data) {
+            // Table loaded successfully
+        });
+        
+        // Add event listener for table load error
+        $('#table').on('load-error.bs.table', function(status) {
+            // Table load error
+        });
+    });
+</script>

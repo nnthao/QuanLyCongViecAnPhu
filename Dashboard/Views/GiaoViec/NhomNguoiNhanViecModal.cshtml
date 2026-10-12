@@ -1,0 +1,298 @@
+@{
+    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId((System.Security.Claims.ClaimsIdentity)User.Identity);
+    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted().Where(x => x.Id != currentUserId).ToList();
+    var phongBans = Dashboard.Common.CacheManagerHelper.GetPhongBanNhanViecCacheNotDeleted();
+}
+<style>
+    #chonNhomNguoiNhanModal .table-scroll {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    #chonNhomNguoiNhanModal .table-container {
+        margin: 20px auto;
+        max-width: 800px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    #chonNhomNguoiNhanModal .table-header {
+        background: linear-gradient(90deg, #4a90e2, #357abd);
+        color: white;
+        font-weight: bold;
+    }
+
+        #chonNhomNguoiNhanModal .table-header th {
+            border: none;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+    #chonNhomNguoiNhanModal .expandable-row {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+
+        #chonNhomNguoiNhanModal .expandable-row:hover {
+            background-color: #e9ecef;
+        }
+
+        #chonNhomNguoiNhanModal .expandable-row td {
+            padding: 10px 12px;
+            vertical-align: middle;
+        }
+
+    #chonNhomNguoiNhanModal .child-row {
+        background-color: white;
+        display: table-row;
+    }
+
+        #chonNhomNguoiNhanModal .child-row td {
+            padding: 8px;
+            border-top: 1px solid #dee2e6;
+        }
+
+    #chonNhomNguoiNhanModal .expand-icon {
+        transition: transform 0.3s ease;
+        margin-right: 8px;
+        color: #007bff;
+    }
+
+    #chonNhomNguoiNhanModal .checkbox-cell {
+        text-align: center;
+        width: 80px;
+    }
+
+    #chonNhomNguoiNhanModal .unit-name {
+        font-weight: bold;
+    }
+
+    .child-unit-name {
+        color: #666;
+        font-size: 0.95em;
+    }
+
+    #chonNhomNguoiNhanModal .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    #chonNhomNguoiNhanModal .custom-checkbox {
+        transform: scale(1.2);
+    }
+   
+</style>
+
+<div class="modal fade" id="chonNhomNguoiNhanModal" tabindex="-1" role="dialog" aria-labelledby="chonNhomNguoiNhanModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="chonNhomNguoiNhanModalLabel">Chọn nhóm người nhận</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table mt-2 ">
+                        <tbody id="userBodyNhomNhanViec">
+                            <!-- Dữ liệu nhóm sẽ được load từ API -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"> <i class="fa fa-times"></i> Đóng</button>
+                <button type="button" class="btn btn-success" id="btnChonNguoi"><i class="fa fa-check"></i> Chọn</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Biến lưu trữ dữ liệu nhóm
+        let groupData = [];
+        
+        // Load dữ liệu nhóm ngay khi trang load
+        loadGroupData();
+
+        $("#btnOpenChonNhomNguoiNhanModal").click(function () {
+            // Remove tất cả checkbox được check trong modal
+            $("#userBodyNhomNhanViec input:checked").prop("checked", false);
+            $("#chonNhomNguoiNhanModal").modal("show");
+        });
+
+        // Event khi modal được hiển thị
+        $("#chonNhomNguoiNhanModal").on("show.bs.modal", function () {
+            // Remove tất cả checkbox được check trong modal
+            $("#userBodyNhomNhanViec input:checked").prop("checked", false);
+        });
+
+        // Load dữ liệu nhóm từ API
+        function loadGroupData() {
+            $.ajax({
+                url: '/NhomNhanViec/GetListNhomNhanViecDeChon',
+                type: 'GET',
+                success: function(response) {
+                    if (response && Array.isArray(response)) {
+                        groupData = response;
+                        renderGroupTable(groupData);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi load dữ liệu nhóm:', error);
+                }
+            });
+        }
+
+        // Render bảng nhóm theo cấu trúc giống user display
+        function renderGroupTable(groups) {
+            var tbody = $('#userBodyNhomNhanViec');
+            tbody.empty();
+
+            groups.forEach(function(group) {
+                // Hàng nhóm (expandable)
+                var groupRow = $('<tr class="expandable-row" data-group="group-' + group.Id + '">');
+                groupRow.append('<td class="unit-name"><span><i class="fa fa-caret-right expand-icon collapsed"></i><span>' + (group.Ten || '') + '</span></span></td>');
+                groupRow.append('<td class="checkbox-cell"><input type="checkbox" class="custom-checkbox parent-checkbox" id="group-' + group.Id + '"></td>');
+                tbody.append(groupRow);
+
+                // Các thành viên trong nhóm
+                if (group.ThanhVienNhomNhanViecs && group.ThanhVienNhomNhanViecs.length > 0) {
+                    group.ThanhVienNhomNhanViecs.forEach(function(member) {
+                        var memberRow = $('<tr class="child-row" data-parent="group-' + group.Id + '" style="display: none;">');
+                        memberRow.append('<td class="child-unit-name">' + (member.Name || '') + '</td>');
+                        memberRow.append('<td class="checkbox-cell"><input type="checkbox" id="Member_' + member.UserId + '" data-id="' + member.UserId + '" data-name="' + (member.Name || '') + '" data-parent="group-' + group.Id + '" class="custom-checkbox child-checkbox"></td>');
+                        tbody.append(memberRow);
+                    });
+                } else {
+                    // Nếu không có thành viên, hiển thị thông báo
+                    var emptyRow = $('<tr class="child-row" data-parent="group-' + group.Id + '" style="display: none;">');
+                    emptyRow.append('<td class="child-unit-name text-muted">Không có thành viên</td>');
+                    emptyRow.append('<td class="checkbox-cell"></td>');
+                    tbody.append(emptyRow);
+                }
+            });
+        }
+
+        // Tìm kiếm nhóm và thành viên
+        $('#searchGroupInput').on('input', function() {
+            var searchTerm = $(this).val().toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                // Hiển thị tất cả
+                $('#userBodyNhomNhanViec tr').show();
+            } else {
+                $('#userBodyNhomNhanViec tr').each(function() {
+                    var $row = $(this);
+                    var isExpandableRow = $row.hasClass('expandable-row');
+                    var isChildRow = $row.hasClass('child-row');
+                    
+                    if (isExpandableRow) {
+                        // Đối với hàng nhóm, tìm trong tên nhóm
+                        var groupText = $row.find('.unit-name span:last').text().toLowerCase();
+                        var hasMatch = groupText.includes(searchTerm);
+                        
+                        // Kiểm tra xem có thành viên nào trong nhóm này khớp không
+                        var groupName = $row.data('group');
+                        var childRows = $('#userBodyNhomNhanViec tr.child-row[data-parent="' + groupName + '"]');
+                        var hasChildMatch = false;
+                        
+                        childRows.each(function() {
+                            var childText = $(this).find('.child-unit-name').text().toLowerCase();
+                            if (childText.includes(searchTerm)) {
+                                hasChildMatch = true;
+                                $(this).show(); // Hiển thị thành viên khớp
+                            } else {
+                                $(this).hide(); // Ẩn thành viên không khớp
+                            }
+                        });
+                        
+                        if (hasMatch || hasChildMatch) {
+                            $row.show();
+                        } else {
+                            $row.hide();
+                        }
+                    } else if (isChildRow) {
+                        // Đối với hàng thành viên, tìm trong tên thành viên
+                        var memberText = $row.find('.child-unit-name').text().toLowerCase();
+                        if (memberText.includes(searchTerm)) {
+                            $row.show();
+                        } else {
+                            $row.hide();
+                        }
+                    }
+                });
+            }
+        });
+
+        // Click để expand/collapse nhóm - sử dụng event delegation
+        $(document).on('click', '#userBodyNhomNhanViec .unit-name', function(e) {
+            e.preventDefault();
+            var $row = $(this).closest(".expandable-row");
+            var groupName = $row.data("group");
+            var $icon = $row.find(".expand-icon");
+
+            // Toggle các hàng con
+            $("#userBodyNhomNhanViec tr.child-row[data-parent='" + groupName + "']").toggle();
+
+            // Đổi icon
+            $icon.toggleClass("fa-caret-right fa-caret-down");
+        });
+
+        // Checkbox cha (nhóm) - sử dụng event delegation
+        $(document).on("change", "#userBodyNhomNhanViec .parent-checkbox", function() {
+            var isChecked = $(this).prop("checked");
+            var parentId = $(this).attr("id");
+
+            // check/uncheck toàn bộ checkbox con cùng nhóm
+            $("#userBodyNhomNhanViec input.child-checkbox[data-parent='" + parentId + "']").prop("checked", isChecked);
+        });
+
+        // Checkbox con (thành viên) - sử dụng event delegation
+        $(document).on("change", "#userBodyNhomNhanViec .child-checkbox", function() {
+            var parentId = $(this).data("parent");
+            var $parent = $("#" + parentId);
+
+            // Nếu tất cả con đều check thì cha cũng check
+            var allChecked = $("#userBodyNhomNhanViec input.child-checkbox[data-parent='" + parentId + "']").length ===
+                $("#userBodyNhomNhanViec input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+
+            $parent.prop("checked", allChecked);
+        });
+
+        // Xử lý khi bấm nút Chọn
+        $('#btnChonNguoi').on('click', function() {
+            // Lấy danh sách data-id và loại bỏ trùng lặp
+            var selectedMemberIds = [...new Set($('#userBodyNhomNhanViec .child-checkbox:checked').map(function() {
+                return $(this).data('id');
+            }).get())];
+
+            if (selectedMemberIds.length === 0) {
+                alert('Vui lòng chọn ít nhất một thành viên');
+                return;
+            }
+            console.log(selectedMemberIds)
+            //// Thêm các thành viên đã chọn vào danh sách người nhận
+            addUsersFromGroups(selectedMemberIds);
+            
+            // Đóng modal
+            $('#chonNhomNguoiNhanModal').modal('hide');
+        });
+
+        // Thêm user từ nhóm vào danh sách người nhận
+        function addUsersFromGroups(userIds) {
+            var checkedIds = [];
+            $('#userBody input.child-checkbox:checked').each(function () {
+                checkedIds.push($(this).data('id'));
+            });
+
+            userIds.forEach(function(userId) {
+                let existingUser = checkedIds.includes(userId);
+                if (!existingUser) {
+                    $(`input[data-id="${userId}"]`).prop('checked', true).trigger('change');
+                }
+            });
+        }
+    });
+</script>

@@ -1,0 +1,142 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using System.Configuration;
+@using Dashboard.Common;
+<style>
+    #nguoiLienQuanTab .search {
+        width: 100%;
+    }
+</style>
+<div class="row" id="nguoiLienQuanTab">
+    <div class="col-sm-6 col-xs-12" style="padding: 0 10px">
+        <p style="margin: 0;"><b>Chọn người liên quan:</b></p>
+        <table id="bs-nguoi-tham-gia"
+               data-toggle="table"
+               data-toolbar="#get"
+               data-url="/CuocHopDangKy/GetNguoiLienQuanCuocHop"
+               data-pagination="true"
+               data-page-size="30"
+               data-page-list="[30, 50, 100]"
+               data-locale="vi-VN"
+               data-sort-name="Name"
+               data-sort-order="asc"
+               data-search="true"
+               data-search-text="">
+            <thead>
+                <tr>
+                    <th data-field="Name">Tên</th>
+                    <th data-field="Email">Email</th>
+                    <th data-field="CoQuan">Cơ quan</th>
+                    <th data-width="20" data-align="center" data-field="operate"
+                        data-formatter="actionChooseNguoiLienQuan">&nbsp;</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="col-sm-6 col-xs-12" style="padding: 0 10px">
+        <p style="margin: 0;"><b>Người liên quan đã chọn:</b></p>
+        <table id="bsNguoiDuocChon"
+               data-toggle="table"
+               data-pagination="true"
+               data-page-size="30"
+               data-page-list="[30, 50, 100]"
+               data-locale="vi-VN"
+               data-sort-name="Name"
+               data-sort-order="asc"
+               data-search="true"
+               data-search-text="">
+            <thead>
+                <tr>
+                    <th data-field="Name">Tên</th>
+                    <th data-field="Email">Email</th>
+                    <th data-field="CoQuan">Cơ quan</th>
+                    <th data-width="20" data-align="center" data-field="operate"
+                        data-formatter="actionNguoiDuocChon">&nbsp;</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script>
+    let NguoiDungSelected = [];
+    $("#bsNguoiDuocChon").bootstrapTable("destroy");
+    $("#bsNguoiDuocChon").bootstrapTable({ data: NguoiDungSelected });
+
+    function actionChooseNguoiLienQuan(value, row, index) {
+        let chooseBtn =
+            `<button onclick="chooseNguoiLienQuan(${row.Id}, '${row.Name}', '${row.Email}', '${row.CoQuan}');"
+                    class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-arrow-right'></i> </button>`;
+
+        return chooseBtn;
+    }
+
+    function actionNguoiDuocChon(value, row, index) {
+        let removeBtn =
+            `<button onclick="removeNguoiDuocChon(${row.Id});"
+                    class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-trash'></i> </button>`;
+
+        return removeBtn;
+    }
+
+    function chooseNguoiLienQuan(id, name, email, coquan) {
+        var index = NguoiDungSelected.findIndex(x => x.Id === id);
+        if (index == -1) {
+            NguoiDungSelected.push({
+                Id: id,
+                Name: name,
+                Email: email,
+                CoQuan: coquan,
+            });
+
+            $("#bsNguoiDuocChon").bootstrapTable("destroy");
+            $("#bsNguoiDuocChon").bootstrapTable({ data: NguoiDungSelected });
+        }
+    }
+
+    function removeNguoiDuocChon(id) {
+        $("#bsNguoiDuocChon").bootstrapTable("destroy");
+        var index = NguoiDungSelected.findIndex(x => x.Id === id);
+
+        if (index >= 0) {
+            NguoiDungSelected.splice(index, 1);
+            $("#bsNguoiDuocChon").bootstrapTable({ data: NguoiDungSelected });
+
+            $.ajax({
+                url: `/CuocHopDangKy/XoaNguoiThamGiaCuocHopDaChon?cuocHopId=${$("#Id").val()}&nguoiLienQuanId=${id}`,
+                processData: false,
+                type: "GET",
+                success: function (data) {
+
+                },
+                error: function () {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                }
+            });
+        }
+    }
+
+    function ajaxNguoiLienQuanServer() {
+        NguoiDungSelected = [];
+        $("#bsNguoiDuocChon").bootstrapTable("destroy");
+        $("#bsNguoiDuocChon").bootstrapTable({ data: NguoiDungSelected });
+
+        if ($("#Id").val() && $("#Id").val() > 0) {
+            $.ajax({
+                url: "/CuocHopDangKy/GetNguoiLienQuanCuocHopDaChon?cuocHopId=" + $("#Id").val(),
+                processData: false,
+                type: "GET",
+                success: function (data) {
+                    NguoiDungSelected = data;
+                    $("#bsNguoiDuocChon").bootstrapTable("destroy");
+                    $("#bsNguoiDuocChon").bootstrapTable({ data: NguoiDungSelected });
+                },
+                error: function () {
+
+                }
+            });
+        }
+    }
+</script>

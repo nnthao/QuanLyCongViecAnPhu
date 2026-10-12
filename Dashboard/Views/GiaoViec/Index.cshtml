@@ -1,0 +1,408 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.Entities
+@using Dashboard.Models.HtmlHelpers
+@using Newtonsoft.Json
+@using System.Linq
+@model GiaoViecFormQueryViewModel
+@{
+    ViewBag.Title = "Công việc đã giao";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var shouldOpenCreateModal = Model.Id == 0
+        && (!string.IsNullOrWhiteSpace(Model.SoKyHieu)
+            || !string.IsNullOrWhiteSpace(Model.TrichYeu)
+            || !string.IsNullOrWhiteSpace(Model.IofficeNumber)
+            || !string.IsNullOrWhiteSpace(Model.VanBanId));
+    var tenCongViec = string.Join(" - ", new[] { Model.SoKyHieu, Model.TrichYeu }
+        .Where(value => !string.IsNullOrWhiteSpace(value)));
+    var initialGiaoViecForm = shouldOpenCreateModal
+        ? new
+        {
+            Id = 0,
+            TenCongViec = tenCongViec,
+            NoiDung = Model.NoiDung ?? string.Empty,
+            GhiChu = string.IsNullOrWhiteSpace(Model.GhiChu) ? "Nhiệm vụ tạo từ iOffice" : Model.GhiChu,
+            IofficeNumber = Model.IofficeNumber ?? string.Empty,
+            VanBanId = Model.VanBanId ?? string.Empty
+        }
+        : null;
+    var initialGiaoViecFormJson = JsonConvert.SerializeObject(
+        initialGiaoViecForm,
+        new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml });
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-6 col-xs-12">
+                                <button type="button" onclick="openGiaoViecFormModal(0)" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Tạo việc
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao từ ", col: 2, required: false)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 2, required: false)
+                            @Html.CustomSelect2Empty(id: "NguoiDuocGiaoId", label: "Người được giao", col: 3, moreClass: "col-sm-3 col-xs-12")
+                            <div class="col-sm-3 col-xs-12">
+                                <div class="form-group">
+                                    <label for="TrangThaiSearch">Trạng thái</label>
+                                    <select id="TrangThaiSearch" class="form-control">
+                                        <option value="0">-- Chọn --</option>
+                                        <option value="1">Đã hoàn thành</option>
+                                        <option value="2" selected>Chưa hoàn thành</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-xs-12">
+                                <div class="form-group">
+                                    <label for="TrangThaiSearch" style="width:100%">&nbsp;</label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-columns-hidden="['GhiChu']"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/GiaoViec/GetListDaGiao"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenCongViec">Tên công việc</th>
+                                            <th data-field="NoiDung">Nội dung</th>
+                                            <th data-field="GhiChu">Ghi chú</th>
+                                            <th data-field="NguoiGiao">Người giao</th>
+                                            <th data-field="NgayTaoStr">Ngày giao</th>
+                                            <th data-field="ThanhVienStrs" data-formatter="thanhVienFormatter">Người nhận việc</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Nhắc nhở -->
+<div class="modal fade" id="nhacNhoModal" tabindex="-1" role="dialog" aria-labelledby="nhacNhoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nhacNhoModalLabel">Nhắc nhở thành viên</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><strong id="tenCongViecModal"></strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Chọn thành viên cần nhắc nhở:</label>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;" class="text-center">
+                                        <input type="checkbox" id="checkAllThanhVien" />
+                                    </th>
+                                    <th>Thành viên</th>
+                                    <th>Hạn xử lý</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="danhSachThanhVien">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                <button type="button" class="btn btn-primary" id="btnGuiNhacNho"><i class="fa fa-bell"></i> Gửi nhắc nhở</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/GiaoViec/FormModal.cshtml")
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    var initialGiaoViecForm = @Html.Raw(initialGiaoViecFormJson);
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function isHoanThanhFormatter(value, row, index) {
+        if (row.IsHoanThanh) {
+            return `<span class="badge bg-success">Đã hoàn thành</span>`;
+        }
+        return `<span class="badge bg-warning">Chưa hoàn thành</span>`;
+    }
+
+    var currentRowData = null;
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<button type="button" onclick="openGiaoViecFormModal(${row.Id})" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</button>`;
+        const btnXoa = `<button id="btn-delete-item" class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xoá</button>`;
+        const btnNhacNho = `<button id="btn-nhac-nho" class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-bell'></i> Nhắc nhở</button>`;
+        return btnSua + btnXoa + btnNhacNho;
+    }
+
+    function noiDungFormatter(value, row, index) {
+        if (!row.GiaoViecThanhViens || row.GiaoViecThanhViens.length === 0) {
+            return value || '';
+        }
+        var itemsWithContent = row.GiaoViecThanhViens.filter(function (tv) { return tv.NoiDungNhiemVu; });
+        if (itemsWithContent.length === 0) {
+            return '';
+        }
+        if (itemsWithContent.length === 1) {
+            return itemsWithContent[0].NoiDungNhiemVu;
+        }
+        return itemsWithContent.map(function (tv) { return tv.NoiDungNhiemVu; }).join('<br/>');
+    }
+
+    function thanhVienFormatter(value, row, index) {
+        if (!row.GiaoViecThanhViens || row.GiaoViecThanhViens.length === 0) {
+            return '';
+        }
+
+        let html = ``;
+        for (let i = 0; i < row.GiaoViecThanhViens.length; i++) {
+            let item = row.GiaoViecThanhViens[i];
+
+            var hanXuLy = `- Hạn xử lý: <b>${item.HanXuLyStr || ''}</b>`;
+            var statusHtml = '';
+
+            if (item.IsHoanThanh) {
+                // Đã hoàn thành
+                statusHtml = `<span class="text-success text-bold">✅ Đã hoàn thành</span> ${hanXuLy}`;
+            } else {
+                // Chưa hoàn thành
+                if (item.SoNgayConLai >= 0) {
+                    // Còn thời gian
+                    statusHtml = `<span class="text-warning text-bold">⏳ Chưa hoàn thành</span> ${hanXuLy} (Còn lại ${item.SoNgayConLai} ngày)`;
+                } else {
+                    // Trễ hạn
+                    statusHtml = `<span class="text-danger text-bold">❌ Trễ hạn</span> ${hanXuLy} (Trễ ${Math.abs(item.SoNgayConLai)} ngày)`;
+                }
+            }
+
+            html += `<p><b><a href="javascript:void(0)" onclick="openXemThongTinModal(${item.Id}, ${row.Id}, ${item.ThanhVienId})">${item.ThanhVien || ''}</a></b> - ${statusHtml}</p>`;
+        }
+        return html;
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá công việc này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/GiaoViec/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-nhac-nho': function (e, value, row, index) {
+            currentRowData = row;
+            openNhacNhoModal(row);
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.TrangThaiSearch = $("#TrangThaiSearch").val();
+        params.NguoiDuocGiaoId = $("#NguoiDuocGiaoId").val();
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    function openNhacNhoModal(row) {
+        if (!row.GiaoViecThanhViens || row.GiaoViecThanhViens.length === 0) {
+            toastr.warning("Không có thành viên để nhắc nhở.");
+            return;
+        }
+
+        $("#tenCongViecModal").text(row.TenCongViec || '');
+        var tbody = $("#danhSachThanhVien");
+        tbody.empty();
+
+        row.GiaoViecThanhViens.forEach(function (item) {
+            var statusText = '';
+            var statusClass = '';
+            if (item.IsHoanThanh) {
+                statusText = 'Đã hoàn thành';
+                statusClass = 'text-success';
+            } else {
+                if (item.SoNgayConLai >= 0) {
+                    statusText = `Chưa hoàn thành (Còn lại ${item.SoNgayConLai} ngày)`;
+                    statusClass = 'text-warning';
+                } else {
+                    statusText = 'Trễ hạn';
+                    statusClass = 'text-danger';
+                }
+            }
+
+            var tr = $(`
+                <tr class="row-clickable" style="cursor: pointer;">
+                    <td class="text-center">
+                        <input type="checkbox" class="checkbox-thanh-vien" data-giao-viec-thanh-vien-id="${item.Id}" data-thanh-vien-id="${item.ThanhVienId}" data-han-xu-ly="${item.HanXuLyStr || ''}" ${item.IsHoanThanh ? 'disabled' : ''} />
+                    </td>
+                    <td>${item.ThanhVien || ''}</td>
+                    <td>${item.HanXuLyStr || ''}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                </tr>
+            `);
+            tbody.append(tr);
+
+            tr.on('click', function (e) {
+                if ($(e.target).is('input[type="checkbox"]')) {
+                    return;
+                }
+                var checkbox = $(this).find('.checkbox-thanh-vien');
+                if (!checkbox.is(':disabled')) {
+                    checkbox.prop('checked', !checkbox.prop('checked'));
+                }
+            });
+        });
+
+        $("#checkAllThanhVien").prop('checked', false);
+        $("#nhacNhoModal").modal('show');
+    }
+
+    function guiNhacNho() {
+        var selectedThanhViens = [];
+        $(".checkbox-thanh-vien:checked").each(function () {
+            selectedThanhViens.push({
+                GiaoViecThanhVienId: $(this).data('giao-viec-thanh-vien-id'),
+                ThanhVienId: $(this).data('thanh-vien-id'),
+                HanXuLy: $(this).data('han-xu-ly')
+            });
+        });
+
+        if (selectedThanhViens.length === 0) {
+            toastr.warning("Vui lòng chọn ít nhất một thành viên để nhắc nhở.");
+            return;
+        }
+
+        if (!currentRowData) {
+            toastr.error("Không tìm thấy thông tin công việc.");
+            return;
+        }
+
+        showLoadingModal();
+
+        var fd = new FormData();
+        fd.append("GiaoViecId", currentRowData.Id);
+        fd.append("TenCongViec", currentRowData.TenCongViec);
+        fd.append("ThanhViens", JSON.stringify(selectedThanhViens));
+
+        ajaxPostFormData("/GiaoViec/GuiNhacNho", fd, function funcCallback(data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var errorMsg = data.Errors.map(function (e) { return e.Description; }).join("<br/>");
+                toastr.error(errorMsg);
+            } else {
+                toastr.success("Gửi nhắc nhở thành công.");
+                $("#nhacNhoModal").modal('hide');
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+
+        $("#TrangThaiSearch, #NguoiDuocGiaoId").change(function () {
+            search();
+        });
+
+        ajaxGet("/GiaoViec/GetNguoiDuocGiaoLookup", function funcCallback(res) {
+            var data = [{ id: '', text: '-- Chọn --' }].concat(res || []);
+            $("#NguoiDuocGiaoId").select2({
+                data: data,
+                language: "vi",
+                placeholder: "-- Chọn --",
+                allowClear: true
+            });
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+
+        $("#checkAllThanhVien").change(function () {
+            var isChecked = $(this).is(':checked');
+            $(".checkbox-thanh-vien:not(:disabled)").prop('checked', isChecked);
+        });
+
+        $("#btnGuiNhacNho").click(function () {
+            guiNhacNho();
+        });
+
+        if (initialGiaoViecForm) {
+            openGiaoViecFormModal(initialGiaoViecForm.Id, initialGiaoViecForm);
+        }
+    });
+</script>

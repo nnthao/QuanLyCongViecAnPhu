@@ -1,0 +1,641 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê mức độ hoàn thành theo phòng ban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var dauThang = Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var cuoiThang = Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy");
+
+    var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+    var currentPhongBanId = Dashboard.Common.UserClaimHelper.GetPhongBanId(identity);
+    var isSystemUser = Dashboard.Common.UserClaimHelper.GetIsSystemUser(identity);
+    var isQuyenGiaoViecTatCaPhongBan = Dashboard.Common.UserClaimHelper.IsQuyenAllow(identity, Dashboard.Common.QuyenMoRong.QuyenGiaoViecTatCaPhongBan.ToString());
+    var phongBanIdForTree = (isSystemUser || isQuyenGiaoViecTatCaPhongBan) ? 0 : currentPhongBanId;
+
+    var phongBans = Dashboard.Common.UltiHelper.GetPhongBanTreeSorted(phongBanIdForTree, true);
+}
+<style>
+    #thongKeTable th {
+        text-align: center;
+    }
+
+    /* Multi-select dropdown styles */
+    .multi-select-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .multi-select-dropdown {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        position: relative;
+    }
+
+    .multi-select-header {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+    }
+
+        .multi-select-header:hover {
+            background: #e9e9e9;
+        }
+
+    .multi-select-placeholder {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .multi-select-arrow {
+        font-size: 12px;
+        color: #666;
+        transition: transform 0.3s ease;
+    }
+
+    .multi-select-dropdown.open .multi-select-arrow {
+        transform: rotate(180deg);
+    }
+
+    .multi-select-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 300px;
+        overflow: hidden;
+    }
+
+    .multi-select-dropdown.open .multi-select-content {
+        display: block;
+    }
+
+    .multi-select-search {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        position: relative;
+    }
+
+        .multi-select-search input {
+            width: 100%;
+            padding: 6px 30px 6px 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        font-size: 14px;
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        cursor: pointer;
+        font-size: 14px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .clear-search:hover {
+            background: #999;
+            color: white;
+        }
+
+    .multi-select-options {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .multi-select-option {
+        display: block;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+        .multi-select-option:hover {
+            background: #f8f9fa;
+        }
+
+        .multi-select-option:last-child {
+            border-bottom: none;
+        }
+
+        .multi-select-option input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.1);
+        }
+
+        .multi-select-option span {
+            color: #333;
+        }
+
+        .multi-select-option input[type="checkbox"]:checked + span {
+            font-weight: 500;
+        }
+
+    /* Scrollbar styling */
+    .multi-select-options::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .multi-select-options::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .multi-select-options::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+        .multi-select-options::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao Từ ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: dauThang)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: cuoiThang)
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                <div class="form-group">
+                                    <label>
+                                        &nbsp;
+                                    </label>
+                                    <div class="input-group">
+                                        <button onclick="thongKe();" class="btn btn-primary mr-3"><i class="fa fa-check"></i> Thống kê</button>
+                                        <button onclick="xuatExcel();" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                <div class="form-group">
+                                    <label>Chọn phòng ban</label>
+                                    <div class="multi-select-container">
+                                        <div class="multi-select-dropdown" id="phongBanMultiSelect">
+                                            <div class="multi-select-header" onclick="toggleDropdown()">
+                                                <span class="multi-select-placeholder">--- Chọn một phòng ban ---</span>
+                                                <span class="multi-select-arrow">▼</span>
+                                            </div>
+                                            <div class="multi-select-content" id="multiSelectContent">
+                                                <div class="multi-select-search">
+                                                    <input type="text" placeholder="Tìm kiếm" id="multiSelectSearch" onkeyup="filterOptions()">
+                                                    <span class="search-icon">🔍</span>
+                                                    <span class="clear-search" onclick="clearSearch()">✕</span>
+                                                </div>
+                                                <div class="multi-select-options" id="multiSelectOptions">
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="all" onchange="toggleAll()">
+                                                        <span><b>Lựa chọn tất cả</b></span>
+                                                    </label>
+                                                    @foreach (var pb in phongBans)
+                                                    {
+                                                        <label class="multi-select-option">
+                                                            <input type="checkbox" value="@pb.Id">
+                                                            <span>@pb.Ten</span>
+                                                        </label>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                <div class="form-group">
+                                    <label>Chọn trạng thái</label>
+                                    <div class="multi-select-container">
+                                        <div class="multi-select-dropdown" id="trangThaiMultiSelect">
+                                            <div class="multi-select-header" onclick="toggleTrangThaiDropdown()">
+                                                <span class="multi-select-placeholder">--- Chọn trạng thái hoàn thành ---</span>
+                                                <span class="multi-select-arrow">▼</span>
+                                            </div>
+                                            <div class="multi-select-content" id="trangThaiMultiSelectContent">
+                                                <div class="multi-select-search">
+                                                    <input type="text" placeholder="Tìm kiếm" id="trangThaiMultiSelectSearch" onkeyup="filterTrangThaiOptions()">
+                                                    <span class="search-icon">🔍</span>
+                                                    <span class="clear-search" onclick="clearTrangThaiSearch()">✕</span>
+                                                </div>
+                                                <div class="multi-select-options" id="trangThaiMultiSelectOptions">
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="all" onchange="toggleTrangThaiAll()">
+                                                        <span><b>Lựa chọn tất cả</b></span>
+                                                    </label>
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="1">
+                                                        <span>Hoàn thành sớm hạn</span>
+                                                    </label>
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="2">
+                                                        <span>Hoàn thành đúng hạn</span>
+                                                    </label>
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="3">
+                                                        <span>Chưa hoàn thành Còn hạn</span>
+                                                    </label>
+                                                    <label class="multi-select-option">
+                                                        <input type="checkbox" value="4">
+                                                        <span>Chưa hoàn thành trễ hạn</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-tableVanBan"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/GiaoViecThongKe/GetListChiTietHoanThanhCongViecTheoTrangThai"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParamsChiTietCongViec"
+                                       data-sort-name="HanXuLy"
+                                       data-id-field="Id"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="PhongBan">Phòng ban</th>
+                                            <th data-field="ThanhVien">Người thưc hiện</th>
+                                            <th data-field="TenCongViec">Tên công việc</th>
+                                            <th data-field="NoiDungNhiemVu">Nội dung</th>
+                                            <th data-field="NgayGiaoViecStr">Ngày giao việc</th>
+                                            <th data-field="NgayHoanThanhStr">Ngày hoàn thành</th>
+                                            <th data-field="HanXuLyStr" data-class="text-danger">Hạn xử lý</th>
+                                            <th data-field="TrangThaiHoanThanh" data-formatter="trangThaiHoanThanhFormatter">Trạng thái</th>
+                                            <th data-width="200" data-formatter="operateFormatter">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    function queryParamsChiTietCongViec(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.PhongBanId = $("#PhongBanId").val();
+        params.IsHoanThanhType = $("#IsHoanThanhType").val();
+        // Add selected phong ban IDs from multi-select
+        params.PhongBanIdsStr = getSelectedPhongBanIds();
+        // Add selected trang thai values from multi-select
+        params.IsHoanThanhTypeListStr = getSelectedTrangThaiValues();
+        return params;
+    }
+
+    function searchChiTietCongViec() {
+        $('#bs-tableVanBan').bootstrapTable('refresh');
+    }
+
+    function thongKe(){
+        searchChiTietCongViec();
+    }
+
+    function xuatExcel(){
+        // Get selected values
+        var phongBanIds = getSelectedPhongBanIds();
+        var trangThaiValues = getSelectedTrangThaiValues();
+
+        // Build query parameters
+        var params = {
+            TuNgayStr: $("#TuNgayStr").val(),
+            DenNgayStr: $("#DenNgayStr").val(),
+            PhongBanIdsStr: phongBanIds,
+            IsHoanThanhTypeListStr: trangThaiValues,
+            limit: 0
+        };
+
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", $("#TuNgayStr").val());
+        fd.append("DenNgayStr", $("#DenNgayStr").val());
+        fd.append("PhongBanIdsStr", phongBanIds);
+        fd.append("IsHoanThanhTypeListStr", trangThaiValues);
+
+        showLoadingModal();
+        ajaxPostFormData("/GiaoViecThongKe/XuatExcelChiTietCongViecTheoTrangThai", fd,
+            function funcCallback(response) {
+            hideLoadingModal();
+
+            if (response.success === false) {
+                // Handle validation errors
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('\n');
+                    alert(errorMessages);
+                } else if (response.message) {
+                    alert(response.message);
+                }
+            } else if (response.downloadUrl) {
+                downloadFromLink(response.downloadUrl, response.fileName)
+                toastr.success(response.message || "Xuất Excel thành công");
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        })
+    }
+
+    function xemThongTinChiTietPhongBan(phongBanId, isType) {
+        if (phongBanId) {
+
+            $("#PhongBanId").val(phongBanId);
+            $("#IsHoanThanhType").val(isType);
+
+            $("#hoanThanhCongViecModal").modal("show");
+
+            setTimeout(function () {
+                $('#bs-tableVanBan').bootstrapTable('refresh');
+            }, 200)
+        }
+    }
+
+    function trangThaiHoanThanhFormatter(value, row, index) {
+        if (!value) return `<span class="badge badge-secondary">-</span>`;
+        var badgeClass = 'badge-secondary';
+        var valLower = value.toString().toLowerCase();
+        if (valLower.indexOf('sớm') !== -1) {
+            badgeClass = 'badge-success';
+        } else if (valLower.indexOf('đúng') !== -1) {
+            badgeClass = 'badge-primary';
+        } else if (valLower.indexOf('còn') !== -1) {
+            badgeClass = 'badge-info';
+        } else if (valLower.indexOf('trễ') !== -1 || valLower.indexOf('quá') !== -1) {
+            badgeClass = 'badge-danger';
+        }
+        return `<span class="badge ${badgeClass}">${value}</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        return `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId})" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-eye'></i> Xem thông tin</button>`;
+    }
+
+
+    // Multi-select dropdown functionality
+    let isDropdownOpen = false;
+
+    function toggleDropdown() {
+        const dropdown = document.getElementById('phongBanMultiSelect');
+        const content = document.getElementById('multiSelectContent');
+
+        isDropdownOpen = !isDropdownOpen;
+
+        if (isDropdownOpen) {
+            dropdown.classList.add('open');
+            content.style.display = 'block';
+        } else {
+            dropdown.classList.remove('open');
+            content.style.display = 'none';
+        }
+    }
+
+    function filterOptions() {
+        const searchTerm = document.getElementById('multiSelectSearch').value.toLowerCase();
+        const options = document.querySelectorAll('.multi-select-option');
+
+        options.forEach(option => {
+            const text = option.querySelector('span').textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
+    function clearSearch() {
+        document.getElementById('multiSelectSearch').value = '';
+        filterOptions();
+    }
+
+    function toggleAll() {
+        const selectAllCheckbox = document.querySelector('input[value="all"]');
+        const otherCheckboxes = document.querySelectorAll('.multi-select-option input[type="checkbox"]:not([value="all"])');
+
+        otherCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+
+        updatePlaceholder();
+    }
+
+    function updatePlaceholder() {
+        const checkboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const placeholder = document.querySelector('#phongBanMultiSelect .multi-select-placeholder');
+
+        if (checkboxes.length === 0) {
+            placeholder.textContent = '--- Chọn một phòng ban ---';
+        } else if (checkboxes.length === 1) {
+            placeholder.textContent = checkboxes[0].parentElement.querySelector('span').textContent;
+        } else {
+            placeholder.textContent = `Đã chọn ${checkboxes.length} phòng ban`;
+        }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const phongBanDropdown = document.getElementById('phongBanMultiSelect');
+        const trangThaiDropdown = document.getElementById('trangThaiMultiSelect');
+
+        if (!phongBanDropdown.contains(event.target) && isDropdownOpen) {
+            toggleDropdown();
+        }
+
+        if (!trangThaiDropdown.contains(event.target) && isTrangThaiDropdownOpen) {
+            toggleTrangThaiDropdown();
+        }
+    });
+
+    // Add event listeners to checkboxes
+    document.addEventListener('DOMContentLoaded', function () {
+        // Phong Ban checkboxes
+        const phongBanCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"])');
+        phongBanCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updatePlaceholder();
+                updateSelectAllState();
+            });
+        });
+
+        // Trang Thai checkboxes
+        const trangThaiCheckboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"])');
+        trangThaiCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateTrangThaiPlaceholder();
+                updateTrangThaiSelectAllState();
+            });
+        });
+
+        // Show error message from TempData if exists
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+            alert('@Html.Raw(TempData["ErrorMessage"])');
+            </text>
+        }
+    });
+
+    function updateSelectAllState() {
+        const allCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"])');
+        const checkedCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const selectAllCheckbox = document.querySelector('#multiSelectOptions input[value="all"]');
+
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    // Get selected values for form submission
+    function getSelectedPhongBanIds() {
+        const selectedCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        return Array.from(selectedCheckboxes).map(checkbox => checkbox.value).join(',');
+    }
+
+    // Trang Thai Multi-select functionality
+    let isTrangThaiDropdownOpen = false;
+
+    function toggleTrangThaiDropdown() {
+        const dropdown = document.getElementById('trangThaiMultiSelect');
+        const content = document.getElementById('trangThaiMultiSelectContent');
+
+        isTrangThaiDropdownOpen = !isTrangThaiDropdownOpen;
+
+        if (isTrangThaiDropdownOpen) {
+            dropdown.classList.add('open');
+            content.style.display = 'block';
+        } else {
+            dropdown.classList.remove('open');
+            content.style.display = 'none';
+        }
+    }
+
+    function filterTrangThaiOptions() {
+        const searchTerm = document.getElementById('trangThaiMultiSelectSearch').value.toLowerCase();
+        const options = document.querySelectorAll('#trangThaiMultiSelectOptions .multi-select-option');
+
+        options.forEach(option => {
+            const text = option.querySelector('span').textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
+    function clearTrangThaiSearch() {
+        document.getElementById('trangThaiMultiSelectSearch').value = '';
+        filterTrangThaiOptions();
+    }
+
+    function toggleTrangThaiAll() {
+        const selectAllCheckbox = document.querySelector('#trangThaiMultiSelectOptions input[value="all"]');
+        const otherCheckboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"])');
+
+        otherCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+
+        updateTrangThaiPlaceholder();
+    }
+
+    function updateTrangThaiPlaceholder() {
+        const checkboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const placeholder = document.querySelector('#trangThaiMultiSelect .multi-select-placeholder');
+
+        if (checkboxes.length === 0) {
+            placeholder.textContent = '--- Chọn trạng thái hoàn thành ---';
+        } else if (checkboxes.length === 1) {
+            placeholder.textContent = checkboxes[0].parentElement.querySelector('span').textContent;
+        } else {
+            placeholder.textContent = `Đã chọn ${checkboxes.length} trạng thái`;
+        }
+    }
+
+    function updateTrangThaiSelectAllState() {
+        const allCheckboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"])');
+        const checkedCheckboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const selectAllCheckbox = document.querySelector('#trangThaiMultiSelectOptions input[value="all"]');
+
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    // Get selected trang thai values for form submission
+    function getSelectedTrangThaiValues() {
+        const selectedCheckboxes = document.querySelectorAll('#trangThaiMultiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        return Array.from(selectedCheckboxes).map(checkbox => checkbox.value).join(',');
+    }
+</script>

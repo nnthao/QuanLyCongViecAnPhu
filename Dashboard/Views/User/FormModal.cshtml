@@ -1,0 +1,173 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+<div class="modal fade" id="userFormModal" tabindex="-1" role="dialog" aria-labelledby="userFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userFormModalTitle"><b>Thêm mới người dùng</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="User_Id" value="0" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "User_Name", label: "Tên", col: 6, required: true, length: 100, moreClass: "col-sm-6 col-xs-12")
+                    @Html.CustomTextBox(id: "User_Email", label: "Email", col: 6, required: true, length: 100, moreClass: "col-sm-6 col-xs-12")
+                </div>
+                <div class="row">
+                    @Html.CustomTextBox(id: "User_Phone", label: "Số điện thoại", col: 4, length: 100, moreClass: "col-sm-4 col-xs-12")
+                    @Html.CustomTextBox(id: "User_TelegramId", label: "TelegramId", col: 4, length: 100, moreClass: "col-sm-4 col-xs-12")
+                    @Html.CustomTextBox(id: "User_UserZaloId", label: "ZaloId", col: 4, length: 100, moreClass: "col-sm-4 col-xs-12")
+                </div>
+                <div class="row">
+                    @Html.CustomSelect2Empty(id: "User_VaiTroId", label: "Vai trò", col: 4, moreClass: "col-sm-4 col-xs-12", required: true)
+                    @Html.CustomSelect2Empty(id: "User_NhomVaiTroId", label: "Vai trò khác", col: 8, moreClass: "col-sm-8 col-xs-12")
+                </div>
+                <div class="row">
+                    @Html.CustomSelect2Empty(id: "User_ChucDanhId", label: "Chức danh", col: 6, moreClass: "col-sm-6 col-xs-12", required: true)
+                    @Html.CustomSelect2Empty(id: "User_PhongBanId", label: "Phòng ban", col: 6, moreClass: "col-sm-6 col-xs-12", required: true)
+                </div>
+                <div class="row">
+                    @Html.CustomCheckBox(id: "User_IsLanhDaoPhong", label: "Lãnh đạo phòng", col: 6, moreClass: "col-sm-6 col-xs-12 p-t-15")
+                </div>
+                <div class="row mt-2" id="divPasswordSection">
+                    <div class="col-12"><div class="txt-middle-line"><span><b>Mật khẩu</b></span></div></div>
+                    @Html.CustomTextBox(id: "User_NewPassword", label: "Mật khẩu", col: 6, required: true, length: 100, isPasswordType: true, moreClass: "col-sm-6 col-xs-12")
+                    @Html.CustomTextBox(id: "User_RePassword", label: "Nhập lại Mật khẩu", required: true, col: 6, length: 100, isPasswordType: true, moreClass: "col-sm-6 col-xs-12")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveUserForm()" class="btn btn-success" id="btnUserSave">
+                    <i class="fa fa-save"></i> <span id="btnUserSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const userTextFields = ["User_Id", "User_Name", "User_Email", "User_Phone", "User_NewPassword", "User_RePassword", "User_TelegramId", "User_UserZaloId"];
+    const userSelectFields = ["User_VaiTroId", "User_PhongBanId", "User_ChucDanhId"];
+    const userCheckBoxFields = ["User_IsLanhDaoPhong"];
+
+    function resetUserModalForm() {
+        $("#User_Id").val(0);
+        $("#User_Name").val('');
+        $("#User_Email").val('');
+        $("#User_Phone").val('');
+        $("#User_TelegramId").val('');
+        $("#User_UserZaloId").val('');
+        $("#User_NewPassword").val('');
+        $("#User_RePassword").val('');
+        $("#User_IsLanhDaoPhong").prop('checked', false);
+        $("#User_VaiTroId").val('').trigger('change');
+        $("#User_NhomVaiTroId").val(null).trigger('change');
+        $("#User_ChucDanhId").val('').trigger('change');
+        $("#User_PhongBanId").val('').trigger('change');
+    }
+
+    function openUserFormModal(id) {
+        resetUserModalForm();
+        showLoadingModal();
+
+        ajaxGet("/User/GetUserById?id=" + id, function (res) {
+            hideLoadingModal();
+            let rolesData = res.Roles ? res.Roles.Data.slice(1) : [];
+
+            $("#User_NhomVaiTroId").select2({
+                data: rolesData,
+                language: "vi",
+                multiple: true
+            });
+
+            $("#User_VaiTroId").select2({
+                data: res.Roles ? res.Roles.Data : [],
+                language: "vi"
+            });
+
+            $("#User_ChucDanhId").select2({
+                data: res.ChucDanh ? res.ChucDanh.Data : [],
+                language: "vi"
+            });
+
+            $("#User_PhongBanId").select2({
+                data: res.PhongBan ? res.PhongBan.Data : [],
+                language: "vi"
+            });
+
+            if (id > 0) {
+                $("#userFormModalTitle").html("<b>Cập nhật người dùng</b>");
+                $("#btnUserSaveText").text("Cập nhật");
+
+                if (res.Item) {
+                    var item = res.Item;
+                    $("#User_Id").val(item.Id);
+                    $("#User_Name").val(item.Name || '');
+                    $("#User_Email").val(item.Email || '');
+                    $("#User_Phone").val(item.Phone || '');
+                    $("#User_TelegramId").val(item.TelegramId || '');
+                    $("#User_UserZaloId").val(item.UserZaloId || '');
+                    $("#User_IsLanhDaoPhong").prop('checked', !!item.IsLanhDaoPhong);
+
+                    $("#User_VaiTroId").val(item.VaiTroId).trigger('change');
+                    $("#User_ChucDanhId").val(item.ChucDanhId).trigger('change');
+                    $("#User_PhongBanId").val(item.PhongBanId).trigger('change');
+
+                    if (item.NhomVaiTroId) {
+                        $("#User_NhomVaiTroId").val(item.NhomVaiTroId.split(',')).trigger('change');
+                    }
+                }
+            } else {
+                $("#userFormModalTitle").html("<b>Thêm mới người dùng</b>");
+                $("#btnUserSaveText").text("Thêm mới");
+            }
+
+            $("#userFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function saveUserForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#User_Id").val());
+        fd.append("Name", $("#User_Name").val());
+        fd.append("Email", $("#User_Email").val());
+        fd.append("Phone", $("#User_Phone").val());
+        fd.append("TelegramId", $("#User_TelegramId").val());
+        fd.append("UserZaloId", $("#User_UserZaloId").val());
+        fd.append("VaiTroId", $("#User_VaiTroId").val() || 0);
+        fd.append("ChucDanhId", $("#User_ChucDanhId").val() || 0);
+        fd.append("PhongBanId", $("#User_PhongBanId").val() || 0);
+        fd.append("IsLanhDaoPhong", $("#User_IsLanhDaoPhong").is(':checked'));
+        fd.append("NewPassword", $("#User_NewPassword").val());
+        fd.append("RePassword", $("#User_RePassword").val());
+
+        var nhomVaiTro = $("#User_NhomVaiTroId").val();
+        fd.append("NhomVaiTroId", nhomVaiTro ? nhomVaiTro.join() : "");
+
+        ajaxPostFormData("/User/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#userFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

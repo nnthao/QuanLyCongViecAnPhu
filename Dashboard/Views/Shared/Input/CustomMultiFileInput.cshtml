@@ -1,0 +1,59 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+@using Dashboard.Common;
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group m-b-5">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger" id="@Model.Id-Required">*</span>
+            }
+        </label>
+        <div class="custom-control-inline">
+            @if (Model.IsMultiple)
+            {
+                <input type="file" id="@Model.Id" name="FileUpload" multiple="multiple" accept="@BienDungChung.AllowedFileExtensions" />
+            }
+            else
+            {
+                <input type="file" id="@Model.Id" name="FileUpload" accept="@BienDungChung.AllowedFileExtensions" />
+            }
+        </div>
+    </div>
+    <div id="@Model.Id-Files"></div>
+</div>
+<script type="text/javascript">
+    window['@Model.Id-datas'] =[];
+
+    $('#' + '@Model.Id').on('change', function () {
+        $('#' + '@Model.Id-Files').empty();
+
+        var files = $('#' + '@Model.Id')[0].files;
+        var validFiles = [];
+        var hasError = false;
+
+        for (var i = 0; i < files.length; i++) {
+            if (!validateFileExtension(files[i])) {
+                hasError = true;
+                break;
+            }
+            validFiles.push(files[i]);
+        }
+
+        if (!hasError) {
+            $.merge(window['@Model.Id-datas'], validFiles);
+
+            for (var i = 0; i < window['@Model.Id-datas'].length; i++) {
+                $('#' + '@Model.Id-Files').append(`
+                    <span>${ window['@Model.Id-datas'][i].name} <button class="btn btn-sm btn-danger m-t-5 m-b-5"><i class="fa fa-trash "></i></button></span>
+                    &nbsp; &nbsp; &nbsp;
+                `);
+            }
+            $(this).val('');
+        } else {
+            window['@Model.Id-datas'] = [];
+        }
+    });
+
+
+</script>

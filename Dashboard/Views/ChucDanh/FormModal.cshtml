@@ -1,0 +1,87 @@
+@using Dashboard.HtmlHelpers;
+
+<div class="modal fade" id="chucDanhFormModal" tabindex="-1" role="dialog" aria-labelledby="chucDanhFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="chucDanhFormModalTitle"><b>Thêm chức danh</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="ChucDanh_Id" value="0" type="hidden" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "ChucDanh_Ten", label: "Tên chức danh", col: 6, required: true, length: 100, moreClass: "col-sm-6 col-xs-12")
+                    @Html.CustomTextBox(id: "ChucDanh_ThuTu", label: "Thứ tự", col: 6, required: false, length: 10, moreClass: "col-sm-6 col-xs-12")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveChucDanhForm()" class="btn btn-success" id="btnChucDanhSave">
+                    <i class="fa fa-save"></i> <span id="btnChucDanhSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetChucDanhForm() {
+        $("#ChucDanh_Id").val(0);
+        $("#ChucDanh_Ten").val('');
+        $("#ChucDanh_ThuTu").val('');
+    }
+
+    function openChucDanhFormModal(id) {
+        resetChucDanhForm();
+        showLoadingModal();
+
+        ajaxGet("/ChucDanh/GetById?id=" + id, function (res) {
+            hideLoadingModal();
+            if (id > 0) {
+                $("#chucDanhFormModalTitle").html("<b>Cập nhật chức danh</b>");
+                $("#btnChucDanhSaveText").text("Cập nhật");
+                if (res && res.Item) {
+                    $("#ChucDanh_Id").val(res.Item.Id);
+                    $("#ChucDanh_Ten").val(res.Item.Ten || '');
+                    $("#ChucDanh_ThuTu").val(res.Item.ThuTu || '');
+                }
+            } else {
+                $("#chucDanhFormModalTitle").html("<b>Thêm mới chức danh</b>");
+                $("#btnChucDanhSaveText").text("Thêm mới");
+            }
+            $("#chucDanhFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function saveChucDanhForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#ChucDanh_Id").val());
+        fd.append("Ten", $("#ChucDanh_Ten").val());
+        fd.append("ThuTu", $("#ChucDanh_ThuTu").val() || "");
+
+        ajaxPostFormData("/ChucDanh/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#chucDanhFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

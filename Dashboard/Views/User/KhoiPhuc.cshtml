@@ -1,0 +1,28 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    Layout = null;
+}
+
+
+<div data-backdrop="static" data-keyboard="false" class="modal p-0" id="khoiPhucModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Khôi phục</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                Bạn muốn khôi phục người dùng: <strong><span id="hoTenKP"></span></strong>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                    <img src="~/Content/img/loading.gif" height="25" />
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                <button type="button" id="btn-revert" class="btn btn-success"><i class="fa fa-refresh"></i> Khôi phục</button>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,208 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thông báo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .tenThongBao{
+        cursor: pointer;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-6 col-xs-12">
+                                <button class="btn btn-success" onclick="danhDauDaxemNhieu();"> <i class="fa fa-check-square-o"></i> Đánh dấu đã xem</button>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,
+                                   moreClass: "col-sm-3 col-xs-12 p-t-15 d-none")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/ThongBao/GetListThongBao"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-row-style="rowStyle"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="state" data-checkbox="true"></th>
+                                            <th data-field="TieuDe"  data-formatter="linkClickFormat"> Tiêu đề</th>
+                                            <th data-field="NoiDung"  data-formatter="linkClickFormat">Nội dung</th>
+                                            <th data-field="NgayTaoStr">Ngày nhận</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+
+    function linkClickFormat(value, row, index) {
+        return `<span  class="tenThongBao" onclick="thongBaoClickFunc('${row.Id}','${row.Link}' )">${value} </span>`
+    }
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function rowStyle(row, index) {
+        if (row.IsDaXem) {
+            return {};
+        }
+        
+        return {
+            classes: 'font-weight-bold'
+        };
+    }
+
+    function operateFormatter(value, row, index) {
+        let nguoiNhan = row.NguoiNhan ? `<p>${row.NguoiNhan}</p>` : ``;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button> ${nguoiNhan}`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button> ${nguoiNhan}`;
+
+        if (row.IsDeleted) {
+            return  btnKhoiPhuc;
+        }
+
+        return btnXoa;
+    }
+
+    //Open Model when update
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá đơn vị dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/ThongBao/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục đơn vị dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/ThongBao/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    function danhDauDaxemNhieu() {
+        var selections = $('#bs-table').bootstrapTable('getSelections');
+
+        var ids = selections.map(function (row) {
+            return row.Id;
+        });
+
+        ids.forEach(function (id) {
+            $('#bs-table').find('tr[data-id="' + id + '"]').removeClass('font-weight-bold');
+        });
+
+        if (ids) {
+            var fd = new FormData();
+            fd.append("Ids", ids.join());
+            ajaxPostFormData("/ThongBao/DanhDauDaXemNhieu", fd, function funcCallback(data) {
+                $('#bs-table').bootstrapTable('uncheckAll');
+                getThongBao();
+            }, function funcError() {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            })
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $('#bs-table').on('click-row.bs.table', function (e, row, $element, field) {
+            $element.removeClass('font-weight-bold');
+
+            if (row.Id && !row.IsDaXem) {
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+                ajaxPostFormData("/ThongBao/DanhDauDaXem", fd, function funcCallback(data) {
+                    getThongBao();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        });
+
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>

@@ -1,0 +1,114 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+<div class="modal fade" id="phongBanFormModal" tabindex="-1" role="dialog" aria-labelledby="phongBanFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="phongBanFormModalTitle"><b>Thêm phòng ban</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="PhongBan_Id" value="0" type="hidden" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "PhongBan_Ten", label: "Tên", col: 6, required: true, length: 500, moreClass: "col-sm-6 col-xs-12")
+                    @Html.CustomSelect2Empty(id: "PhongBan_PhongBanChaId", label: "Phòng ban cha", col: 6, moreClass: "col-sm-6 col-xs-12", allowClear: true)
+                    @Html.CustomSelect2Empty(id: "PhongBan_NguoiTheoDoiChiDaoId", label: "Người theo dõi chỉ đạo", col: 6, moreClass: "col-sm-6 col-xs-12", allowClear: true)
+                    @Html.CustomTextBox(id: "PhongBan_ThuTu", label: "Thứ tự", col: 3, required: false, length: 10, moreClass: "col-sm-3 col-xs-12")
+                    @Html.CustomCheckBox(id: "PhongBan_IsPhongNhanViec", label: "Phòng nhận việc", col: 3, moreClass: "col-sm-3 col-xs-12 p-t-30")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="savePhongBanForm()" class="btn btn-success" id="btnPhongBanSave">
+                    <i class="fa fa-save"></i> <span id="btnPhongBanSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetPhongBanForm() {
+        $("#PhongBan_Id").val(0);
+        $("#PhongBan_Ten").val('');
+        $("#PhongBan_ThuTu").val('');
+        $("#PhongBan_PhongBanChaId").val('').trigger('change');
+        $("#PhongBan_NguoiTheoDoiChiDaoId").val('').trigger('change');
+        $("#PhongBan_IsPhongNhanViec").prop("checked", true);
+    }
+
+    function openPhongBanFormModal(id) {
+        resetPhongBanForm();
+        showLoadingModal();
+
+        ajaxGet("/PhongBan/GetById?id=" + id, function (res) {
+            hideLoadingModal();
+            $("#PhongBan_PhongBanChaId").select2({
+                data: res.PhongBans ? res.PhongBans.Data : [],
+                language: "vi",
+                allowClear: true
+            });
+
+            $("#PhongBan_NguoiTheoDoiChiDaoId").select2({
+                data: res.Users ? res.Users.Data : [],
+                language: "vi",
+                allowClear: true
+            });
+
+            if (id > 0) {
+                $("#phongBanFormModalTitle").html("<b>Cập nhật phòng ban</b>");
+                $("#btnPhongBanSaveText").text("Cập nhật");
+
+                if (res.Item) {
+                    $("#PhongBan_Id").val(res.Item.Id);
+                    $("#PhongBan_Ten").val(res.Item.Ten || '');
+                    $("#PhongBan_ThuTu").val(res.Item.ThuTu || '');
+                    $("#PhongBan_PhongBanChaId").val(res.Item.PhongBanChaId ? res.Item.PhongBanChaId : 0).trigger('change');
+                    $("#PhongBan_NguoiTheoDoiChiDaoId").val(res.Item.NguoiTheoDoiChiDaoId ? res.Item.NguoiTheoDoiChiDaoId : 0).trigger('change');
+                    $("#PhongBan_IsPhongNhanViec").prop("checked", res.Item.IsPhongNhanViec !== false);
+                }
+            } else {
+                $("#phongBanFormModalTitle").html("<b>Thêm mới phòng ban</b>");
+                $("#btnPhongBanSaveText").text("Thêm mới");
+            }
+
+            $("#phongBanFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function savePhongBanForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#PhongBan_Id").val());
+        fd.append("Ten", $("#PhongBan_Ten").val());
+        fd.append("PhongBanChaId", $("#PhongBan_PhongBanChaId").val() || "");
+        fd.append("NguoiTheoDoiChiDaoId", $("#PhongBan_NguoiTheoDoiChiDaoId").val() || "");
+        fd.append("ThuTu", $("#PhongBan_ThuTu").val() || "");
+        fd.append("IsPhongNhanViec", $("#PhongBan_IsPhongNhanViec").is(":checked"));
+
+        ajaxPostFormData("/PhongBan/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#phongBanFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

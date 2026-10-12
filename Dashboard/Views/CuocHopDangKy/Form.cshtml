@@ -1,0 +1,208 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers.Input;
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@using Dashboard.Models.Entities;
+
+@{
+    var action = Model.Id != 0 ? "Cập nhật" : "Thêm mới";//
+    ViewBag.Title = action + " lịch đăng ký";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model ParamControllerToView
+
+<style>
+    .tbVaiTroGrid th, .tbVaiTroGrid td {
+        padding: 5px 10px;
+    }
+
+    .select2-drop li {
+        white-space: pre-line;
+    }
+
+    #select2-IdPhongHop-results li {
+        white-space: pre-line;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                @Html.Partial("~/Views/CuocHopDangKy/ThongTinChung.cshtml")
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/cuochopdangky">
+                                        <i class="fa fa-chevron-left"></i> Quay lại
+                                    </a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success">
+                                        <i class="fa fa-save"></i> @action
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const textFields = [
+        "Id", "TenCuocHop", "NguoiThamGiaKhac", "GhiChu", "NoiDung",
+        "PhongHopTxt", "NgayDienRaStr"
+    ];
+    const selectFields = ["PhongHopId", "NguoiDuocGanDuyetId", "LyDoId"];
+    const radioFields = ["LoaiLichHop"];
+    const checkBoxFields = ["IsThongBao"];
+    const select2MultiFields = ["NguoiThamGia", "PhongBanThamGiaIds"];
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet(`/CuocHopDangKy/GetById?id=${$('#Id').val()}`, function (res) {
+            hideLoadingModal();
+
+            if (res.Error) {
+                toastr.error(res.Error);
+                return;
+            }
+
+            if (res.User && res.User.Data && res.User.Data.length > 0) {
+                if (!$("#NguoiThamGia").hasClass("select2-hidden-accessible")) {
+                    $("#NguoiThamGia").select2({
+                        data: res.User.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                } else {
+                    $("#NguoiThamGia").empty().select2({
+                        data: res.User.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                }
+            } else {
+                console.error("Không có dữ liệu User để load vào select2. res.User:", res.User);
+            }
+
+            if (res.PhongBan && res.PhongBan.Data) {
+                $("#PhongBanThamGiaIds").empty().select2({
+                    data: res.PhongBan.Data,
+                    language: "vi",
+                    multiple: true
+                });
+            }
+
+            if (res.PhongHop) {
+                $("#PhongHopId").select2({
+                    data: res.PhongHop.Data,
+                    language: "vi",
+                });
+            }
+            if (res.LyDo) {
+                $("#LyDoId").select2({
+                    data: res.LyDo.Data,
+                    language: "vi",
+                });
+            }
+
+            if (res.UserDuyet) {
+                $("#NguoiDuocGanDuyetId").select2({
+                    data: res.UserDuyet.Data,
+                    language: "vi",
+                });
+            }
+
+            if (res.Item) {
+                setTimeout(function () {
+                    FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields)
+
+                    $("#BatDauStr input").val(res.Item.BatDauStr);
+                    $("#KetThucStr input").val(res.Item.KetThucStr);
+
+                    for (let i = 0; i < select2MultiFields.length; i++) {
+                        if ($("#" + select2MultiFields[i])) {
+                            $("#" + select2MultiFields[i]).val(res.Item[select2MultiFields[i]] ? res.Item[select2MultiFields[i]].split(',') : "").trigger("change");
+                        }
+                    }
+                }, 200);
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+        // save file
+        for (let i = 0; i < TaiLieuCuocHopDatas.length; i++) {
+            if (TaiLieuCuocHopDatas[i].IsUpload == false) {
+                fd.append("FileDinhKems", TaiLieuCuocHopDatas[i].File, TaiLieuCuocHopDatas[i].Name || TaiLieuCuocHopDatas[i].File.name);
+            }
+        }
+        fd.append("BatDauStr", $("#BatDauStr input").val());
+        fd.append("KetThucStr", $("#KetThucStr input").val());
+
+        let nguoiThamGiaIds = $("#NguoiThamGia").val();
+        fd.append("NguoiThamGia", nguoiThamGiaIds && nguoiThamGiaIds.length ? `,${nguoiThamGiaIds.join()},` : "");
+        let phongBanThamGiaIds = $("#PhongBanThamGiaIds").val();
+        fd.append("PhongBanThamGiaIds", phongBanThamGiaIds && phongBanThamGiaIds.length ? `,${phongBanThamGiaIds.join()},` : "");
+
+        return fd;
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        $("#BatDauStrError").empty();
+        $("#KetThucStrError").empty();
+
+        var selectAll = selectFields.concat(select2MultiFields);
+        FormHelper.clearError(textFields, selectAll, radioFields, checkBoxFields);
+
+        ajaxPostFormData("/CuocHopDangKy/ThemOrCapNhat", getFormData(), function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.forEach((item) => {
+                    if (item.Id === "Permission") {
+                        toastr.error(item.Description);
+                    } else {
+                        var idError = "#" + item.Name;
+                        if ($(idError).length) {
+                            $(idError).show().text(item.Description);
+                        } else {
+                            toastr.error(item.Description);
+                        }
+                    }
+                });
+            } else {
+                window.location.href = "/cuochopdangky";
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+        ajaxTaiLieuCuocHopServer();
+    });
+</script>

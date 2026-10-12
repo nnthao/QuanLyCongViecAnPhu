@@ -1,0 +1,12 @@
+# Graphify ignore list
+**/vendor/**
+**/Content/vendor/**
+**/ckfinder/**
+node_modules/
+packages/
+**/bin/**
+**/obj/**
+Debug/
+Release/
+graphify-out/
+output/

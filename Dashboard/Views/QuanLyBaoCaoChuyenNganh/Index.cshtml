@@ -1,0 +1,249 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common
+@using Dashboard.Models.Entities
+@{
+    ViewBag.Title = "Quản lý báo cáo chuyên ngành";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    var dauThang = Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var cuoiThang = Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var phongBans = Dashboard.Common.CacheManagerHelper.GetPhongBanCacheNotDeleted();
+    var danhMucBaoCaoList = Dashboard.Common.EnumUltiHelper.EnumToLookupList<DanhMucBaoCaoEnum>();
+    var loaiBaoCaoList = Dashboard.Common.EnumUltiHelper.EnumToLookupList<QuanLyBaoCaoChuyenNganhEnum>();
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <div class="form-group">
+                                    <label>Danh mục báo cáo</label>
+                                    <select id="DanhMucBaoCaoId" class="form-control">
+                                        <option value="">--- Chọn ---</option>
+                                        @foreach (var dm in danhMucBaoCaoList)
+                                        {
+                                            <option value="@dm.id">@dm.text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <label>Loại báo cáo</label>
+                                    <select id="QuanLyBaoCaoChuyenNganhEnumId" class="form-control">
+                                        <option value="">--- Chọn ---</option>
+                                        @foreach (var bc in loaiBaoCaoList)
+                                        {
+                                            <option value="@bc.id">@bc.text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Từ ngày", col: 3, required: false, moreClass: "col-sm-3 col-xs-12", value: dauThang)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 3, required: false, moreClass: "col-sm-3 col-xs-12", value: cuoiThang)
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <label>&nbsp;</label>
+                                <div class="form-group">
+                                    <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                        <i class="fa fa-search"></i> Tìm kiếm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/QuanLyBaoCaoChuyenNganh/GetListQuanLyBaoCaoChuyenNganh"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="DanhMucBaoCao">Danh mục báo cáo</th>
+                                            <th data-field="TenFile" data-formatter="duongDanFileFormatter">Tên file</th>
+                                            <th data-field="QuanLyBaoCaoChuyenNganh">Tên báo cáo</th>
+                                            <th data-field="BaoCaoChuyenNganhQueryInfoStr">Điều kiện lọc</th>
+                                            <th data-field="NgayTaoStr" >Ngày tạo</th>
+                                            <th data-field="action" data-formatter="actionFormatter" data-align="center">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function duongDanFileFormatter(value, row, index) {
+        return `<a href="javascript:void(0);" onclick="downloadFromLink('${row.DuongDanFile}', '${row.TenFile}')" > ${row.TenFile}</a>`;
+    }
+
+    function actionFormatter(value, row, index) {
+        return `
+            <button type="button" class="btn btn-danger btn-sm"  onclick="xoa(${row.Id})">
+                <i class="fa fa-trash"></i> Xoá
+            </button>
+        `;
+    }
+
+    function queryParams(params) {
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.DanhMucBaoCaoId = $("#DanhMucBaoCaoId").val();
+        params.QuanLyBaoCaoChuyenNganhEnumId = $("#QuanLyBaoCaoChuyenNganhEnumId").val();
+        params.PhongBanIdsStr = getSelectedPhongBanIds();
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+    });
+
+    let isDropdownOpen = false;
+    function toggleDropdown() {
+        const dropdown = document.getElementById('phongBanMultiSelect');
+        const content = document.getElementById('multiSelectContent');
+        isDropdownOpen = !isDropdownOpen;
+        if (isDropdownOpen) {
+            dropdown.classList.add('open');
+            content.style.display = 'block';
+        } else {
+            dropdown.classList.remove('open');
+            content.style.display = 'none';
+        }
+    }
+
+    function filterOptions() {
+        const searchTerm = document.getElementById('multiSelectSearch').value.toLowerCase();
+        const options = document.querySelectorAll('.multi-select-option');
+        options.forEach(option => {
+            const text = option.querySelector('span').textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
+    function clearSearch() {
+        document.getElementById('multiSelectSearch').value = '';
+        filterOptions();
+    }
+
+    function toggleAll() {
+        const selectAllCheckbox = document.querySelector('input[value="all"]');
+        const otherCheckboxes = document.querySelectorAll('.multi-select-option input[type="checkbox"]:not([value="all"])');
+        otherCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        updatePlaceholder();
+    }
+
+    function updatePlaceholder() {
+        const checkboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const placeholder = document.querySelector('#phongBanMultiSelect .multi-select-placeholder');
+        if (checkboxes.length === 0) {
+            placeholder.textContent = '--- Chọn một phòng ban ---';
+        } else if (checkboxes.length === 1) {
+            placeholder.textContent = checkboxes[0].parentElement.querySelector('span').textContent;
+        } else {
+            placeholder.textContent = `Đã chọn ${checkboxes.length} phòng ban`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const phongBanCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"])');
+        phongBanCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updatePlaceholder();
+                updateSelectAllState();
+            });
+        });
+    });
+
+    function updateSelectAllState() {
+        const allCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"])');
+        const checkedCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        const selectAllCheckbox = document.querySelector('#multiSelectOptions input[value="all"]');
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    function getSelectedPhongBanIds() {
+        const selectedCheckboxes = document.querySelectorAll('#multiSelectOptions input[type="checkbox"]:not([value="all"]):checked');
+        return Array.from(selectedCheckboxes).map(checkbox => checkbox.value).join(',');
+    }
+
+    function xoa(id) {
+        if (!id || isNaN(id)) return;
+        if (confirm('Bạn có chắc chắn muốn xoá bản ghi này?')) {
+            var fd = new FormData();
+            fd.append("id", id);
+            showLoadingModal();
+            ajaxPostFormData("/QuanLyBaoCaoChuyenNganh/Xoa", fd, function funcCallback(data) {
+                hideLoadingModal();
+
+                toastr.success("Đã xoá thành công.");
+                search();
+            }, function funcError() {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            })
+        };
+    }
+</script>

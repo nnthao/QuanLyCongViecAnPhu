@@ -1,0 +1,102 @@
+@{
+    ViewBag.Title = "Test gửi tin nhắn Zalo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <label for="SoDienThoai">
+                                        Số điện thoại: <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="SoDienThoai"
+                                           placeholder="Nhập số điện thoại người nhận" />
+                                    <p id="SoDienThoaiError" class="text-danger m-b-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12 col-xs-12">
+                                <div class="form-group">
+                                    <label for="NoiDung">
+                                        Nội dung tin nhắn: <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" id="NoiDung" rows="6"></textarea>
+                                    <p id="NoiDungError" class="text-danger m-b-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12 col-xs-12">
+                                <p class="text-muted">
+                                    Tin nhắn được gửi tới tài khoản Zalo đã liên kết với số điện thoại trong hệ thống.
+                                </p>
+                                <button id="btnGuiTinNhan" type="button" class="btn btn-success">
+                                    <i class="fa fa-paper-plane"></i> Gửi tin nhắn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const zaloTestFields = ["SoDienThoai", "NoiDung"];
+
+    function getZaloTestFormData() {
+        const formData = new FormData();
+        formData.append("SoDienThoai", $("#SoDienThoai").val());
+        formData.append("NoiDung", $("#NoiDung").val());
+        return formData;
+    }
+
+    function hienThiLoiGuiZalo(errors) {
+        errors.forEach(function (error) {
+            const errorElement = $(`#${error.Name}`);
+            if (errorElement.length > 0) {
+                errorElement.text(error.Description);
+                return;
+            }
+
+            toastr.error(error.Description);
+        });
+    }
+
+    function guiTinNhanZalo() {
+        showLoadingModal();
+        FormHelper.clearError(zaloTestFields, [], [], []);
+
+        ajaxPostFormData("/Zalo/GuiTinNhan", getZaloTestFormData(), function (response) {
+            hideLoadingModal();
+
+            if (response.Errors && response.Errors.length > 0) {
+                hienThiLoiGuiZalo(response.Errors);
+                return;
+            }
+
+            toastr.success(response.Message || "Gửi tin nhắn Zalo thành công.");
+            $("#NoiDung").val("");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#btnGuiTinNhan").on("click", guiTinNhanZalo);
+    });
+</script>

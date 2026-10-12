@@ -1,0 +1,42 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+@using Dashboard.Common;
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <label style="font-weight:normal" for="@Model.Id">
+        @Model.Label:
+        @if (Model.Required)
+        {
+            <span class="text-danger" id="@Model.Id-Required">*</span>
+        }
+    </label>
+    <input type="file" id="@Model.Id" name="@Model.Id" accept="@BienDungChung.AllowedFileExtensions">
+    <a href="javascript:void(0);" id="@Model.Id-Empty" style="color:red;display:none">
+        <i class="fa fa-times"></i>
+    </a>
+    <p id="@Model.ErrorId" class="text-danger m-b-0" </p>
+</div>
+<script type="text/javascript">
+     let idFileDinhKem = '@Model.Id';
+
+    $("#" + idFileDinhKem).on("change", function () {
+        var errorElementId = '@Model.ErrorId';
+        $('#' + errorElementId).text('');
+        
+        if ($("#" + idFileDinhKem)[0] != undefined && $("#" + idFileDinhKem)[0].files[0] != undefined) {
+            var file = $("#" + idFileDinhKem)[0].files[0];
+            if (validateFileExtension(file, errorElementId)) {
+                $("#" + idFileDinhKem + "-Empty").show();
+            } else {
+                $(this).val('');
+                $("#" + idFileDinhKem + "-Empty").hide();
+            }
+        }
+        else {
+            $("#" + idFileDinhKem + "-Empty").hide();
+        }
+    });
+
+    $("#" + idFileDinhKem + "-Empty").click(function () {
+        $("#" + idFileDinhKem).val('');
+         $("#" + idFileDinhKem + "-Empty").hide();
+    });
+</script>

@@ -1,0 +1,180 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Kết quả";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-12">
+                                <div class="btn-group" role="group" aria-label="Filter buttons">
+                                    <button type="button" class="btn btn-outline-primary filter-btn active" data-filter="">
+                                        Tất cả
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="LoaiI">
+                                        Sáng kiến loại I (75-100 điểm)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="LoaiII">
+                                        Sáng kiến loại II (65-75 điểm)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="LoaiIII">
+                                        Sáng kiến loại III (55-65 điểm)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success filter-btn" data-filter="DatGiai">
+                                        Đạt giải (≥55 điểm)
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger filter-btn" data-filter="KhongDatGiai">
+                                        Không đạt giải (<55 điểm)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/KetQua/GetListKetQua"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="DiemDanhGia"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenDotXetDuyet">Đợt xét duyệt</th>
+                                            <th data-field="NamXetDuyet">Năm xét duyệt</th>
+                                            <th data-field="MoTaChiTiet">Mô tả chi tiết</th>
+                                            <th data-field="DiemDanhGia" data-formatter="diemFormatter">Điểm đánh giá</th>
+                                            <th data-field="LoaiSangKien" data-formatter="loaiFormatter">Loại sáng kiến</th>
+                                            <th data-field="TienThuong" data-formatter="tienThuongFormatter">Tiền thưởng</th>
+                                            <th data-field="DanhSachChiTietNhanThuong" data-formatter="chiTietNhanThuongFormatter">Chi tiết nhận thưởng</th>
+                                            <th data-field="TrangThai">Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    var currentFilter = "";
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function diemFormatter(value, row, index) {
+        if (value != null && value !== undefined) {
+            return value.toFixed(2) + " điểm";
+        }
+        return "Chưa có điểm";
+    }
+
+    function loaiFormatter(value, row, index) {
+        if (row.DiemDanhGia != null && row.DiemDanhGia !== undefined) {
+            var diem = parseFloat(row.DiemDanhGia);
+            if (diem > 75 && diem <= 100) {
+                return '<span class="badge badge-success">Loại I</span>';
+            }
+            if (diem > 65 && diem <= 75) {
+                return '<span class="badge badge-info">Loại II</span>';
+            }
+            if (diem > 55 && diem <= 65) {
+                return '<span class="badge badge-warning">Loại III</span>';
+            }
+            if (diem >= 55) {
+                return '<span class="badge badge-success">Đạt giải</span>';
+            }
+        }
+        return '<span class="badge badge-danger">Không đạt giải</span>';
+    }
+
+    function tienThuongFormatter(value, row, index) {
+        if (value != null && value !== undefined && value > 0) {
+            return '<span class="text-success font-weight-bold">' + parseInt(value).toLocaleString('vi-VN') + ' VNĐ</span>';
+        }
+        return '<span class="text-muted">--</span>';
+    }
+
+    function chiTietNhanThuongFormatter(value, row, index) {
+        if (!row.DanhSachChiTietNhanThuong || row.DanhSachChiTietNhanThuong.length === 0) {
+            return '<span class="text-muted">Chưa có thành viên</span>';
+        }
+
+        var items = [];
+        for (var i = 0; i < row.DanhSachChiTietNhanThuong.length; i++) {
+            var ct = row.DanhSachChiTietNhanThuong[i];
+            var hoTen = (ct.HoTen || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            var tienThuong = parseInt(ct.TienThuong).toLocaleString('vi-VN');
+            var tiLe = ct.TiLeDongGop.toFixed(1);
+            items.push(`<div class="mb-1"><i class="fa fa-user text-primary"></i> <strong>${hoTen}</strong>: <span class="text-success">${tienThuong} VNĐ</span> <small class="text-muted">(${tiLe}%)</small></div>`);
+        }
+        return items.join('');
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.LoaiSangKienFilter = currentFilter;
+        return params;
+    }
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $('.filter-btn').click(function () {
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            currentFilter = $(this).data('filter') || "";
+            search();
+        });
+    });
+</script>
+
+

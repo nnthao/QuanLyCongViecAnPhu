@@ -1,0 +1,741 @@
+﻿@using System.Linq
+@{
+    var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId(identity);
+    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted().Where(x => x.Id != currentUserId).ToList();
+    var chucDanhs = Dashboard.Common.CacheManagerHelper.GetChucDanhCache();
+    var vaiTroXuLys = Dashboard.Common.CacheManagerHelper.GetVaiTroXuLyCache().Where(x => x.IsDeleted != true).OrderBy(x => x.ThuTu.HasValue ? x.ThuTu.Value : int.MaxValue).ToList();
+    var currentPhongBanId = Dashboard.Common.UserClaimHelper.GetPhongBanId(identity);
+    var isSystemUser = Dashboard.Common.UserClaimHelper.GetIsSystemUser(identity);
+    var isQuyenGiaoViecTatCaPhongBan = Dashboard.Common.UserClaimHelper.IsQuyenAllow(identity, Dashboard.Common.QuyenMoRong.QuyenGiaoViecTatCaPhongBan.ToString());
+    var isQuyenCRUDTatCaPhongBan = Dashboard.Common.UserClaimHelper.IsQuyenAllow(identity, Dashboard.Common.QuyenMoRong.QuyenCRUDTatCaPhongBan.ToString());
+    var phongBanIdForTree = (isSystemUser || isQuyenGiaoViecTatCaPhongBan || isQuyenCRUDTatCaPhongBan) ? 0 : currentPhongBanId;
+
+    // Lấy danh sách phòng ban sắp xếp theo thứ tự cha trước rồi tới con, thứ tự phòng cha và con theo ThuTu tăng dần
+    var phongBans = Dashboard.Common.UltiHelper.GetPhongBanTreeSorted(phongBanIdForTree, true);
+}
+<style>
+    .table-scroll {
+        max-height: calc(100vh - 550px);
+        min-height: 250px;
+        overflow-y: auto;
+    }
+
+    .table-scroll thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f9fa;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+
+    #nhomNguoiNhan .table-container {
+        margin: 20px auto;
+        max-width: 800px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    #nhomNguoiNhan .table-header {
+        background: linear-gradient(90deg, #4a90e2, #357abd);
+        color: white;
+        font-weight: bold;
+    }
+
+        #nhomNguoiNhan .table-header th {
+            border: none;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+    #nhomNguoiNhan .expandable-row {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+
+        #nhomNguoiNhan .expandable-row:hover {
+            background-color: #e9ecef;
+        }
+
+        #nhomNguoiNhan .expandable-row td {
+            padding: 10px 12px;
+            vertical-align: middle;
+        }
+
+    #nhomNguoiNhan .child-row {
+        background-color: white;
+        display: table-row;
+    }
+
+        #nhomNguoiNhan .child-row td {
+            padding: 8px;
+            border-top: 1px solid #dee2e6;
+        }
+
+    #nhomNguoiNhan .expand-icon {
+        transition: transform 0.3s ease;
+        margin-right: 8px;
+        color: #007bff;
+    }
+
+    #nhomNguoiNhan .checkbox-cell {
+        text-align: center;
+        width: 80px;
+    }
+
+    #nhomNguoiNhan .unit-name {
+        font-weight: bold;
+    }
+
+    .child-unit-name {
+        color: #666;
+        font-size: 0.95em;
+    }
+
+    #nhomNguoiNhan .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    #nhomNguoiNhan .custom-checkbox {
+        transform: scale(1.2);
+    }
+
+    /* Style cho bảng thông tin nhân viên */
+    #thongTinNhanViec table {
+        margin-top: 0;
+    }
+
+    #thongTinNhanViec th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #thongTinNhanViec td {
+        vertical-align: middle;
+    }
+
+    #thongTinNhanViec .noi-dung-nhiem-vu {
+        resize: vertical;
+        min-height: 60px;
+    }
+
+    #thongTinNhanViec .han-xu-ly {
+        text-align: center;
+    }
+
+    #thongTinNhanViec .btn-danger {
+        padding: 4px 8px;
+    }
+
+    .thead-light th {
+        text-align: center;
+    }
+
+    .goi-y-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1060;
+        background: #ffffff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 2px;
+    }
+
+    .goi-y-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f1f1;
+        font-size: 13px;
+        line-height: 1.4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .goi-y-item:last-child {
+        border-bottom: none;
+    }
+
+    .goi-y-item:hover,
+    .goi-y-item.active {
+        background-color: #e9ecef;
+        color: #0056b3;
+    }
+
+    .goi-y-text {
+        flex: 1;
+        word-break: break-word;
+    }
+</style>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>Người được giao việc <span class="text-danger mr-2">*</span> </b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6" id="nhomNguoiNhan">
+        <span id="UserIdsError" class="text-danger m-b-0"></span>
+        <!-- Ô tìm kiếm -->
+        <div class="mb-2">
+            <input type="text" id="searchUserInput" class="form-control" placeholder="Tìm kiếm nhân viên...">
+        </div>
+        <div class="table-scroll">
+            <table class="table mt-2 ">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Tên</th>
+                        <th>Chức danh</th>
+                        <th class="checkbox-cell">Chọn</th>
+                    </tr>
+                </thead>
+                <tbody id="userBody">
+                    @foreach (var pb in phongBans)
+                    {
+                        var pbPadding = pb.Level > 0 ? $"padding-left: {pb.Level * 25}px !important;" : "";
+                        <tr class="expandable-row" data-group="group-@pb.Id">
+                            <td class="unit-name" colspan="2" style="@pbPadding">
+                                <span>
+                                    <i class="fa fa-caret-down expand-icon expanded"></i>
+                                    <span>@pb.Ten</span>
+                                </span>
+                            </td>
+                            <td class="checkbox-cell">
+                                <input type="checkbox" class="custom-checkbox parent-checkbox" id="group-@pb.Id">
+                            </td>
+                        </tr>
+
+                        var useCoquans = users.Where(o => o.PhongBanId == pb.Id)
+                            .OrderBy(us =>
+                            {
+                                var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                                return chucDanh != null && chucDanh.ThuTu.HasValue ? chucDanh.ThuTu.Value : int.MaxValue;
+                            })
+                            .ThenBy(us => us.Name)
+                            .ToList();
+                        foreach (var us in useCoquans)
+                        {
+                            var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                            var chucDanhTen = chucDanh != null ? chucDanh.Ten : "";
+                            var emailDisplay = !string.IsNullOrEmpty(us.Email) ? " (" + us.Email + ")" : "";
+                            <tr class="child-row" data-parent="group-@pb.Id">
+                                <td class="child-unit-name" style="@pbPadding">@us.Name@emailDisplay</td>
+                                <td>@chucDanhTen</td>
+                                <td class="checkbox-cell">
+                                    <input type="checkbox" id="User_@us.Id" data-id="@us.Id" data-name="@us.Name" data-email="@us.Email" data-chucdanh="@chucDanhTen" data-parent="group-@pb.Id" class="custom-checkbox child-checkbox">
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-12">
+        <p class="text-right"><button class="btn btn-primary" id="btnOpenChonNhomNguoiNhanModal"><i class="fa fa-users"></i> Chọn nhóm người nhận</button></p>
+        <span id="ThanhVienError" class="text-danger"></span>
+        <div class="table-scroll">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 20%">Người nhận <span class="text-danger mr-2">*</span></th>
+                        <th style="width: 30%">Nội dung thực hiện <span class="text-danger mr-2">*</span></th>
+                        <th style="width: 20%">Hạn xử lý <span class="text-danger mr-2">*</span></th>
+                        <th style="width: 20%">Vai trò xử lý <span class="text-danger mr-2">*</span></th>
+                        <th style="width: 10%">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="thongTinNhanViec">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/GiaoViec/NhomNguoiNhanViecModal.cshtml")
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Chức năng tìm kiếm
+        $('#searchUserInput').on('input', function () {
+            var searchTerm = $(this).val().toLowerCase().trim();
+
+            if (searchTerm === '') {
+                // Hiển thị tất cả
+                $('#userBody tr').show();
+            } else {
+                $('#userBody tr').each(function () {
+                    var $row = $(this);
+                    var isExpandableRow = $row.hasClass('expandable-row');
+                    var isChildRow = $row.hasClass('child-row');
+
+                    if (isExpandableRow) {
+                        // Đối với hàng phòng ban, tìm trong tên phòng ban
+                        var phongBanText = $row.find('.unit-name span:last').text().toLowerCase();
+                        var hasMatch = phongBanText.includes(searchTerm);
+
+                        // Kiểm tra xem có nhân viên nào trong phòng ban này khớp không
+                        var groupName = $row.data('group');
+                        var childRows = $('#userBody tr.child-row[data-parent="' + groupName + '"]');
+                        var hasChildMatch = false;
+
+                        childRows.each(function () {
+                            var childText = $(this).find('.child-unit-name').text().toLowerCase();
+                            var chucDanhText = $(this).find('td').eq(1).text().toLowerCase();
+                            var email = $(this).find('input.child-checkbox').data('email') || '';
+                            var fullText = childText + ' ' + chucDanhText + ' ' + email.toLowerCase();
+                            if (fullText.includes(searchTerm)) {
+                                hasChildMatch = true;
+                                $(this).show(); // Hiển thị nhân viên khớp
+                            } else {
+                                $(this).hide(); // Ẩn nhân viên không khớp
+                            }
+                        });
+
+                        if (hasMatch || hasChildMatch) {
+                            $row.show();
+                        } else {
+                            $row.hide();
+                        }
+                    } else if (isChildRow) {
+                        // Đối với hàng nhân viên, tìm trong tên nhân viên, email và chức danh
+                        var userText = $row.find('.child-unit-name').text().toLowerCase();
+                        var chucDanhText = $row.find('td').eq(1).text().toLowerCase();
+                        var email = $row.find('input.child-checkbox').data('email') || '';
+                        var fullText = userText + ' ' + chucDanhText + ' ' + email.toLowerCase();
+                        if (fullText.includes(searchTerm)) {
+                            $row.show();
+                        } else {
+                            $row.hide();
+                        }
+                    }
+                });
+            }
+        });
+
+        $('#nhomNguoiNhan .unit-name').click(function (e) {
+            // Không xử lý nếu click vào checkbox
+            var $row = $(this).closest(".expandable-row");
+            var groupName = $row.data("group");
+            var $icon = $row.find(".expand-icon");
+
+            // Toggle các hàng con
+            $("tr.child-row[data-parent='" + groupName + "']").toggle();
+
+            // Đổi icon
+            $icon.toggleClass("fa-caret-right fa-caret-down");
+        });
+
+        $("#nhomNguoiNhan .parent-checkbox").on("change", function () {
+            var isChecked = $(this).prop("checked");
+            var parentId = $(this).attr("id");
+
+            // check/uncheck toàn bộ checkbox con cùng nhóm
+            $("input.child-checkbox[data-parent='" + parentId + "']").prop("checked", isChecked);
+
+            taoDanhSachNhanViec()
+        });
+
+        // Khi checkbox con thay đổi
+        $("#nhomNguoiNhan .child-checkbox").on("change", function () {
+            var parentId = $(this).data("parent");
+            var $parent = $("#" + parentId);
+
+            // Nếu tất cả con đều check thì cha cũng check
+            // Nếu có ít nhất 1 con chưa check thì cha bỏ check
+            var allChecked = $("input.child-checkbox[data-parent='" + parentId + "']").length ===
+                $("input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+
+            $parent.prop("checked", allChecked);
+
+            taoDanhSachNhanViec()
+        });
+
+        window.nhanViecs = [];
+
+        function getCheckedUserData() {
+            var checkedInputs = document.querySelectorAll('#userBody input.child-checkbox:checked');
+            var userData = [];
+
+            checkedInputs.forEach(function (input) {
+                var userInfo = {
+                    id: input.dataset.id,
+                    name: input.dataset.name,
+                    parent: input.dataset.parent
+                };
+                userData.push(userInfo);
+            });
+
+            return userData;
+        }
+
+        var vaiTroXuLyList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(vaiTroXuLys.Select(x => new { id = x.Id, ten = x.Ten })));
+
+        function saveCurrentData() {
+            var tbody = document.getElementById('thongTinNhanViec');
+            if (!tbody) return;
+            var rows = tbody.querySelectorAll('tr[data-user-id]');
+
+            rows.forEach(function (row) {
+                var userId = row.dataset.userId;
+                var nhanViec = window.nhanViecs.find(function (nv) { return String(nv.id) === String(userId); });
+
+                if (nhanViec) {
+                    var textarea = row.querySelector('.noi-dung-nhiem-vu');
+                    var inputDate = row.querySelector('.han-xu-ly');
+                    var selectVaiTro = row.querySelector('.vai-tro-xu-ly');
+
+                    if (textarea) nhanViec.noiDungNhiemVu = textarea.value;
+                    if (inputDate) nhanViec.hanXuLy = inputDate.value;
+                    if (selectVaiTro) {
+                        var roleValue = selectVaiTro.value.trim();
+                        nhanViec.vaiTroXuLyId = roleValue ? parseInt(roleValue, 10) : null;
+                    }
+                }
+            });
+        }
+
+        function taoDanhSachNhanViec() {
+            saveCurrentData();
+
+            // Lấy danh sách user hiện tại được chọn
+            var currentCheckedUsers = getCheckedUserData();
+            var currentUserIds = currentCheckedUsers.map(function (user) { return String(user.id); });
+
+            // Xóa những user cũ không được chọn lại
+            window.nhanViecs = window.nhanViecs.filter(function (existingUser) {
+                return currentUserIds.includes(String(existingUser.id));
+            });
+
+            // Thêm user mới được chọn
+            currentCheckedUsers.forEach(function (newUser) {
+                var existingUser = window.nhanViecs.find(function (user) {
+                    return String(user.id) === String(newUser.id);
+                });
+
+                if (!existingUser) {
+                    window.nhanViecs.push({
+                        id: String(newUser.id),
+                        name: newUser.name,
+                        parent: newUser.parent,
+                        hanXuLy: '',
+                        noiDungNhiemVu: '',
+                        vaiTroXuLyId: null
+                    });
+                }
+            });
+
+            // Cập nhật hiển thị danh sách nhân viên
+            updateNhanViecDisplay(true);
+        }
+
+        var goiYTimeoutNhiemVu = null;
+        var selectedGoiYIndexNhiemVu = -1;
+
+        function hideAllNhiemVuSuggestions() {
+            $(".goi-y-nhiem-vu-dropdown").hide();
+            selectedGoiYIndexNhiemVu = -1;
+        }
+
+        function updateNhiemVuGoiYSelection($items) {
+            $items.removeClass("active");
+            if (selectedGoiYIndexNhiemVu >= 0 && selectedGoiYIndexNhiemVu < $items.length) {
+                var $active = $items.eq(selectedGoiYIndexNhiemVu);
+                $active.addClass("active");
+                if ($active[0] && typeof $active[0].scrollIntoView === 'function') {
+                    $active[0].scrollIntoView({ block: "nearest" });
+                }
+            }
+        }
+
+        function loadNhiemVuGoiYNoiDung($textarea, keyword) {
+            var $dropdown = $textarea.siblings(".goi-y-nhiem-vu-dropdown");
+            selectedGoiYIndexNhiemVu = -1;
+            var url = "/GiaoViec/GetGoiYNoiDung?Keyword=" + encodeURIComponent(keyword || '') + "&Limit=10&Loai=2";
+            ajaxGet(url, function (res) {
+                if (res && res.length > 0) {
+                    var html = "";
+                    for (var i = 0; i < res.length; i++) {
+                        var item = res[i];
+                        var safeText = $('<div>').text(item.NoiDung).html();
+                        var encodedText = encodeURIComponent(item.NoiDung);
+                        html += `<div class="goi-y-item" data-text="${encodedText}">
+                                    <span class="goi-y-text">${safeText}</span>
+                                 </div>`;
+                    }
+                    $dropdown.html(html).show();
+
+                    $dropdown.find(".goi-y-item").on("mousedown", function (e) {
+                        e.preventDefault();
+                        var text = decodeURIComponent($(this).data("text"));
+                        $textarea.val(text).trigger("input");
+                        hideAllNhiemVuSuggestions();
+                    });
+                } else {
+                    $dropdown.hide().empty();
+                }
+            });
+        }
+
+        function updateNhanViecDisplay(skipSave) {
+            var tbody = document.getElementById('thongTinNhanViec');
+            if (!tbody) return;
+
+            // Lưu dữ liệu hiện tại trước khi render lại nếu có dữ liệu và không bỏ qua lưu
+            if (!skipSave && window.nhanViecs && window.nhanViecs.length > 0) {
+                saveCurrentData();
+            }
+
+            var html = '';
+
+            if (!window.nhanViecs || window.nhanViecs.length === 0) {
+                html = '<tr><td colspan="5" class="text-center text-muted">Chưa có nhân viên nào được chọn</td></tr>';
+            } else {
+                window.nhanViecs.forEach(function (nhanViec) {
+                    var roleOptionsHtml = '<option value="">-- Chọn vai trò --</option>';
+                    vaiTroXuLyList.forEach(function (vt) {
+                        var selected = (nhanViec.vaiTroXuLyId && String(nhanViec.vaiTroXuLyId) === String(vt.id)) ? 'selected' : '';
+                        roleOptionsHtml += `<option value="${vt.id}" ${selected}>${vt.ten}</option>`;
+                    });
+
+                    var safeName = $('<div>').text(nhanViec.name || '').html();
+                    var safeNoiDung = $('<div>').text(nhanViec.noiDungNhiemVu || '').html();
+                    var safeHanXuLy = $('<div>').text(nhanViec.hanXuLy || '').html();
+
+                    html += '<tr data-user-id="' + nhanViec.id + '">';
+                    html += '<td>' + safeName + '</td>';
+                    html += '<td style="position: relative;">' +
+                            '<textarea class="form-control noi-dung-nhiem-vu" rows="2" placeholder="Nhập nội dung nhiệm vụ...">' + safeNoiDung + '</textarea>' +
+                            '<div class="goi-y-nhiem-vu-dropdown goi-y-dropdown"></div>' +
+                            '</td>';
+                    html += `<td> <div class="input-group">
+                    <input type="text" class="form-control han-xu-ly" value="${safeHanXuLy}">
+                    <div class="input-group-append">
+                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                    </div>
+                </div></td>`;
+                    html += `<td><select class="form-control vai-tro-xu-ly">${roleOptionsHtml}</select></td>`;
+                    html += `<td class="text-center"><button type="button" class="btn btn-sm btn-danger" onclick="xoaNhanViec('${nhanViec.id}')"><i class="fa fa-trash"></i></button></td>`;
+                    html += '</tr>';
+                });
+            }
+
+            tbody.innerHTML = html;
+
+            // Gắn sự kiện cho textarea và autocomplete gợi ý
+            tbody.querySelectorAll('.noi-dung-nhiem-vu').forEach(function (textarea) {
+                var $textarea = $(textarea);
+                var $dropdown = $textarea.siblings(".goi-y-nhiem-vu-dropdown");
+
+                $textarea.off("input.goiy focus.goiy keydown.goiy")
+                    .on("input.goiy focus.goiy", function () {
+                        var kw = $(this).val();
+                        var $this = $(this);
+                        if (goiYTimeoutNhiemVu) clearTimeout(goiYTimeoutNhiemVu);
+                        goiYTimeoutNhiemVu = setTimeout(function () {
+                            loadNhiemVuGoiYNoiDung($this, kw);
+                        }, 200);
+                    })
+                    .on("keydown.goiy", function (e) {
+                        var $items = $dropdown.find(".goi-y-item");
+                        if (!$dropdown.is(":visible") || $items.length === 0) return;
+
+                        if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            selectedGoiYIndexNhiemVu = (selectedGoiYIndexNhiemVu + 1) % $items.length;
+                            updateNhiemVuGoiYSelection($items);
+                        } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            selectedGoiYIndexNhiemVu = (selectedGoiYIndexNhiemVu - 1 + $items.length) % $items.length;
+                            updateNhiemVuGoiYSelection($items);
+                        } else if (e.key === "Enter") {
+                            if (selectedGoiYIndexNhiemVu >= 0 && selectedGoiYIndexNhiemVu < $items.length) {
+                                e.preventDefault();
+                                $items.eq(selectedGoiYIndexNhiemVu).trigger("mousedown");
+                            }
+                        } else if (e.key === "Escape") {
+                            hideAllNhiemVuSuggestions();
+                        }
+                    });
+
+                $textarea.on('input change', function () {
+                    var userId = $(this).closest('tr').data('userId');
+                    var nhanViec = window.nhanViecs.find(function (nv) { return String(nv.id) === String(userId); });
+                    if (nhanViec) {
+                        nhanViec.noiDungNhiemVu = $(this).val();
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('.han-xu-ly').forEach(function (input) {
+                if (!$(input).data('datepicker')) {
+                    $(input).datepicker({
+                        format: 'dd/mm/yyyy',
+                        autoclose: true,
+                        todayHighlight: true,
+                        language: 'vi'
+                    });
+                }
+
+                $(input).on('change changeDate input', function () {
+                    var userId = $(this).closest('tr').data('userId');
+                    var nhanViec = window.nhanViecs.find(function (nv) { return String(nv.id) === String(userId); });
+                    if (nhanViec) {
+                        nhanViec.hanXuLy = $(this).val();
+                    }
+                });
+
+                // Validation format ngày
+                input.addEventListener('blur', function () {
+                    var value = this.value.trim();
+                    if (value && !isValidDateFormat(value)) {
+                        this.style.borderColor = '#dc3545';
+                        this.title = 'Vui lòng nhập đúng định dạng dd/MM/yyyy';
+                    } else {
+                        this.style.borderColor = '';
+                        this.title = '';
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('.vai-tro-xu-ly').forEach(function (select) {
+                $(select).on('change', function () {
+                    var userId = $(this).closest('tr').data('userId');
+                    var nhanViec = window.nhanViecs.find(function (nv) { return String(nv.id) === String(userId); });
+                    if (nhanViec) {
+                        var roleValue = $(this).val().trim();
+                        nhanViec.vaiTroXuLyId = roleValue ? parseInt(roleValue, 10) : null;
+                    }
+                });
+            });
+        }
+
+        function isValidDateFormat(dateString) {
+            var regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            var match = dateString.match(regex);
+
+            if (!match) return false;
+
+            var day = parseInt(match[1], 10);
+            var month = parseInt(match[2], 10);
+            var year = parseInt(match[3], 10);
+
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+
+            var date = new Date(year, month - 1, day);
+            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+        }
+
+        window.xoaNhanViec = function (userId) {
+            saveCurrentData();
+
+            // 1) Xóa record khỏi mảng hiện tại
+            window.nhanViecs = window.nhanViecs.filter(function (nv) { return String(nv.id) !== String(userId); });
+
+            // 2) Bỏ check checkbox tương ứng ở danh sách bên trái
+            var checkbox = document.querySelector('#userBody input.child-checkbox[data-id="' + userId + '"]');
+            if (checkbox) {
+                checkbox.checked = false;
+
+                // 2.1) Cập nhật trạng thái checkbox cha
+                var parentId = checkbox.getAttribute('data-parent');
+                if (parentId) {
+                    var totalChildren = document.querySelectorAll("#userBody input.child-checkbox[data-parent='" + parentId + "']").length;
+                    var totalChecked = document.querySelectorAll("#userBody input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+                    var parentCb = document.getElementById(parentId);
+                    if (parentCb) parentCb.checked = (totalChildren > 0 && totalChildren === totalChecked);
+                }
+            }
+
+            // 3) Re-render bảng
+            updateNhanViecDisplay(true);
+        };
+
+        window.resetNguoiNhanViecForm = function () {
+            window.nhanViecs = [];
+            hideAllNhiemVuSuggestions();
+            $("#userBody input.child-checkbox").prop("checked", false);
+            $("#userBody input.parent-checkbox").prop("checked", false);
+            $("#searchUserInput").val("");
+            $("#userBody tr").show();
+            $("#UserIdsError").text("");
+            $("#ThanhVienError").text("");
+            updateNhanViecDisplay(true);
+        };
+
+        // Hàm public để set danh sách người nhận việc từ dữ liệu trả về
+        window.setThanhVienNhanViec = function (thanhViens) {
+            window.resetNguoiNhanViecForm();
+
+            if (!Array.isArray(thanhViens) || thanhViens.length === 0) return;
+
+            // Check các checkbox theo danh sách
+            thanhViens.forEach(function (tv) {
+                var $cb = $("#userBody input.child-checkbox[data-id='" + tv.ThanhVienId + "']");
+                if ($cb.length) {
+                    $cb.prop("checked", true);
+
+                    var parentId = $cb.data("parent");
+                    if (parentId) {
+                        var totalChildren = $("#userBody input.child-checkbox[data-parent='" + parentId + "']").length;
+                        var totalChecked = $("#userBody input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+                        var $parent = $("#" + parentId);
+                        if ($parent.length) {
+                            $parent.prop("checked", totalChildren > 0 && totalChildren === totalChecked);
+                        }
+                    }
+                }
+            });
+
+            // Gán dữ liệu trực tiếp vào window.nhanViecs từ danh sách thanhViens
+            window.nhanViecs = [];
+            thanhViens.forEach(function (tv) {
+                var $cb = $("#userBody input.child-checkbox[data-id='" + tv.ThanhVienId + "']");
+                var name = ($cb.length && $cb.data("name")) ? $cb.data("name") : (tv.ThanhVien || '');
+                var parent = ($cb.length && $cb.data("parent")) ? $cb.data("parent") : '';
+
+                window.nhanViecs.push({
+                    id: String(tv.ThanhVienId),
+                    name: name,
+                    parent: parent,
+                    hanXuLy: tv.HanXuLyStr || '',
+                    noiDungNhiemVu: tv.NoiDungNhiemVu || '',
+                    vaiTroXuLyId: tv.VaiTroXuLyId ? parseInt(tv.VaiTroXuLyId, 10) : null
+                });
+            });
+
+            // Render lại với skipSave = true để không ghi đè dữ liệu vừa nạp
+            updateNhanViecDisplay(true);
+        };
+
+        window.getThongTinNhanViecArray = function () {
+            saveCurrentData();
+            var arr = [];
+            (window.nhanViecs || []).forEach(function (nv) {
+                arr.push({
+                    ThanhVienId: parseInt(nv.id, 10),
+                    ThanhVien: nv.name || '',
+                    NoiDungNhiemVu: nv.noiDungNhiemVu || '',
+                    HanXuLyStr: nv.hanXuLy || '',
+                    VaiTroXuLyId: nv.vaiTroXuLyId ? parseInt(nv.vaiTroXuLyId, 10) : null
+                });
+            });
+            return arr;
+        };
+
+        $(document).on("click", function (e) {
+            if (!$(e.target).closest(".noi-dung-nhiem-vu, .goi-y-nhiem-vu-dropdown").length) {
+                hideAllNhiemVuSuggestions();
+            }
+        });
+    });
+</script>

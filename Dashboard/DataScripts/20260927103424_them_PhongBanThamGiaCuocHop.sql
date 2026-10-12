@@ -1,0 +1,7 @@
+CREATE TABLE PhongBanThamGiaCuocHop (
+    [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [CuocHopId] INT NOT NULL,
+    [PhongBanId] INT NOT NULL
+);
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20260927103424');

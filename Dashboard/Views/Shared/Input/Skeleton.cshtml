@@ -1,0 +1,81 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+<style>
+    .cardSkeleton {
+        background-color: #fff;
+        height: auto;
+        width: auto;
+        overflow: hidden;
+        margin: 0 0 12px 0;
+        border-radius: 5px;
+        box-shadow: 9px 17px 45px -29px rgba(0, 0, 0, 0.44);
+    }
+
+    /* Card image loading */
+    .cardSkeleton__image img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .cardSkeleton__image.loading {
+        height: 150px;
+        width: 100%;
+    }
+
+    /* Card title */
+    .cardSkeleton__title {
+        padding: 8px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+        .cardSkeleton__title.loading {
+            height: 1rem;
+            width: 50%;
+            margin: 1rem;
+            border-radius: 3px;
+        }
+
+    /* Card description */
+    .cardSkeleton__description {
+        padding: 8px;
+        font-size: 16px;
+    }
+
+        .cardSkeleton__description.loading {
+            height: 3rem;
+            margin: 1rem;
+            border-radius: 3px;
+        }
+
+    /* The loading Class */
+    .loading {
+        position: relative;
+        background-color: #e2e2e2;
+    }
+
+        /* The moving element */
+        .loading::after {
+            display: block;
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform: translateX(-100%);
+            background: -webkit-gradient(linear, left top, right top, from(transparent), color-stop(rgba(255, 255, 255, 0.2)), to(transparent));
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            /* Adding animation */
+            animation: loading 0.8s infinite;
+        }
+
+    /* Loading Animation */
+    @@keyframes loading {
+        100% {
+            transform: translateX(100%);
+        }
+    }
+</style>
+<div class="cardSkeleton" id="@Model.Id">
+    <div class="cardSkeleton__image loading"></div>
+    <div class="cardSkeleton__title loading"></div>
+    <div class="cardSkeleton__description loading"></div>
+</div>

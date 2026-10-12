@@ -1,0 +1,210 @@
+﻿<div class="modal fade" id="vanBanModal" tabindex="-1" role="dialog" aria-labelledby="vanBanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vanBanModalLabel">Chọn văn bản</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-sm-6 col-xs-12">
+                       
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <div class="input-group">
+                            <input onkeypress="enterSearchVanBan(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                            <div class="input-group-append">
+                                <button id="btn-search" onclick="searchVanBan();" class="btn btn-primary" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table id="bs-tableVanBan"
+                               data-toggle="table"
+                               data-toolbar="#get"
+                               data-url="/VanBanPhapLuat/GetListVanBanPhapLuat"
+                               data-pagination="true"
+                               data-side-pagination="server"
+                               data-page-size="30"
+                               data-page-list="[30, 50, 100, 200]"
+                               data-locale="vi-VN"
+                               data-query-params="queryParamsVanBan"
+                               data-sort-name="NgayBanHanh"
+                               data-id-field="Id"
+                               data-click-to-select="true"
+                               data-sort-order="desc">
+                            <thead>
+                                <tr>
+                                    <th data-checkbox="true"></th>
+                                    <th data-field="SoKiHieu">Số ký hiệu</th>
+                                    <th data-field="TrichYeu">Trích yếu</th>
+                                    <th data-field="HinhThucVanBan">Hình thức</th>
+                                    <th data-field="NgayBanHanhStr">Ngày ban hành</th>
+                                    <th data-field="CoQuanBanHanh">Cơ quan ban hành</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: inline;text-align:center">
+                <button type="button" class="btn btn-default mr-3" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="addSelectedVanBan()">
+                    <i class="fa fa-plus"></i> Thêm văn bản đã chọn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('openVanBanModal').addEventListener('click', function () {
+        $('#vanBanModal').modal('show');
+        $('#bs-tableVanBan').bootstrapTable('refresh');
+    });
+
+    function queryParamsVanBan(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = false;
+        return params;
+    }
+
+    function searchVanBan() {
+        $('#bs-tableVanBan').bootstrapTable('refresh');
+    }
+
+    function enterSearchVanBan(e) {
+        if (e.keyCode === 13) {
+            $('#bs-tableVanBan').bootstrapTable('refresh');
+        }
+    }
+
+    function operateVanBanFormatter(value, row, index) {
+        const btnChon = `<button class='btn btn-success btn-sm' onclick='selectSingleVanBan(${row.Id}, "${row.SoKiHieu}", "${row.TrichYeu}", "${row.NgayBanHanhStr}", "${row.CoQuanBanHanh}")'>
+            <i class='fa fa-plus'></i> Chọn
+        </button>`;
+        return btnChon;
+    }
+
+    // Kiểm tra xem văn bản đã tồn tại trong danh sách chưa dựa vào DOM
+    function isVanBanExistInList(vanBanId) {
+        return $(`#listVanBan tr[data-vanban-id="${vanBanId}"]`).length > 0;
+    }
+
+    // Lấy danh sách tất cả văn bản đã chọn từ DOM
+    function getSelectedVanBanFromDOM() {
+        var vanBanList = [];
+        $('#listVanBan tr[data-vanban-id]').each(function () {
+            var $row = $(this);
+            var vanBan = {
+                Id: parseInt($row.attr('data-vanban-id')),
+                SoKiHieu: $row.find('td:eq(0)').text(),
+                TrichYeu: $row.find('td:eq(1)').text(),
+                NgayBanHanhStr: $row.find('td:eq(2)').text(),
+                CoQuanBanHanh: $row.find('td:eq(3)').text()
+            };
+            vanBanList.push(vanBan);
+        });
+        return vanBanList;
+    }
+
+    function selectSingleVanBan(id, soKiHieu, trichYeu, ngayBanHanh, coQuanBanHanh) {
+        if (!isVanBanExistInList(id)) {
+            var vanBan = {
+                Id: id,
+                SoKiHieu: soKiHieu,
+                TrichYeu: trichYeu,
+                NgayBanHanhStr: ngayBanHanh,
+                CoQuanBanHanh: coQuanBanHanh
+            };
+            addVanBanToTable(vanBan);
+            toastr.success("Đã thêm văn bản vào danh sách");
+        } else {
+            toastr.warning("Văn bản này đã được chọn");
+        }
+    }
+
+    function selectAllVanBan() {
+        var allRows = $('#bs-tableVanBan').bootstrapTable('getData');
+        var selectedCount = 0;
+
+        allRows.forEach(function (row) {
+            if (!isVanBanExistInList(row.Id)) {
+                var vanBan = {
+                    Id: row.Id,
+                    SoKiHieu: row.SoKiHieu,
+                    TrichYeu: row.TrichYeu,
+                    NgayBanHanhStr: row.NgayBanHanhStr,
+                    CoQuanBanHanh: row.CoQuanBanHanh
+                };
+                addVanBanToTable(vanBan);
+                selectedCount++;
+            }
+        });
+
+        if (selectedCount > 0) {
+            toastr.success(`Đã thêm ${selectedCount} văn bản vào danh sách`);
+        } else {
+            toastr.info("Tất cả văn bản đã được chọn");
+        }
+    }
+
+    function addSelectedVanBan() {
+        var selectedRows = $('#bs-tableVanBan').bootstrapTable('getSelections');
+        var addedCount = 0;
+
+        selectedRows.forEach(function (row) {
+            if (!isVanBanExistInList(row.Id)) {
+                var vanBan = {
+                    Id: row.Id,
+                    SoKiHieu: row.SoKiHieu,
+                    TrichYeu: row.TrichYeu,
+                    NgayBanHanhStr: row.NgayBanHanhStr,
+                    CoQuanBanHanh: row.CoQuanBanHanh
+                };
+                addVanBanToTable(vanBan);
+                addedCount++;
+            }
+        });
+
+        if (addedCount > 0) {
+            toastr.success(`Đã thêm ${addedCount} văn bản vào danh sách`);
+        } else {
+            toastr.warning("Không có văn bản nào được chọn hoặc đã được thêm trước đó");
+        }
+    }
+
+    function addVanBanToTable(vanBan) {
+        var row = `
+            <tr data-vanban-id="${vanBan.Id}">
+                <td>${vanBan.SoKiHieu}</td>
+                <td>${vanBan.TrichYeu}</td>
+                <td>${vanBan.NgayBanHanhStr}</td>
+                <td>${vanBan.CoQuanBanHanh}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm mr-2 mt-1 mb-1" onclick="removeVanBan(${vanBan.Id})">
+                        <i class="fa fa-trash"></i> Xóa
+                    </button>
+                     <button class="btn btn-info btn-sm mt-1 mb-1" onclick="xemChiTietVanBan(${vanBan.Id})">
+                         <i class="fa fa-eye"></i> Xem thông tin
+                     </button>
+                </td>
+            </tr>
+        `;
+        $('#listVanBan').append(row);
+    }
+
+    function removeVanBan(vanBanId) {
+        if (confirm("Bạn có chắc muốn xóa văn bản này khỏi danh sách?")) {
+            $(`tr[data-vanban-id="${vanBanId}"]`).remove();
+            toastr.success("Đã xóa văn bản khỏi danh sách");
+        }
+    }
+</script>

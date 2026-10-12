@@ -1,0 +1,45 @@
+curl --location 'https://office.quangngai.gov.vn/qlvb_qni/api/file/getfileattach/2795779/' \
+--header 'X-AUTHENTICATION-TOKEN: $2a$10$1e1kP1PSMLr.4BzIYz6JKuXe0pl1ttWbwmtNW7QUR6cbSLLJcQYe'
+
+//X-AUTHENTICATION-TOKEN láy từ giá trị   "token": "$2a$10$1e1kP1PSMLr.4BzIYz6JKuXe0pl1ttWbwmtNW7QUR6cbSLLJcQYe", => được file \QuanLyCongViec_CtyHaTan\Data\API\1. login .txt trả về 
+
+
+// kêt quả khi gọi curl trên 
+{
+    "status": {
+        "code": "0",
+        "message": ""
+    },
+    "data": [
+        {
+            "id": 6927471,
+            "name": "c3180291-e5f8-4bf3-8dac-f79f382a3ee6.pdf",
+            "attachmentId": 7156346,
+            "creator": null,
+            "isKy": "true",
+            "kyPki": "true",
+            "kyServer": "false",
+            "info": [
+                "1.Hồ Như Ninh - CỤC ĐƯỜNG BỘ VIỆT NAM - BỘ XÂY DỰNG - 23/09/2026 17:10:29 - Chữ ký số hợp lệ",
+                "2.Lê Phan Duy - CỤC ĐƯỜNG BỘ VIỆT NAM - BỘ XÂY DỰNG - 23/09/2026 17:27:52 - Chữ ký số hợp lệ",
+                "3.KHU QUẢN LÝ ĐƯỜNG BỘ III - CỤC ĐƯỜNG BỘ VIỆT NAM - BỘ XÂY DỰNG - 24/09/2026 08:16:11 - Chữ ký số hợp lệ"
+            ],
+            "type": "0",
+            "listSign": null,
+            "commentDisplay": "false",
+            "kyCA": "false",
+            "editFile": "false",
+            "btnChuyen": "false",
+            "createDate": "24/09/2026 08:58:46",
+            "btnDelete": "false",
+            "btnNote": "false",
+            "kySmart": "false",
+            "fileChinhPhu": null,
+            "typeDoc": null,
+            "fileSize": null,
+            "filePage": null,
+            "listKyNhay": null,
+            "butPhe": "false"
+        }
+    ]
+}

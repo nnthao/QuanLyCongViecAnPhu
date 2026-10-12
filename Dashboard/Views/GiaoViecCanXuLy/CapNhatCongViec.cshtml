@@ -1,0 +1,352 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@model Dashboard.Models.ViewModel.ParamControllerToView
+@{
+    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted();
+    var phongBans = Dashboard.Common.CacheManagerHelper.GetPhongBanNhanViecCacheNotDeleted();
+    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId((System.Security.Claims.ClaimsIdentity)User.Identity);
+    var isXemThongTinDaXuLy = Model != null && Model.IsXemThongTinDaXuLy;
+    var giaoViecThanhVienId = Model != null ? Model.GiaoViecThanhVienId : 0;
+}
+@if (isXemThongTinDaXuLy)
+{
+    <style>
+        #tbTienTrinhXuLy th:last-child, #tbTienTrinhXuLy td:last-child {
+            display: none;
+        }
+    </style>
+}
+<style>
+    .clipboard-upload-zone {
+        margin-top: 10px;
+        padding: 12px 16px;
+        border: 2px dashed #17a2b8;
+        border-radius: 6px;
+        background-color: #f4fbfd;
+        color: #0c5460;
+        text-align: center;
+        cursor: text;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .clipboard-upload-zone:focus,
+    .clipboard-upload-zone.is-active {
+        outline: none;
+        background-color: #e8f7fb;
+        border-color: #138496;
+    }
+
+    .clipboard-upload-zone.is-dragover {
+        background-color: #dff3f8;
+        border-color: #0f6f7e;
+    }
+
+    .clipboard-upload-zone .hint {
+        margin: 0;
+    }
+</style>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>Cập nhật công việc </b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        @if (!isXemThongTinDaXuLy)
+        {
+            <div class="row">
+                @Html.CustomTextArea(id: "NoiDungXuLy", label: "Nội dung xử lý", col: 6, moreClass: "col-sm-6 col-xs-12", row: 3, required: false)
+                <div class="col-sm-6 col-xs-12">
+                    <label>
+                        File đính kèm:  <a href="javascript:void(0);" class="ml-2" id="btnAddFileDinhKem"><i class="fa fa-upload"></i> Thêm file</a>
+                    </label>
+                    <div id="capNhatDropZone" class="clipboard-upload-zone" contenteditable="true" tabindex="0">
+                        <p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>
+                    </div>
+                    <p id="listFile">
+                    </p>
+                </div>
+                <div class="col-12 text-center mt-2">
+                    <button type="button" onclick="addOrUpdate()" class="btn btn-success" id="btnXacNhanHoanThanh"><i class="fa fa-check-circle"></i> Xác nhận hoàn thành</button>
+                    <button type="button" onclick="huyXacNhanHoanThanh()" class="btn btn-warning ml-2 d-none" id="btnHuyXacNhanHoanThanh"><i class="fa fa-undo"></i> Hủy xác nhận hoàn thành</button>
+                </div>
+                <input id="capNhatFileUpload" type="file" class="d-none" multiple accept="@Dashboard.Common.BienDungChung.AllowedFileExtensions">
+            </div>
+        }
+    </div>
+    <div class="col-sm-12 col-xs-12 mt-3">
+        <div class="table-scroll">
+            <table class="table table-bordered table-striped" id="tbTienTrinhXuLy">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Thời gian </th>
+                        <th>Nội dung thực hiện</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="thongTinXuLy">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let capNhatSelectedFiles = [];
+
+    function getClipboardImageExtension(mimeType) {
+        if (!mimeType) {
+            return "png";
+        }
+
+        var mimeParts = mimeType.split("/");
+        if (mimeParts.length < 2) {
+            return "png";
+        }
+
+        return mimeParts[1].replace("jpeg", "jpg");
+    }
+
+    function resetDropZone() {
+        $('#capNhatDropZone').html('<p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>');
+    }
+
+    function renderSelectedFiles() {
+        const $listFile = $('#listFile');
+        if (!capNhatSelectedFiles || capNhatSelectedFiles.length === 0) {
+            $listFile.html('');
+            return;
+        }
+        const html = capNhatSelectedFiles.map((f, idx) => `
+            <p class="mb-1 d-flex align-items-center justify-content-between">
+                <span class="text-primary">${f.name}</span>
+                <button type="button" class="btn btn-sm btn-danger ml-2 btn-remove-file" data-index="${idx}">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </p>
+        `).join('');
+        $listFile.html(html);
+    }
+
+    function resetCapNhatCongViec() {
+        $("#NoiDungXuLy").val('');
+        capNhatSelectedFiles = [];
+        $('#listFile').html('');
+        $('#capNhatFileUpload').val('');
+        resetDropZone();
+        $('#thongTinXuLy').empty();
+    }
+
+    function addFilesToSelection(newFiles) {
+        if (!newFiles || newFiles.length === 0) {
+            return;
+        }
+
+        var validFiles = [];
+        var hasError = false;
+
+        for (var i = 0; i < newFiles.length; i++) {
+            if (!validateFileExtension(newFiles[i])) {
+                hasError = true;
+                break;
+            }
+            validFiles.push(newFiles[i]);
+        }
+
+        if (!hasError) {
+            capNhatSelectedFiles = capNhatSelectedFiles.concat(validFiles);
+            renderSelectedFiles();
+        }
+    }
+
+    function loadTienTrinhCapNhat(giaoViecThanhVienId) {
+        if (!giaoViecThanhVienId || giaoViecThanhVienId === 0) {
+            $("#thongTinXuLy").empty();
+            $("#btnHuyXacNhanHoanThanh").addClass("d-none");
+            return;
+        }
+
+        ajaxGet(`/GiaoViecCanXuLy/GetByTienTrinhCapNhatCuaThanhVien?giaoViecThanhVienId=${giaoViecThanhVienId}`, function calFunction(res) {
+            $("#thongTinXuLy").empty();
+            if (res.Item && res.Item.length > 0) {
+                $("#btnHuyXacNhanHoanThanh").removeClass("d-none");
+                for (let i = 0; i < res.Item.length; i++) {
+                    let item = res.Item[i];
+                    let itemFiles = item.Files || [];
+
+                    let files = ``;
+                    for (let j = 0; j < itemFiles.length; j++) {
+                        files += `<p class='m-b-5'><a href="javascript:void(0)" onclick="downloadFromLink('${itemFiles[j].DuongDan}', '${itemFiles[j].TenFile}')">${itemFiles[j].TenFile}</a></p>`;
+                    }
+
+                    $("#thongTinXuLy").append(`<tr>
+                         <td>${item.NgayTaoStr || ''}</td>
+                         <td>
+                            <div class="mb-2"><b>Nội dung:</b> ${item.NoiDungXuLy || ''}</div>
+                            ${files}
+                         </td>
+                         <td>
+                            <button class="btn btn-danger" onclick="xoaTienTrinh(${item.Id}, this)"><i class="fa fa-trash"></i></button>
+                         </td>
+                     </tr>`);
+                }
+            } else {
+                $("#btnHuyXacNhanHoanThanh").addClass("d-none");
+            }
+        }, function errFunct(err) {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function xoaTienTrinh(id, elm) {
+        if (confirm("Bạn muốn xoá tiến trình này?")) {
+            var fd = new FormData();
+            fd.append("Id", id);
+            showLoadingModal();
+
+            ajaxPostFormData("/GiaoViecCanXuLy/XoaTienTrinhCuaThanhVien", fd, function funcCallback(data) {
+                hideLoadingModal();
+                $(elm).closest("tr").remove();
+                if ($("#thongTinXuLy tr").length === 0) {
+                    $("#btnHuyXacNhanHoanThanh").addClass("d-none");
+                }
+                toastr.success("Xoá thành công.");
+            }, function funcError() {
+                hideLoadingModal();
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const $fileInput = $('#capNhatFileUpload');
+        const $listFile = $('#listFile');
+        const $dropZone = $('#capNhatDropZone');
+
+        $('#btnAddFileDinhKem').on('click', function (e) {
+            e.preventDefault();
+            $fileInput.trigger('click');
+        });
+
+        $fileInput.on('change', function () {
+            const newlySelected = Array.from(this.files || []);
+            if (newlySelected.length > 0) {
+                addFilesToSelection(newlySelected);
+            }
+
+            $fileInput.val('');
+        });
+
+        $listFile.on('click', '.btn-remove-file', function () {
+            const idx = parseInt($(this).data('index'));
+            if (!isNaN(idx)) {
+                capNhatSelectedFiles.splice(idx, 1);
+                renderSelectedFiles();
+                $fileInput.val('');
+            }
+        });
+
+        $dropZone
+            .on('focus', function () {
+                $(this).addClass('is-active');
+            })
+            .on('blur', function () {
+                $(this).removeClass('is-active');
+                resetDropZone();
+            })
+            .on('dragenter dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('is-dragover');
+            })
+            .on('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('is-dragover');
+            })
+            .on('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('is-dragover');
+
+                let dropEvent = e.originalEvent || e;
+                let files = dropEvent.dataTransfer ? Array.from(dropEvent.dataTransfer.files || []) : [];
+
+                resetDropZone();
+
+                if (files.length === 0) {
+                    return;
+                }
+
+                addFilesToSelection(files);
+            })
+            .on('paste', function (e) {
+                let clipboardEvent = e.originalEvent || e;
+                let clipboardData = clipboardEvent.clipboardData;
+                let files = [];
+
+                if (!clipboardData || !clipboardData.items) {
+                    return;
+                }
+
+                for (var i = 0; i < clipboardData.items.length; i++) {
+                    let item = clipboardData.items[i];
+                    if (item.kind === 'file' && item.type.indexOf('image/') === 0) {
+                        let blob = item.getAsFile();
+                        if (blob) {
+                            let extension = getClipboardImageExtension(blob.type);
+                            let fileName = 'clipboard-image-' + new Date().getTime() + '-' + i + '.' + extension;
+                            files.push(new File([blob], fileName, { type: blob.type }));
+                        }
+                    }
+                }
+
+                e.preventDefault();
+                resetDropZone();
+
+                if (files.length === 0) {
+                    return;
+                }
+
+                addFilesToSelection(files);
+            });
+
+        if (@giaoViecThanhVienId > 0) {
+            loadTienTrinhCapNhat(@giaoViecThanhVienId);
+        }
+    });
+
+    function huyXacNhanHoanThanh(giaoViecThanhVienId) {
+        if (confirm("Bạn có chắc chắn muốn hủy xác nhận hoàn thành công việc này? Tất cả thông tin cập nhật trước đó sẽ bị xóa.")) {
+            showLoadingModal();
+            var targetId = giaoViecThanhVienId || $("#CanXuLy_GiaoViecThanhVienId").val() || $("#Id").val();
+            var fd = new FormData();
+            fd.append("GiaoViecThanhVienId", targetId);
+
+            ajaxPostFormData("/GiaoViecCanXuLy/HuyXacNhanHoanThanhCuaThanhVien", fd, function (data) {
+                hideLoadingModal();
+                if (data.Errors && data.Errors.length > 0) {
+                    var msg = data.Errors.map(function(item) { return item.Description; }).join("<br/>");
+                    toastr.error(msg);
+                } else {
+                    toastr.success("Hủy xác nhận thành công.");
+                    if (typeof $("#giaoViecCanXuLyFormModal").modal === 'function' && $("#giaoViecCanXuLyFormModal").is(":visible")) {
+                        $("#giaoViecCanXuLyFormModal").modal("hide");
+                    }
+                    if (typeof search === 'function') {
+                        search();
+                    } else if (typeof loadData === 'function') {
+                        loadData();
+                    } else {
+                        window.location.reload();
+                    }
+                }
+            }, function () {
+                hideLoadingModal();
+                toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+            });
+        }
+    }
+</script>

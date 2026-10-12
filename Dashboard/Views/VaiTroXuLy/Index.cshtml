@@ -1,0 +1,230 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Vai trò xử lý";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/VaiTroXuLy/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,
+                                   moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/VaiTroXuLy/GetListVaiTroXuLy"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="ThuTu"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Ten">Tên vai trò xử lý</th>
+                                            <th data-field="ThuTu" data-formatter="thuTuFormatter" data-sortable="true">Thứ tự</th>
+                                            <th data-field="IsThongKeGiaoViec" data-formatter="isThongKeGiaoViecFormatter" data-align="center">Thống kê giao việc</th>
+                                            <th data-field="IsCanDinhKemFileKhiXacNhanHoanThanh" data-formatter="isCanDinhKemFileKhiXacNhanHoanThanhFormatter" data-align="center">Cần đính kèm file khi xác nhận HT</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+
+    function thuTuFormatter(value, row, index) {
+        const val = (value !== null && value !== undefined) ? value : '';
+        return `<input type="number" class="form-control" style="width: 100px;" value="${val}" onchange="capNhatThuTu(${row.Id}, this.value)" />`;
+    }
+
+    function isThongKeGiaoViecFormatter(value, row, index) {
+        const isChecked = (value === true || value === 'true' || value === 1) ? 'checked' : '';
+        return `<div class="custom-control custom-checkbox d-inline-block">
+            <input type="checkbox" class="custom-control-input" id="chk_isThongKeGiaoViec_${row.Id}" ${isChecked} onchange="capNhatIsThongKeGiaoViec(${row.Id}, this.checked)" />
+            <label class="custom-control-label" for="chk_isThongKeGiaoViec_${row.Id}"></label>
+        </div>`;
+    }
+
+    function isCanDinhKemFileKhiXacNhanHoanThanhFormatter(value, row, index) {
+        const isChecked = (value === true || value === 'true' || value === 1) ? 'checked' : '';
+        return `<div class="custom-control custom-checkbox d-inline-block">
+            <input type="checkbox" class="custom-control-input" id="chk_isCanDinhKemFileKhiXacNhanHoanThanh_${row.Id}" ${isChecked} onchange="capNhatIsCanDinhKemFileKhiXacNhanHoanThanh(${row.Id}, this.checked)" />
+            <label class="custom-control-label" for="chk_isCanDinhKemFileKhiXacNhanHoanThanh_${row.Id}"></label>
+        </div>`;
+    }
+
+    function capNhatThuTu(id, val) {
+        var formData = new FormData();
+        formData.append("Id", id);
+        formData.append("ThuTu", val);
+
+        ajaxPostFormData("/VaiTroXuLy/CapNhatThuTu", formData, function (data) {
+            if (data) {
+                $('#bs-table').bootstrapTable('refresh');
+                toastr.success("Cập nhật thứ tự thành công.");
+            } else {
+                toastr.error("Cập nhật thất bại.");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function capNhatIsThongKeGiaoViec(id, val) {
+        var formData = new FormData();
+        formData.append("Id", id);
+        formData.append("IsThongKeGiaoViec", val);
+
+        ajaxPostFormData("/VaiTroXuLy/CapNhatIsThongKeGiaoViec", formData, function (data) {
+            if (data) {
+                $('#bs-table').bootstrapTable('refresh');
+                toastr.success("Cập nhật thành công.");
+            } else {
+                toastr.error("Cập nhật thất bại.");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function capNhatIsCanDinhKemFileKhiXacNhanHoanThanh(id, val) {
+        var formData = new FormData();
+        formData.append("Id", id);
+        formData.append("IsCanDinhKemFileKhiXacNhanHoanThanh", val);
+
+        ajaxPostFormData("/VaiTroXuLy/CapNhatIsCanDinhKemFileKhiXacNhanHoanThanh", formData, function (data) {
+            if (data) {
+                $('#bs-table').bootstrapTable('refresh');
+                toastr.success("Cập nhật thành công.");
+            } else {
+                toastr.error("Cập nhật thất bại.");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<a href="/VaiTroXuLy/Form?id=${row.Id}" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        if (row.IsDeleted) {
+            return [
+                btnSua + btnKhoiPhuc
+            ].join("");
+        }
+
+        return [
+            btnSua + btnXoa
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá vai trò xử lý này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/VaiTroXuLy/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục vai trò xử lý này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/VaiTroXuLy/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        }
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    }
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>

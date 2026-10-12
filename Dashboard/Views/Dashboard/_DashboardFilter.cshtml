@@ -1,0 +1,63 @@
+@using Dashboard.Common
+@{
+    var phongBans = UltiHelper.GetPhongBanTreeSorted(0, true);
+}
+
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="filter-card">
+            <div class="row align-items-center">
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="form-group mb-md-0 mb-2">
+                        <label for="filterPhongBan" class="filter-label">
+                            <i class="fa fa-sitemap mr-1 text-primary"></i> Lọc theo phòng ban
+                        </label>
+                        <select class="form-control select2" id="filterPhongBan" style="width: 100%;">
+                            <option value="">-- Tất cả phòng ban --</option>
+                            @foreach (var pb in phongBans)
+                            {
+                                <option value="@pb.Id">@pb.Ten</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="form-group mb-md-0 mb-2">
+                        <label for="filterNam" class="filter-label">
+                            <i class="fa fa-calendar mr-1 text-primary"></i> Năm thống kê
+                        </label>
+                        <select class="form-control select2" id="filterNam" style="width: 100%;">
+                            <option value="">-- Chọn năm --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="form-group mb-md-0 mb-2">
+                        <label class="filter-label d-none d-sm-block">&nbsp;</label>
+                        <div class="checkbox-filter-box">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="chkFilterCaNhan">
+                                <label class="custom-control-label" for="chkFilterCaNhan">
+                                    <i class="fa fa-user-circle text-primary mr-1"></i> Lọc riêng cá nhân
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12 text-md-right text-sm-right mt-2 mt-md-0">
+                    <div class="form-group mb-0">
+                        <label class="filter-label d-none d-md-block">&nbsp;</label>
+                        <div class="d-flex justify-content-md-end justify-content-start">
+                            <!-- <button type="button" class="btn btn-sm btn-outline-primary mr-2 px-3" id="btnXemCongViecNam" style="height: 38px; border-radius: 8px;">
+                                <i class="fa fa-list-alt mr-1"></i> Xem việc đã giao
+                            </button> -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btnResetFilter" style="height: 38px; border-radius: 8px;">
+                                <i class="fa fa-undo mr-1"></i> Đặt lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

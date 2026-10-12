@@ -1,0 +1,106 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+@using Dashboard.Common;
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger" id="@Model.Id-Required">*</span>
+            }
+        </label>
+        <div class="custom-control-inline">
+            @if (Model.PreviewImage)
+            {
+                <input type="file" id="@Model.Id" class="form-control" name="@Model.Id" accept="@(string.IsNullOrEmpty(Model.acceptfile) ? BienDungChung.AllowedFileExtensions : Model.acceptfile)" @Model.multiple />
+            }
+            else
+            {
+                <input type="file" id="@Model.Id" class="form-control" name="@Model.Id" accept="@(string.IsNullOrEmpty(Model.acceptfile) ? BienDungChung.AllowedFileExtensions : Model.acceptfile)" @Model.multiple />
+            }
+
+            <a href="#" style="margin-left: 5px;" id="@Model.Id-ValueFile"></a>
+            <a style="margin-top: 10px; margin-left: 5px;" id="@Model.Id-File-Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                </svg>
+            </a>
+        </div>
+
+        @if (Model.PreviewImage)
+        {
+            <div class="gallery">
+                @*<img style="width:700px" id="@Model.Id-Preview" />*@
+            </div>
+        }
+
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+<script type="text/javascript">
+    var fileImageDinhKemDatas = [];
+
+     document.addEventListener('DOMContentLoaded', function () {
+        var idDeleteFile = "@Model.Id" + "-File-Delete";
+        $("#" + idDeleteFile).click(function () {
+            var valueFile = "@Model.Id" + "-ValueFile";
+            $("#" + valueFile).text("");
+            $("#" + valueFile).attr("href", "");
+            $("#" + "@Model.Id").val("");
+            if ('@Model.PreviewImage' == "true" || '@Model.PreviewImage' == "True") {
+                @*$("#" + "@Model.Id-Preview").attr("src", "");*@
+                $(".gallery").empty();
+            }
+        });
+    });
+
+    $(function () {
+        // Multiple images preview in browser
+        var imagesPreview = function (input, placeToInsertImagePreview) {
+
+            if (input.files) {
+                var filesAmount = input.files.length;
+
+                for (i = 0; i < filesAmount; i++) {
+                    var reader = new FileReader();
+
+                    reader.onload = function (event) {
+                        $($.parseHTML('<img>')).attr('src', event.target.result).appendTo(placeToInsertImagePreview);
+                    }
+
+                    reader.readAsDataURL(input.files[i]);
+                }
+            }
+
+        };
+        
+        $('#' + "@Model.Id").on('change', function () {
+            imagesPreview(this, 'div.gallery');
+            
+            let input = this;
+            var errorElementId = '@Model.ErrorId';
+            $('#' + errorElementId).text('');
+            
+            if (input.files && input.files.length > 0) {
+                var hasError = false;
+                for (var i = 0; i < input.files.length; i++) {
+                    if (!validateFileExtension(input.files[i], errorElementId)) {
+                        hasError = true;
+                        break;
+                    }
+                    fileImageDinhKemDatas.push({
+                        "Id": 0,
+                        "Name": input.files[i].name,
+                        "File": input.files[i]
+                    });
+                }
+                
+                if (hasError) {
+                    fileImageDinhKemDatas = [];
+                    $(this).val('');
+                }
+            }
+        });
+    });
+</script>

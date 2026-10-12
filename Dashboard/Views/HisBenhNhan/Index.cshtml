@@ -1,0 +1,127 @@
+@{
+    ViewBag.Title = "Test tra cuu benh nhan HIS";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label for="MaBenhNhan">Ma benh nhan</label>
+                                    <input id="MaBenhNhan" class="form-control" value="BN00153305" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="Uuid">Uuid</label>
+                                    <textarea id="Uuid" class="form-control" rows="3" placeholder="Nhap uuid phien HIS"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="Cookie">Cookie</label>
+                                    <textarea id="Cookie" class="form-control" rows="4" placeholder="Nhap Cookie, vi du: JSESSIONID=...; SESSIONID=..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <button id="btn-goi-api" type="button" class="btn btn-primary">
+                                    <i class="fa fa-search"></i> Goi API
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="KetQuaJson">Ket qua JSON</label>
+                                    <textarea id="KetQuaJson" class="form-control" rows="20" readonly></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function getElementValue(id) {
+        var element = document.getElementById(id);
+        return element ? element.value : "";
+    }
+
+    function buildRequestData() {
+        return {
+            MaBenhNhan: getElementValue("MaBenhNhan"),
+            Uuid: getElementValue("Uuid"),
+            Cookie: getElementValue("Cookie")
+        };
+    }
+
+    function renderResult(data) {
+        var ketQuaJson = document.getElementById("KetQuaJson");
+        if (ketQuaJson) {
+            ketQuaJson.value = JSON.stringify(data, null, 2);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var button = document.getElementById("btn-goi-api");
+        var ketQuaJson = document.getElementById("KetQuaJson");
+
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener("click", function () {
+            var requestData = buildRequestData();
+            if (ketQuaJson) {
+                ketQuaJson.value = "Dang goi...";
+            }
+
+            var body = new URLSearchParams();
+            body.append("MaBenhNhan", requestData.MaBenhNhan || "");
+            body.append("Uuid", requestData.Uuid || "");
+            body.append("Cookie", requestData.Cookie || "");
+
+            fetch("/HisBenhNhan/LayThongTinTheoMaBenhNhan", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                body: body.toString()
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    renderResult(data);
+                })
+                .catch(function (error) {
+                    if (ketQuaJson) {
+                        ketQuaJson.value = error && error.message ? error.message : "Da co loi xay ra.";
+                    }
+                });
+        });
+    });
+</script>

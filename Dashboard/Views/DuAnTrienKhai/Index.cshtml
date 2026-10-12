@@ -1,0 +1,152 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Dự án triển khai";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <a href="/DuAnTrienKhai/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 2, moreClass: "col-sm-2 col-xs-12 p-t-15")
+                            <div class="col-sm-7 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm theo tên triển khai, dự án, đơn vị">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-toggle="table"
+                                       data-url="/DuAnTrienKhai/GetAll"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-sort-name="NgayBatDau"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Ten">Tên triển khai</th>
+                                            <th data-field="TenDuAn">Dự án</th>
+                                            <th data-field="TenDonVi">Đơn vị</th>
+                                            <th data-field="NgayBatDauStr" data-align="center" data-width="110">Bắt đầu</th>
+                                            <th data-field="NgayKetThucStr" data-align="center" data-width="110">Kết thúc</th>
+                                            <th data-field="TienDoTong" data-align="center" data-width="120" data-formatter="tienDoFormatter">Tiến độ</th>
+                                            <th data-field="TrangThai" data-align="center" data-width="140" data-formatter="trangThaiFormatter">Trạng thái</th>
+                                            <th data-field="operate" data-width="220" data-formatter="operateFormatter"></th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function tienDoFormatter(value, row) {
+        const percent = row.TienDoTong || 0;
+        return `
+            <div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: ${percent}%"></div>
+                </div>
+                <div class="text-center mt-1"><b>${percent}%</b></div>
+            </div>`;
+    }
+
+    function trangThaiFormatter(value, row) {
+        const status = row.TrangThai || "";
+        if (status === "Hoàn thành") return `<span class="badge badge-success">${status}</span>`;
+        if (status === "Chậm tiến độ") return `<span class="badge badge-danger">${status}</span>`;
+        if (status === "Đang triển khai") return `<span class="badge badge-primary">${status}</span>`;
+        return `<span class="badge badge-secondary">${status || "Chưa bắt đầu"}</span>`;
+    }
+
+    function operateFormatter(value, row) {
+        const btnChiTiet = `<a href="/DuAnTrienKhai/Form?id=${row.Id}" class="btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5"><i class="fa fa-eye"></i> Chi tiết</a>`;
+        const btnXoa = `<button onclick="xoa(${row.Id})" class="btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5"><i class="fa fa-trash"></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button onclick="khoiPhuc(${row.Id})" class="btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5"><i class="fa fa-refresh"></i> Khôi phục</button>`;
+        return row.IsDeleted ? btnChiTiet + btnKhoiPhuc : btnChiTiet + btnXoa;
+    }
+
+    function xoa(id) {
+        if (!confirm("Bạn muốn xoá dự án triển khai này?")) return;
+        var fd = new FormData();
+        fd.append("id", id);
+        showLoadingModal();
+        ajaxPostFormData("/DuAnTrienKhai/Xoa", fd, function () {
+            hideLoadingModal();
+            toastr.success("Xoá thành công.");
+            search();
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function khoiPhuc(id) {
+        if (!confirm("Bạn muốn khôi phục dự án triển khai này?")) return;
+        var fd = new FormData();
+        fd.append("id", id);
+        showLoadingModal();
+        ajaxPostFormData("/DuAnTrienKhai/KhoiPhuc", fd, function () {
+            hideLoadingModal();
+            toastr.success("Khôi phục thành công.");
+            search();
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    }
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            search();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>

@@ -1,0 +1,483 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " sáng kiến";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = ViewBag.IsAdmin != null && (bool)ViewBag.IsAdmin;
+}
+@model int
+
+<style>
+    .tbVaiTroGrid th, .tbVaiTroGrid td {
+        padding: 5px 10px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomSelect2Empty(id: "DotXetDuyetId", label: "Đợt xét duyệt", col: 6, required: true)
+                            @Html.CustomSelect2Empty(id: "LinhVucSangKienId", label: "Lĩnh vực", col: 6, required: true)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTaChiTiet", label: "Mô tả chi tiết", col: 12, required: true, row: 5)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, required: false, row: 4)
+                        </div>
+
+                        @if (isAdmin)
+                        {
+                            <div class="row">
+                                @Html.CustomTextBox(id: "TrangThai", label: "Trạng thái", col: 6, required: false, length: 200)
+                            </div>
+                        }
+                        else
+                        {
+                            <input id="TrangThai" type="hidden" />
+                        }
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Thành viên tham gia</b></span></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-4 col-xs-12">
+                                <label>Thành viên <span class="text-danger">*</span></label>
+                                <select id="ThanhVienUserId" class="form-control"></select>
+                            </div>
+                            <div class="col-sm-2 col-xs-12">
+                                <label>Tỉ lệ đóng góp (%) <span class="text-danger">*</span></label>
+                                <input type="number" id="ThanhVienTiLe" class="form-control" min="0" max="100" step="0.01" value="0" />
+                            </div>
+                            <div class="col-sm-2 col-xs-12">
+                                <label>Vai trò</label>
+                                <select id="ThanhVienVaiTro" class="form-control">
+                                    <option value="Chủ trì">Chủ trì</option>
+                                    <option value="Thành viên">Thành viên</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-2 col-xs-12">
+                                <label>Ghi chú</label>
+                                <input type="text" id="ThanhVienGhiChu" class="form-control" />
+                            </div>
+                            <div class="col-sm-2 col-xs-12">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-success btn-block" onclick="themThanhVien()">
+                                    <i class="fa fa-plus"></i> Thêm
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-12">
+                                <div class="alert alert-info mb-2">
+                                    <i class="fa fa-info-circle"></i> Tổng tỉ lệ đóng góp: <strong id="tongTiLeDongGop">0</strong>%
+                                    <span id="tiLeStatus" class="ml-2"></span>
+                                </div>
+                                <table id="tbThanhVien" class="table table-bordered table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 5%">STT</th>
+                                            <th style="width: 30%">Thành viên</th>
+                                            <th style="width: 15%">Tỉ lệ đóng góp (%)</th>
+                                            <th style="width: 15%">Vai trò</th>
+                                            <th style="width: 20%">Ghi chú</th>
+                                            <th style="width: 15%">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbThanhVienBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>File đính kèm</b></span></div>
+                            </div>
+                        </div>
+                        @Html.Partial("~/Views/SangKien/FileDinhKem.cshtml")
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/SangKien"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var danhSachThanhVien = [];
+    var thanhVienOptions = [];
+
+    function loadDotXetDuyetOptions(selectedValue) {
+        ajaxGet("/DotXetDuyet/DotXetDuyetLookup", function (res) {
+            if ($("#DotXetDuyetId").hasClass("select2-hidden-accessible")) {
+                $("#DotXetDuyetId").select2('destroy');
+            }
+            $("#DotXetDuyetId").empty();
+            $("#DotXetDuyetId").select2({
+                data: res,
+                language: "vi"
+            });
+
+            if (selectedValue !== undefined && selectedValue !== null) {
+                $("#DotXetDuyetId").val(selectedValue).trigger("change");
+            } else {
+                $("#DotXetDuyetId").val(0).trigger("change");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách đợt xét duyệt.");
+        });
+    }
+
+    function loadLinhVucSangKienOptions(selectedValue) {
+        ajaxGet("/SangKien/GetLinhVucSangKienLookup", function (res) {
+            if ($("#LinhVucSangKienId").hasClass("select2-hidden-accessible")) {
+                $("#LinhVucSangKienId").select2('destroy');
+            }
+            $("#LinhVucSangKienId").empty();
+            $("#LinhVucSangKienId").select2({
+                data: res,
+                language: "vi"
+            });
+
+            if (selectedValue !== undefined && selectedValue !== null) {
+                $("#LinhVucSangKienId").val(selectedValue).trigger("change");
+            } else {
+                $("#LinhVucSangKienId").val(0).trigger("change");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách lĩnh vực.");
+        });
+    }
+
+    function loadThanhVienOptions() {
+        ajaxGet("/SangKien/GetThanhVienLookup", function (res) {
+            thanhVienOptions = res || [];
+            if ($("#ThanhVienUserId").hasClass("select2-hidden-accessible")) {
+                $("#ThanhVienUserId").select2('destroy');
+            }
+            $("#ThanhVienUserId").empty();
+            var data = [{ id: 0, text: "--- Chọn thành viên ---" }].concat(res);
+            $("#ThanhVienUserId").select2({
+                data: data,
+                language: "vi"
+            });
+            $("#ThanhVienUserId").val(0).trigger("change");
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách thành viên.");
+        });
+    }
+
+    function loadThanhVienBySangKien(sangKienId) {
+        if (!sangKienId || sangKienId <= 0) return;
+        ajaxGet(`/SangKien/GetThanhVienBySangKien?sangKienId=${sangKienId}`, function (res) {
+            danhSachThanhVien = res || [];
+            renderThanhVienTable();
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách thành viên.");
+        });
+    }
+
+    function getTenThanhVien(userId) {
+        var user = thanhVienOptions.find(x => x.id == userId);
+        return user ? user.text : "";
+    }
+
+    function themThanhVien() {
+        var userId = parseInt($("#ThanhVienUserId").val()) || 0;
+        var tiLe = parseFloat($("#ThanhVienTiLe").val()) || 0;
+        var vaiTro = $("#ThanhVienVaiTro").val();
+        var ghiChu = $("#ThanhVienGhiChu").val();
+
+        if (userId <= 0) {
+            toastr.warning("Vui lòng chọn thành viên.");
+            return;
+        }
+
+        if (tiLe <= 0 || tiLe > 100) {
+            toastr.warning("Tỉ lệ đóng góp phải từ 0.01 đến 100.");
+            return;
+        }
+
+        var exists = danhSachThanhVien.find(x => x.UserId == userId);
+        if (exists) {
+            toastr.warning("Thành viên này đã được thêm.");
+            return;
+        }
+
+        var tongHienTai = tinhTongTiLe();
+        if (tongHienTai + tiLe > 100) {
+            toastr.warning("Tổng tỉ lệ đóng góp không được vượt quá 100%.");
+            return;
+        }
+
+        danhSachThanhVien.push({
+            Id: 0,
+            SangKienId: parseInt($("#Id").val()) || 0,
+            UserId: userId,
+            TiLeDongGop: tiLe,
+            VaiTro: vaiTro,
+            GhiChu: ghiChu,
+            TenThanhVien: getTenThanhVien(userId)
+        });
+
+        renderThanhVienTable();
+        resetThanhVienForm();
+    }
+
+    function xoaThanhVien(index) {
+        if (confirm("Bạn có chắc muốn xóa thành viên này?")) {
+            danhSachThanhVien.splice(index, 1);
+            renderThanhVienTable();
+        }
+    }
+
+    function capNhatTiLe(index, value) {
+        var tiLe = parseFloat(value) || 0;
+        if (tiLe < 0) tiLe = 0;
+        if (tiLe > 100) tiLe = 100;
+
+        var tongKhac = 0;
+        for (var i = 0; i < danhSachThanhVien.length; i++) {
+            if (i !== index) {
+                tongKhac += danhSachThanhVien[i].TiLeDongGop;
+            }
+        }
+
+        if (tongKhac + tiLe > 100) {
+            toastr.warning("Tổng tỉ lệ đóng góp không được vượt quá 100%.");
+            tiLe = 100 - tongKhac;
+        }
+
+        danhSachThanhVien[index].TiLeDongGop = tiLe;
+        renderThanhVienTable();
+    }
+
+    function capNhatVaiTro(index, value) {
+        danhSachThanhVien[index].VaiTro = value;
+    }
+
+    function capNhatGhiChu(index, value) {
+        danhSachThanhVien[index].GhiChu = value;
+    }
+
+    function tinhTongTiLe() {
+        var tong = 0;
+        for (var i = 0; i < danhSachThanhVien.length; i++) {
+            tong += danhSachThanhVien[i].TiLeDongGop;
+        }
+        return tong;
+    }
+
+    function renderThanhVienTable() {
+        var tbody = $("#tbThanhVienBody");
+        tbody.empty();
+
+        if (danhSachThanhVien.length === 0) {
+            tbody.append(`<tr><td colspan="6" class="text-center text-muted">Chưa có thành viên nào</td></tr>`);
+        } else {
+            for (var i = 0; i < danhSachThanhVien.length; i++) {
+                var tv = danhSachThanhVien[i];
+                var vaiTroOptions = `
+                    <option value="Chủ trì" ${tv.VaiTro === 'Chủ trì' ? 'selected' : ''}>Chủ trì</option>
+                    <option value="Thành viên" ${tv.VaiTro === 'Thành viên' ? 'selected' : ''}>Thành viên</option>
+                `;
+                tbody.append(`
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${tv.TenThanhVien}</td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" value="${tv.TiLeDongGop}"
+                                min="0" max="100" step="0.01" onchange="capNhatTiLe(${i}, this.value)" />
+                        </td>
+                        <td>
+                            <select class="form-control form-control-sm" onchange="capNhatVaiTro(${i}, this.value)">
+                                ${vaiTroOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" value="${tv.GhiChu || ''}"
+                                onchange="capNhatGhiChu(${i}, this.value)" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="xoaThanhVien(${i})">
+                                <i class="fa fa-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        var tong = tinhTongTiLe();
+        $("#tongTiLeDongGop").text(tong.toFixed(2));
+        if (tong === 100) {
+            $("#tiLeStatus").html('<span class="badge badge-success">Đủ 100%</span>');
+        } else if (tong > 100) {
+            $("#tiLeStatus").html('<span class="badge badge-danger">Vượt quá 100%</span>');
+        } else {
+            $("#tiLeStatus").html(`<span class="badge badge-warning">Còn thiếu ${(100 - tong).toFixed(2)}%</span>`);
+        }
+    }
+
+    function resetThanhVienForm() {
+        $("#ThanhVienUserId").val(0).trigger("change");
+        $("#ThanhVienTiLe").val(0);
+        $("#ThanhVienVaiTro").val("Thành viên");
+        $("#ThanhVienGhiChu").val("");
+    }
+
+    function loadData() {
+        var id = @Model;
+        loadThanhVienOptions();
+
+        if (id > 0) {
+            showLoadingModal();
+            ajaxGet("/SangKien/GetById?id=" + id, function (res) {
+                if (res.Item) {
+                    loadDotXetDuyetOptions(res.Item.DotXetDuyetId);
+                    loadLinhVucSangKienOptions(res.Item.LinhVucSangKienId);
+                    $("#MoTaChiTiet").val(res.Item.MoTaChiTiet);
+                    $("#GhiChu").val(res.Item.GhiChu);
+                    $("#TrangThai").val(res.Item.TrangThai);
+                    loadThanhVienBySangKien(id);
+                } else {
+                    loadDotXetDuyetOptions();
+                    loadLinhVucSangKienOptions();
+                }
+                ajaxTaiLieuDinhKemServer();
+                hideLoadingModal();
+            }, function () {
+                hideLoadingModal();
+                loadDotXetDuyetOptions();
+                loadLinhVucSangKienOptions();
+                ajaxTaiLieuDinhKemServer();
+                toastr.error("Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng tải lại trang.");
+            });
+        } else {
+            loadDotXetDuyetOptions();
+            loadLinhVucSangKienOptions();
+            ajaxTaiLieuDinhKemServer();
+            renderThanhVienTable();
+        }
+    }
+
+    function resetErrors() {
+        $("#DotXetDuyetIdError").text("").hide();
+        $("#MoTaChiTietError").text("").hide();
+        $("#LinhVucSangKienIdError").text("").hide();
+        $("#TaiLieuDinhKemError").text("").hide();
+    }
+
+    function getFormData() {
+        var fd = new FormData();
+        fd.append("Id", $("#Id").val());
+        fd.append("DotXetDuyetId", $("#DotXetDuyetId").val() || 0);
+        fd.append("LinhVucSangKienId", $("#LinhVucSangKienId").val() || 0);
+        fd.append("MoTaChiTiet", $("#MoTaChiTiet").val());
+        fd.append("GhiChu", $("#GhiChu").val());
+        fd.append("TrangThai", $("#TrangThai").val());
+
+        let listIds = TaiLieuDinhKemDatas.map(x => x.Id);
+        fd.append("TaiLieuDinhKemIds", listIds.join(','));
+
+        for (let i = 0; i < TaiLieuDinhKemDatas.length; i++) {
+            if (TaiLieuDinhKemDatas[i].IsUpload == false) {
+                fd.append("FileDinhKems", TaiLieuDinhKemDatas[i].File, TaiLieuDinhKemDatas[i].TenFile);
+            }
+        }
+
+        return fd;
+    }
+
+    function luuThanhVien(sangKienId, callback) {
+        var data = {
+            sangKienId: sangKienId,
+            danhSach: danhSachThanhVien
+        };
+
+        $.ajax({
+            url: "/SangKien/LuuDanhSachThanhVien",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (res) {
+                if (res.Success) {
+                    callback(true);
+                } else {
+                    toastr.error(res.Error || "Lỗi khi lưu danh sách thành viên.");
+                    callback(false);
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi khi lưu danh sách thành viên.");
+                callback(false);
+            }
+        });
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        resetErrors();
+        ajaxPostFormData("/SangKien/ThemOrCapNhat", getFormData(), function (data) {
+            if (data.Errors && data.Errors.length > 0) {
+                hideLoadingModal();
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else {
+                var sangKienId = data.SangKienId || parseInt($("#Id").val()) || 0;
+                if (sangKienId > 0 && danhSachThanhVien.length > 0) {
+                    luuThanhVien(sangKienId, function (success) {
+                        hideLoadingModal();
+                        if (success) {
+                            toastr.success("Lưu thành công.");
+                            window.location.href = "/SangKien";
+                        }
+                    });
+                } else {
+                    hideLoadingModal();
+                    toastr.success("Lưu thành công.");
+                    window.location.href = "/SangKien";
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>
+

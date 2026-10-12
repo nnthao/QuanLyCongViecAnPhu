@@ -1,0 +1,106 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " phòng ban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "Ten", label: "Tên", col: 6, required: true, length: 500, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "PhongBanChaId", label: "Phòng ban cha", col: 6, moreClass: "col-sm-6 col-xs-12", allowClear: true)
+                        </div>
+                        <div class="row">
+                            @Html.CustomSelect2Empty(id: "NguoiTheoDoiChiDaoId", label: "Người theo dõi chỉ đạo", col: 6, moreClass: "col-sm-6 col-xs-12", allowClear: true)
+                            @Html.CustomTextBox(id: "ThuTu", label: "Thứ tự", col: 3, required: false, length: 10, moreClass: "col-sm-3 col-xs-12")
+                            @Html.CustomCheckBox(id: "IsPhongNhanViec", label: "Phòng nhận việc", col: 3, moreClass: "col-sm-3 col-xs-12 p-t-30")
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <a class="btn btn-light mr-2" href="/PhongBan"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<script>
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/PhongBan/GetById?id=" + @Model, function (res) {
+            $("#PhongBanChaId").select2({
+                data: res.PhongBans ? res.PhongBans.Data : [],
+                language: "vi",
+                allowClear: true
+            });
+
+            $("#NguoiTheoDoiChiDaoId").select2({
+                data: res.Users ? res.Users.Data : [],
+                language: "vi",
+                allowClear: true
+            });
+
+            if (res.Item) {
+                $("#Ten").val(res.Item.Ten || '');
+                $("#PhongBanChaId").val(res.Item.PhongBanChaId ? res.Item.PhongBanChaId : 0).trigger('change');
+                $("#NguoiTheoDoiChiDaoId").val(res.Item.NguoiTheoDoiChiDaoId ? res.Item.NguoiTheoDoiChiDaoId : 0).trigger('change');
+                $("#ThuTu").val(res.Item.ThuTu || '');
+                $("#IsPhongNhanViec").prop("checked", res.Item.IsPhongNhanViec !== false);
+            }
+            hideLoadingModal();
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#Id").val());
+        fd.append("Ten", $("#Ten").val());
+        fd.append("PhongBanChaId", $("#PhongBanChaId").val() || "");
+        fd.append("NguoiTheoDoiChiDaoId", $("#NguoiTheoDoiChiDaoId").val() || "");
+        fd.append("ThuTu", $("#ThuTu").val() || "");
+        fd.append("IsPhongNhanViec", $("#IsPhongNhanViec").is(":checked"));
+
+        ajaxPostFormData("/PhongBan/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                window.location.href = "/PhongBan";
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

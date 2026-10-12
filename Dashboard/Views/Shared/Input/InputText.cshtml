@@ -1,0 +1,17 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger" id="@Model.Id-Required">*</span>
+            }
+        </label>
+
+        <input @Model.TextboxType class="form-control" id="@Model.Id" maxlength="@Model.Length" value="@Model.value"
+               placeholder="@Model.PlaceHolderText" @(Model.IsReadonly ? "readonly" : "")>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>

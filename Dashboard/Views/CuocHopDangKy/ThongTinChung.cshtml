@@ -1,0 +1,81 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers.Input;
+@using Dashboard.Common;
+@using Dashboard.Models.Entities;
+@using Dashboard.Models.ViewModel;
+
+@{
+    Layout = null;
+}
+@model ParamControllerToView
+<link href="~/Content/vendor/timepicker/assets/timepicker.css" rel="stylesheet" />
+<script src="~/Content/vendor/timepicker/assets/timepicker.js"></script>
+
+<input type="hidden" id="Id" value="@Model.Id" />
+<input type="hidden" id="UserCurrentId" value="@Model.UserCurrentId" />
+
+<div class="row">
+    @Html.CustomTextBox(id: "TenCuocHop", label: "Nội dung", col: 12, required: true, length: 150, moreClass: "col-sm-12 col-xs-12")
+</div>
+<div class="row">
+    @Html.CustomTextArea(id: "NguoiThamGiaKhac", label: "Thành phần tham dự", col: 12, row: 2, moreClass: "col-sm-12 col-xs-12", required: true)
+</div>
+<div class="d-none">
+    @Html.CustomSelect2Empty(id: "PhongBanThamGiaIds", label: "Phòng ban tham gia", col: 12)
+    @Html.CustomSelect2Empty(id: "NguoiThamGia", label: "Người tham gia", col: 12)
+    @Html.CustomSelect2Empty(id: "LyDoId", label: "Lý do", col: 12)
+</div>
+<div class="row">
+    @Html.CustomDatePicker(id: "NgayDienRaStr", label: "Ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12")
+    <div class="col-sm-2 col-xs-12">
+        <div class="form-group">
+            <label for="id_end_time">Bắt đầu: <span class="text-danger" id="NguoiThamGia-Required">*</span></label>
+            <div class="input-group date" id="BatDauStr">
+                <input type="text" name="end_time" class="form-control">
+                <div class="input-group-addon input-group-append">
+                    <div class="input-group-text">
+                        <i class="glyphicon glyphicon-time fa fa-clock-o"></i>
+                    </div>
+                </div>
+            </div>
+            <p id="BatDauStrError" class="text-danger m-b-0"></p>
+        </div>
+    </div>
+    <div class="col-sm-2 col-xs-12">
+        <div class="form-group">
+            <label for="id_end_time">Kết thúc:</label>
+            <div class="input-group date" id="KetThucStr">
+                <input type="text" name="end_time" class="form-control">
+                <div class="input-group-addon input-group-append">
+                    <div class="input-group-text">
+                        <i class="glyphicon glyphicon-time fa fa-clock-o"></i>
+                    </div>
+                </div>
+            </div>
+            <p id="KetThucStrError" class="text-danger m-b-0"></p>
+        </div>
+    </div>
+    @Html.CustomTextBox(id: "PhongHopTxt", label: "Phòng họp", col: 4, length: 2000, moreClass: "col-sm-4 col-xs-12")
+</div>
+<div class="row">
+    @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, row: 3, moreClass: "col-sm-12 col-xs-12")
+</div>
+<div class="row d-none">
+    @Html.CustomCheckBox(id: "IsThongBao", label: "Nhắc nhở", col: 12, moreClass: "col-sm-12 col-xs-12 p-t-15")
+</div>
+
+@Html.Partial("~/Views/CuocHopDangKy/TaiLieu.cshtml")
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        $('#BatDauStr, #KetThucStr').datetimepicker({
+            allowInputToggle: true,
+            showClose: true,
+            showClear: true,
+            showTodayButton: true,
+            format: "HH:mm",
+            useCurrent: false
+        });
+    });
+</script>

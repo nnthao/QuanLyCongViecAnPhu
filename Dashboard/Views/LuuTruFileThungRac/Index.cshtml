@@ -1,0 +1,152 @@
+﻿@{
+    ViewBag.Title = "Thùng rác Drive";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="page-content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Thùng rác Drive</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 12%;">Loại</th>
+                                <th style="width: 28%;">Tên</th>
+                                <th style="width: 20%;">Vị trí cũ</th>
+                                <th style="width: 12%;">Dung lượng</th>
+                                <th style="width: 18%;">Thời gian</th>
+                                <th style="width: 10%;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trash-item-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var allowedViewExtensions = ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+
+    function canViewFile(filePath) {
+        if (!filePath) {
+            return false;
+        }
+
+        var extension = filePath.split('.').pop().toLowerCase();
+        return allowedViewExtensions.includes(extension);
+    }
+
+    function buildRestoreButton(type, id) {
+        return `<button type="button" class="btn btn-sm btn-success btn-restore-item" data-type="${type}" data-id="${id}">
+                    <i class="fa fa-undo mr-1"></i>Khôi phục
+                </button>`;
+    }
+
+    function buildViewButton(filePath, fileName) {
+        if (!canViewFile(filePath)) {
+            return '';
+        }
+
+        return `<button type="button" class="btn btn-sm btn-info btn-view-item mr-1" data-file-path="${filePath}" data-file-name="${fileName || ''}">
+                    <i class="fa fa-eye mr-1"></i>Xem
+                </button>`;
+    }
+
+    function getTrashItemIcon(itemType) {
+        return itemType === 'folder'
+            ? '<i class="fa fa-folder text-warning mr-1"></i>'
+            : '<i class="fa fa-file-o text-secondary mr-1"></i>';
+    }
+
+    function renderTrashItems(items) {
+        var $body = $('#trash-item-body');
+        $body.empty();
+
+        if (!items || items.length === 0) {
+            $body.append('<tr><td colspan="6" class="text-center text-muted">Không có dữ liệu trong thùng rác.</td></tr>');
+            return;
+        }
+
+        items.forEach(function (item) {
+            var actionsHtml = buildViewButton(item.DuongDan, item.Name) + buildRestoreButton(item.ItemType, item.Id);
+            var iconHtml = getTrashItemIcon(item.ItemType);
+            var rowHtml = `<tr>
+                <td>${item.ItemTypeDisplay || ''}</td>
+                <td>${iconHtml}${item.Name || ''}</td>
+                <td>${item.ParentName || ''}</td>
+                <td>${item.FileSizeStr || ''}</td>
+                <td>${item.DateDisplay || ''}</td>
+                <td>${actionsHtml}</td>
+            </tr>`;
+            $body.append(rowHtml);
+        });
+    }
+
+    function loadTrashList() {
+        ajaxGet('/LuuTruFileThungRac/GetTrashList', function (res) {
+            renderTrashItems(res && res.TrashItems ? res.TrashItems : []);
+        }, function () {
+            toastr.error('Không tải được dữ liệu thùng rác.');
+        });
+    }
+
+    function restoreItem(type, id) {
+        var url = type === 'folder' ? '/LuuTruFileThungRac/RestoreFolder' : '/LuuTruFileThungRac/RestoreFile';
+        var formData = new FormData();
+        formData.append('id', id);
+
+        ajaxPostFormData(url, formData, function (res) {
+            if (res && res.ok) {
+                toastr.success(res.message || 'Khôi phục thành công.');
+                loadTrashList();
+                return;
+            }
+
+            toastr.error(res && res.message ? res.message : 'Khôi phục thất bại.');
+        }, function () {
+            toastr.error('Khôi phục thất bại.');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadTrashList();
+
+        document.addEventListener('click', function (event) {
+            var target = event.target.closest('.btn-restore-item');
+            if (!target) {
+                return;
+            }
+
+            var type = target.getAttribute('data-type');
+            var id = parseInt(target.getAttribute('data-id') || '0');
+            if (id <= 0) {
+                return;
+            }
+
+            var confirmText = type === 'folder'
+                ? 'Khôi phục thư mục này và toàn bộ dữ liệu bên trong?'
+                : 'Khôi phục file này?';
+
+            if (!window.confirm(confirmText)) {
+                return;
+            }
+
+            restoreItem(type, id);
+        });
+
+        document.addEventListener('click', function (event) {
+            var target = event.target.closest('.btn-view-item');
+            if (!target) {
+                return;
+            }
+
+            openViewFileModal(target.getAttribute('data-file-path'), target.getAttribute('data-file-name'));
+        });
+    });
+</script>

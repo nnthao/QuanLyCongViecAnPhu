@@ -1,0 +1,50 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.VaiTroGridViewModel
+
+<div class="col-sm-12" style="margin-bottom:10px">
+    <table id="@Model.Id-tblData"  class="tbVaiTroGrid table table-bordered table-hover">
+        <thead>
+            <tr class="table-primary">
+                <th style="width: 300px">@Model.Label</th>
+                <th></th>
+                <th style="width: 50px; text-align: center; vertical-align: middle;">
+                    <input type="checkbox" id="@Model.Id-chkParent" value="" />
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                foreach (var item in @Model.Datas)
+                {
+                    <tr>
+                        <td style="padding-left:30px"> @item.Ten</td>
+                        <td style="padding-left:30px"> @item.MoTa</td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <input type="checkbox" value="@item.Key" id="@item.Key" />
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<script type="text/javascript">
+    $("#@Model.Id.ToString()-chkParent").click(function () {
+        var isChecked = $(this).prop("checked");
+        $("#@Model.Id.ToString()-tblData" + ' tr:has(td)').find('input[type="checkbox"]').prop('checked', isChecked);
+    });
+
+    $("#@Model.Id.ToString()-tblData" + ' tr:has(td)').find('input[type="checkbox"]').click(function () {
+        var isChecked = $(this).prop("checked");
+        var isHeaderChecked = $("#@Model.Id.ToString()-chkParent").prop("checked");
+        if (isChecked == false && isHeaderChecked)
+            $("#@Model.Id.ToString()-chkParent").prop('checked', isChecked);
+        else {
+            $("#@Model.Id.ToString()-tblData" + ' tr:has(td)').find('input[type="checkbox"]').each(function () {
+                if ($(this).prop("checked") == false)
+                    isChecked = false;
+            });
+
+            $("#@Model.Id.ToString()-chkParent").prop('checked', isChecked);
+        }
+    });
+</script>

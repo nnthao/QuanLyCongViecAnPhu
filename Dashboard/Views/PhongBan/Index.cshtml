@@ -1,0 +1,239 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Phòng ban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>Phòng ban</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-2 col-xs-12 p-b-10">
+                                <button type="button" onclick="openPhongBanFormModal(0)" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </button>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 2,
+                                   moreClass: "col-sm-2 col-xs-12 p-t-15")
+                            @Html.CustomSelect2Empty(id: "PhongBanChaIdSearch", label: "Phòng ban cha", col: 4,
+                                   moreClass: "col-sm-4 col-xs-12", allowClear: true)
+                            <div class="col-sm-4 col-xs-12 p-b-10">
+                                <div class="form-group mb-0">
+                                    <label style="width:100%">&nbsp;</label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/PhongBan/GetListPhongBan"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="Ten" data-formatter="tenFormatter">Tên</th>
+                                            <th data-field="TenPhongBanCha" data-formatter="phongBanChaFormatter">Phòng ban cha</th>
+                                            <th data-field="TenNguoiTheoDoiChiDao" data-formatter="nguoiTheoDoiChiDaoFormatter">Người theo dõi chỉ đạo</th>
+                                            <th data-field="ThuTu" data-formatter="thuTuFormatter">Thứ tự</th>
+                                            <th data-field="IsPhongNhanViec" data-formatter="isPhongNhanViecFormatter" data-align="center">Phòng nhận việc</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@Html.Partial("FormModal")
+
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+
+    function isPhongNhanViecFormatter(value, row, index) {
+        const isChecked = (value === true || value === null || value === undefined) ? 'checked' : '';
+        return `<div class="custom-control custom-checkbox d-inline-block">
+            <input type="checkbox" class="custom-control-input" id="chk_isPhongNhanViec_${row.Id}" ${isChecked} onchange="capNhatIsPhongNhanViec(${row.Id}, this.checked)" />
+            <label class="custom-control-label" for="chk_isPhongNhanViec_${row.Id}"></label>
+        </div>`;
+    }
+
+    function capNhatIsPhongNhanViec(id, val) {
+        var formData = new FormData();
+        formData.append("Id", id);
+        formData.append("IsPhongNhanViec", val);
+
+        ajaxPostFormData("/PhongBan/CapNhatIsPhongNhanViec", formData, function (data) {
+            if (data) {
+                $('#bs-table').bootstrapTable('refresh');
+                toastr.success("Cập nhật phòng nhận việc thành công");
+            } else {
+                toastr.error("Cập nhật thất bại");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra");
+        });
+    }
+
+    function tenFormatter(value, row, index) {
+        const val = value || '';
+        if (row.Level && row.Level > 0) {
+            const padding = row.Level * 25;
+            return `<span style="padding-left: ${padding}px !important; display: inline-block;">${val}</span>`;
+        }
+        return val;
+    }
+
+    function thuTuFormatter(value, row, index) {
+        const val = (value !== null && value !== undefined) ? value : '';
+        return `<input type="number" class="form-control" style="width: 100px;" value="${val}" onchange="capNhatThuTu(${row.Id}, this.value)" />`;
+    }
+
+    function capNhatThuTu(id, val) {
+        var formData = new FormData();
+        formData.append("Id", id);
+        formData.append("ThuTu", val);
+
+        ajaxPostFormData("/PhongBan/CapNhatThuTu", formData, function (data) {
+            if (data) {
+                $('#bs-table').bootstrapTable('refresh');
+                toastr.success("Cập nhật thứ tự thành công");
+            } else {
+                toastr.error("Cập nhật thất bại");
+            }
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra");
+        });
+    }
+
+    function phongBanChaFormatter(value, row, index) {
+        return value || '---';
+    }
+
+    function nguoiTheoDoiChiDaoFormatter(value, row, index) {
+        return value || '---';
+    }
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnSua = `<button type="button" onclick="openPhongBanFormModal(${row.Id})" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</button>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        if (row.IsDeleted) {
+            return [
+                btnSua + btnKhoiPhuc
+            ].join("");
+        }
+
+        return [
+            btnSua + btnXoa
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá đơn vị dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/phongban/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục đơn vị dùng này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/phongban/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                });
+            }
+        }
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.PhongBanChaId = $("#PhongBanChaIdSearch").val() || 0;
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    function loadPhongBanCha() {
+        ajaxGet("/PhongBan/PhongBanLookup", function funcCallback(res) {
+            $("#PhongBanChaIdSearch").select2({
+                data: res.Data,
+                language: "vi",
+                allowClear: true
+            });
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách phòng ban.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadPhongBanCha();
+
+        $("#DaXoaSearch, #PhongBanChaIdSearch").change(function () {
+            search();
+        });
+    });
+</script>

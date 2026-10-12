@@ -1,0 +1,607 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê đại hội";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        min-height: 100vh;
+    }
+
+    .thong-ke-wrapper {
+        height: 100vh;
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    .thong-ke-container {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        height: 100%;
+    }
+
+    .card {
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px;
+        border: none;
+        overflow: hidden;
+        background: #ffffff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        border-radius: 0;
+        padding: 12px 20px;
+        border: none;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-body {
+        padding: 15px;
+        background: #ffffff;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .stat-item .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .stat-item .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #007bff;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 220px;
+        margin-top: 10px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
+    .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        text-decoration: none;
+        color: white;
+    }
+
+    .fab:hover {
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
+        transform: scale(1.1);
+        color: white;
+    }
+
+    .fab i {
+        font-size: 24px;
+    }
+
+    @@media (max-width: 576px) {
+        .fab {
+            width: 56px;
+            height: 56px;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .fab i {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<div class="thong-ke-wrapper">
+    <div class="thong-ke-container">
+        <div class="card">
+            <div class="card-header">
+                <h3 style="text-transform:uppercase">Thống kê đại hội</h3>
+            </div>
+            <div class="card-body">
+                <div id="loading" class="loading">
+                    <i class="fa fa-spinner fa-spin fa-3x"></i>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+                <div id="content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="stat-item">
+                                <div class="stat-label">Số lượng</div>
+                                <div class="stat-value" id="soLuong">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="stat-item">
+                                <div class="stat-label">Tuổi trung bình</div>
+                                <div class="stat-value" id="tuoiTrungBinh">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="stat-item">
+                                <div class="stat-label">Đảng viên</div>
+                                <div class="stat-value" id="dangVien">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="stat-item">
+                                <div class="stat-label">Tỷ lệ đảng viên</div>
+                                <div class="stat-value" id="tyLeDangVien">0%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Giới tính</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="chartGioiTinh"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Độ tuổi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="chartDoTuoi"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Dân tộc</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="chartDanToc"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-12 col-xs-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Trình độ chuyên môn</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="chartChuyenMon"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <div style="text-align: center; padding: 15px 0; color: white; font-size: 12px;margin-top: 20px;">
+        Sản phẩm của <img src="https://ebill.vnpt.vn/images/logo-mb.png" style="width: 100px; height: auto;margin-left: 10px;"/>
+    </div>
+    </div>
+     
+</div>
+
+<script>
+    var chartGioiTinh, chartDoTuoi, chartDanToc, chartChuyenMon;
+
+    // Plugin hiển thị số lượng trên biểu đồ tròn
+    const pieValueLabelsPlugin = {
+        id: 'pieValueLabelsPlugin',
+        afterDatasetsDraw(chart, args) {
+            const { ctx, data, chartArea } = chart;
+            if (!data || !data.datasets || !chartArea) return;
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#fff';
+
+            if (chart.config.type === 'pie') {
+                const meta = chart.getDatasetMeta(0);
+                if (meta && meta.data) {
+                    meta.data.forEach((element, index) => {
+                        const value = data.datasets[0].data[index];
+                        if (value && value > 0) {
+                            const { x, y } = element.tooltipPosition();
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                            ctx.shadowBlur = 2;
+                            ctx.shadowOffsetX = 1;
+                            ctx.shadowOffsetY = 1;
+                            ctx.fillText(value, x, y);
+                            ctx.shadowColor = 'transparent';
+                            ctx.shadowBlur = 0;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                        }
+                    });
+                }
+            }
+
+            ctx.restore();
+        }
+    };
+
+    // Plugin hiển thị số lượng trên đầu cột của biểu đồ bar
+    // Tham khảo: https://bramantox.wordpress.com/2019/10/06/how-to-show-values-on-top-of-bars-in-chart-js/
+    const barValueLabelsPlugin = {
+        id: 'barValueLabelsPlugin',
+        afterDatasetsDraw(chart, args) {
+            const { ctx, data, chartArea } = chart;
+            if (!data || !data.datasets || !chartArea) return;
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillStyle = '#333';
+
+            if (chart.config.type === 'bar') {
+                data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    if (!meta || meta.hidden) return;
+                    meta.data.forEach((element, index) => {
+                        const raw = dataset.data[index];
+                        const value = typeof raw === 'number' ? raw : (raw && raw.y != null ? raw.y : null);
+                        if (value == null || value === 0) return;
+
+                        // Trong Chart.js 4.x, element có thuộc tính x, y, baseY
+                        // y là tọa độ đỉnh cột (với bar chart vẽ từ dưới lên)
+                        // baseY là tọa độ đáy cột
+                        const x = element.x;
+                        const y = element.y;
+                        const baseY = element.base || chartArea.bottom;
+
+                        // Tính toán vị trí trên đỉnh cột
+                        // Với bar chart, y là đỉnh, nên chỉ cần trừ 5px để có khoảng cách
+                        const labelX = x;
+                        const labelY = y - 5;
+
+                        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                        ctx.shadowBlur = 3;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+
+                        ctx.fillText(value, labelX, labelY);
+
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur = 0;
+                    });
+                });
+            }
+
+            ctx.restore();
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadThongKeDaiHoi();
+    })
+
+    function loadThongKeDaiHoi() {
+        ajaxGet("/DiemDanh/GetThongKeDaiHoi", function (data) {
+            $("#loading").hide();
+            $("#content").show();
+
+            $("#soLuong").text(data.SoLuong);
+            $("#tuoiTrungBinh").text(data.TuoiTrungBinh);
+            $("#dangVien").text(data.DangVien);
+            var tyLe = data.SoLuong > 0 ? ((data.DangVien / data.SoLuong) * 100).toFixed(1) : 0;
+            $("#tyLeDangVien").text(tyLe + "%");
+
+            renderChartGioiTinh(data.GioiTinh);
+            renderChartDoTuoi(data.DoTuoi);
+            renderChartDanToc(data.DanToc);
+            renderChartChuyenMon(data.ChuyenMonNghiepVu);
+        }, function () {
+            $("#loading").html("<p style='color: red;'>Đã có lỗi xảy ra. Vui lòng tải lại trang.</p>");
+        });
+    }
+
+    function renderChartGioiTinh(data) {
+        var ctx = document.getElementById('chartGioiTinh');
+        if (chartGioiTinh) {
+            chartGioiTinh.destroy();
+        }
+
+        var total = data.Nam + data.Nu;
+        chartGioiTinh = new Chart(ctx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Nam', 'Nữ'],
+                datasets: [{
+                    data: [data.Nam, data.Nu],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 99, 132, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                animation: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.label || '';
+                                var value = context.parsed || 0;
+                                var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} người (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [pieValueLabelsPlugin]
+        });
+    }
+
+    function renderChartDoTuoi(data) {
+        var ctx = document.getElementById('chartDoTuoi');
+        if (chartDoTuoi) {
+            chartDoTuoi.destroy();
+        }
+
+        var total = data.Duoi18 + data.Tu18Den24 + data.Tu25Den30 + data.Tren30;
+        var maxValue = Math.max(data.Duoi18, data.Tu18Den24, data.Tu25Den30, data.Tren30);
+        var maxY = Math.ceil(maxValue / 50) * 50;
+        if (maxY < 50) maxY = 50;
+        chartDoTuoi = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Dưới 18 tuổi', '18-24 tuổi', '25-30 tuổi', 'Trên 30 tuổi'],
+                datasets: [{
+                    label: 'Số lượng',
+                    data: [data.Duoi18, data.Tu18Den24, data.Tu25Den30, data.Tren30],
+                    backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                animation: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var value = context.parsed.y || 0;
+                                var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `Số lượng: ${value} người (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: maxY,
+                        ticks: {
+                            stepSize: 50
+                        }
+                    }
+                }
+            },
+            plugins: [barValueLabelsPlugin]
+        });
+    }
+
+    function renderChartDanToc(data) {
+        var ctx = document.getElementById('chartDanToc');
+        if (chartDanToc) {
+            chartDanToc.destroy();
+        }
+
+        if (!data || data.length === 0) {
+            ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+            return;
+        }
+
+        var labels = data.map(d => d.Ten);
+        var values = data.map(d => d.SoLuong);
+        var total = values.reduce((a, b) => a + b, 0);
+        var maxValue = Math.max(...values);
+        var maxY = Math.ceil(maxValue / 50) * 50;
+        if (maxY < 50) maxY = 50;
+        if (maxValue > 100) maxY = 200;
+
+        chartDanToc = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng',
+                    data: values,
+                    backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                animation: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var value = context.parsed.y || 0;
+                                var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `Số lượng: ${value} người (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: maxY,
+                        ticks: {
+                            stepSize: 50
+                        }
+                    }
+                }
+            },
+            plugins: [barValueLabelsPlugin]
+        });
+    }
+
+    function renderChartChuyenMon(data) {
+        var ctx = document.getElementById('chartChuyenMon');
+        if (chartChuyenMon) {
+            chartChuyenMon.destroy();
+        }
+
+        if (!data || data.length === 0) {
+            ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+            return;
+        }
+
+        var labels = data.map(d => d.Ten);
+        var values = data.map(d => d.SoLuong);
+        var total = values.reduce((a, b) => a + b, 0);
+        var maxValue = Math.max(...values);
+        var maxY = Math.ceil(maxValue / 50) * 50;
+        if (maxY < 50) maxY = 50;
+        if (maxValue > 100) maxY = 200;
+
+        chartChuyenMon = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng',
+                    data: values,
+                    backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                animation: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var value = context.parsed.y || 0;
+                                var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `Số lượng: ${value} người (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: maxY,
+                        ticks: {
+                            stepSize: 50
+                        }
+                    }
+                }
+            },
+            plugins: [barValueLabelsPlugin]
+        });
+    }
+</script>
+
+<!-- Floating Action Button -->
+<a href="/DiemDanh/TaiLieuDaiHoi" class="fab" title="Tài liệu đại hội">
+    <i class="fa fa-file-text"></i>
+</a>
+

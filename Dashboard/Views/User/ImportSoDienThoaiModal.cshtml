@@ -1,0 +1,169 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@{
+    Layout = null;
+}
+
+<style>
+    #importSoDienThoaiModal .error-box-container {
+        max-height: 250px;
+        overflow-y: auto;
+        background-color: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    #importSoDienThoaiModal .note-info-box {
+        background-color: #ebf8fa;
+        border-left: 4px solid #17a2b8;
+        padding: 10px 15px;
+        border-radius: 2px;
+    }
+</style>
+
+<div data-backdrop="static" data-keyboard="false" class="modal fade" id="importSoDienThoaiModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fa fa-phone mr-1"></i> Cập nhật số điện thoại từ Excel
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 col-xs-12 mb-3">
+                        <div class="note-info-box text-dark">
+                            <p class="mb-1 font-weight-bold"><i class="fa fa-info-circle mr-1"></i> Quy định file Excel:</p>
+                            <ul class="pl-3 mb-0">
+                                <li><b>Cột D:</b> Thư điện tử công vụ (Email người dùng trong hệ thống).</li>
+                                <li><b>Cột E:</b> Số điện thoại sử dụng Zalo.</li>
+                                <li>Hệ thống sẽ tự động chuẩn hóa khoảng trắng và thêm số <b>0</b> ở đầu nếu bị thiếu (yêu cầu đúng <b>10</b> chữ số).</li>
+                                <li>Nếu có email chưa có trong hệ thống hoặc số điện thoại không hợp lệ, hệ thống sẽ cảnh báo chi tiết và <b>không cập nhật</b>.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label class="font-weight-bold" for="FileImportSoDienThoai">Chọn file Excel (.xlsx, .xls) <span class="text-danger">*</span></label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="FileImportSoDienThoai" name="FileImportSoDienThoai" accept=".xlsx,.xls">
+                                <label class="custom-file-label" id="lblFileImportSoDienThoai" for="FileImportSoDienThoai">Chọn file...</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-xs-12 text-center my-2">
+                        <a href="javascript:void(0);" onclick="taiFileMauCapNhatSdt();" class="text-primary font-weight-bold">
+                            <i class="fa fa-download mr-1"></i> Tải file mẫu cập nhật số điện thoại
+                        </a>
+                    </div>
+
+                    <div class="col-sm-12 col-xs-12 d-none" id="importPhoneErrorWrapper">
+                        <div class="alert alert-danger mb-2">
+                            <h6 class="font-weight-bold mb-1"><i class="fa fa-exclamation-triangle mr-1"></i> Cảnh báo / Danh sách lỗi cần sửa trong file:</h6>
+                            <div id="importPhoneErrorMessage" class="mb-2"></div>
+                            <div class="error-box-container" id="importPhoneErrorBox">
+                                <ul id="importPhoneErrorList" class="pl-3 mb-0 text-danger"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-loading-import-phone" type="button" class="btn btn-secondary d-none" disabled>
+                    <i class="fa fa-spinner fa-spin mr-1"></i> Đang xử lý...
+                </button>
+                <button type="button" class="btn btn-info" id="btn-submit-import-phone">
+                    <i class="fa fa-upload mr-1"></i> Cập nhật
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times mr-1"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openImportSoDienThoaiModal() {
+        $("#FileImportSoDienThoai").val("");
+        $("#lblFileImportSoDienThoai").text("Chọn file...");
+        $("#importPhoneErrorWrapper").addClass("d-none");
+        $("#importPhoneErrorMessage").empty();
+        $("#importPhoneErrorList").empty();
+        $("#btn-loading-import-phone").addClass("d-none");
+        $("#btn-submit-import-phone").prop("disabled", false).removeClass("d-none");
+        $("#importSoDienThoaiModal").modal("show");
+    }
+
+    function taiFileMauCapNhatSdt() {
+        window.open("/User/TaiFileMauCapNhatSoDienThoai", "_blank");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#FileImportSoDienThoai").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            if (fileName) {
+                $("#lblFileImportSoDienThoai").text(fileName);
+            } else {
+                $("#lblFileImportSoDienThoai").text("Chọn file...");
+            }
+            $("#importPhoneErrorWrapper").addClass("d-none");
+            $("#importPhoneErrorList").empty();
+        });
+
+        $("#btn-submit-import-phone").on("click", function () {
+            var fileInput = $("#FileImportSoDienThoai")[0];
+            var fd = new FormData();
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                fd.append("file", fileInput.files[0]);
+            }
+
+            $("#btn-submit-import-phone").prop("disabled", true).addClass("d-none");
+            $("#btn-loading-import-phone").removeClass("d-none");
+            $("#importPhoneErrorWrapper").addClass("d-none");
+            $("#importPhoneErrorMessage").empty();
+            $("#importPhoneErrorList").empty();
+
+            ajaxPostFormData("/User/CapNhatSoDienThoaiTuExcel", fd, function funcCallback(response) {
+                $("#btn-submit-import-phone").prop("disabled", false).removeClass("d-none");
+                $("#btn-loading-import-phone").addClass("d-none");
+
+                if (response.Success === false || (response.Errors && response.Errors.length > 0)) {
+                    var errorsHtml = "";
+                    if (response.Errors && response.Errors.length > 0) {
+                        response.Errors.forEach(function (err) {
+                            errorsHtml += `<li>${err.Description}</li>`;
+                        });
+                    }
+                    if (response.Message) {
+                        $("#importPhoneErrorMessage").text(response.Message);
+                    }
+                    $("#importPhoneErrorList").html(errorsHtml);
+                    $("#importPhoneErrorWrapper").removeClass("d-none");
+                    toastr.warning(response.Message || "File import có lỗi, vui lòng kiểm tra lại.");
+                } else if (response.Success === true) {
+                    toastr.success(response.Message || "Cập nhật số điện thoại thành công.");
+                    $("#importSoDienThoaiModal").modal("hide");
+                    if (typeof search === "function") {
+                        search();
+                    }
+                } else {
+                    toastr.info("Đã xử lý xong.");
+                    $("#importSoDienThoaiModal").modal("hide");
+                    if (typeof search === "function") {
+                        search();
+                    }
+                }
+            }, function funcError() {
+                $("#btn-submit-import-phone").prop("disabled", false).removeClass("d-none");
+                $("#btn-loading-import-phone").addClass("d-none");
+                toastr.error("Đã có lỗi xảy ra trong quá trình cập nhật. Vui lòng tải lại trang.");
+            });
+        });
+    });
+</script>

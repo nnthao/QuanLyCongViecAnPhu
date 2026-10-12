@@ -1,0 +1,4 @@
+ALTER TABLE GiaoViec
+ADD IofficeNumber NVARCHAR(500) NULL;
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20260226174921');

@@ -1,0 +1,356 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using System.Web.Mvc
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " đợt xét duyệt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    var currentYear = DateTime.Now.Year;
+    var yearList = new List<SelectListItem>();
+    yearList.Add(new SelectListItem { Text = "--- Chọn ---", Value = "" });
+    for (int i = currentYear - 10; i <= currentYear + 5; i++)
+    {
+        yearList.Add(new SelectListItem { Text = i.ToString(), Value = i.ToString() });
+    }
+}
+@model int
+
+<style>
+    .tbVaiTroGrid th, .tbVaiTroGrid td {
+        padding: 5px 10px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "TenDotXetDuyet", label: "Tên đợt xét duyệt", col: 6, required: true, length: 500)
+                            @Html.CustomDropDownList(id: "NamXetDuyet", label: "Năm xét duyệt", col: 6, required: false, options: yearList)
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <label for="TuNgay">Từ ngày <span class="text-danger">*</span></label>
+                                    <input type="date" id="TuNgay" name="TuNgay" class="form-control" />
+                                    <span id="TuNgayError" class="text-danger" style="display: none;"></span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <label for="DenNgay">Đến ngày <span class="text-danger">*</span></label>
+                                    <input type="date" id="DenNgay" name="DenNgay" class="form-control" />
+                                    <span id="DenNgayError" class="text-danger" style="display: none;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, required: false, row: 5)
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Giải thưởng xếp loại</b></span></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-4 col-xs-12">
+                                <label>Xếp loại giải thưởng <span class="text-danger">*</span></label>
+                                <select id="GiaiThuongXepLoai" class="form-control">
+                                    <option value="">--- Chọn ---</option>
+                                    <option value="1">Loại I</option>
+                                    <option value="2">Loại II</option>
+                                    <option value="3">Loại III</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-4 col-xs-12">
+                                <label>Số tiền thưởng (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" id="TienThuongXepLoai" class="form-control" min="0" step="1000" value="0" />
+                            </div>
+                            <div class="col-sm-4 col-xs-12">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-success btn-block" onclick="themGiaiThuong()">
+                                    <i class="fa fa-plus"></i> Thêm giải thưởng
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-12">
+                                <table id="tbGiaiThuong" class="table table-bordered table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 10%">STT</th>
+                                            <th style="width: 30%">Xếp loại</th>
+                                            <th style="width: 40%">Số tiền thưởng (VNĐ)</th>
+                                            <th style="width: 20%">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbGiaiThuongBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/DotXetDuyet"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    var danhSachGiaiThuong = [];
+
+    function getTenXepLoai(xepLoai) {
+        switch (parseInt(xepLoai)) {
+            case 1: return "Loại I";
+            case 2: return "Loại II";
+            case 3: return "Loại III";
+            default: return "Khác";
+        }
+    }
+
+    function formatTien(value) {
+        if (!value) return "0";
+        return parseInt(value).toLocaleString('vi-VN');
+    }
+
+    function themGiaiThuong() {
+        var xepLoai = parseInt($("#GiaiThuongXepLoai").val()) || 0;
+        var tienThuong = parseInt($("#TienThuongXepLoai").val()) || 0;
+
+        if (xepLoai <= 0) {
+            toastr.warning("Vui lòng chọn xếp loại giải thưởng.");
+            return;
+        }
+
+        if (tienThuong <= 0) {
+            toastr.warning("Số tiền thưởng phải lớn hơn 0.");
+            return;
+        }
+
+        var exists = danhSachGiaiThuong.find(x => x.GiaiThuongXepLoai == xepLoai);
+        if (exists) {
+            toastr.warning("Xếp loại này đã được thêm.");
+            return;
+        }
+
+        danhSachGiaiThuong.push({
+            Id: 0,
+            DotXetDuyetId: parseInt($("#Id").val()) || 0,
+            GiaiThuongXepLoai: xepLoai,
+            TienThuongXepLoai: tienThuong
+        });
+
+        renderGiaiThuongTable();
+        resetGiaiThuongForm();
+    }
+
+    function xoaGiaiThuong(index) {
+        if (confirm("Bạn có chắc muốn xóa giải thưởng này?")) {
+            danhSachGiaiThuong.splice(index, 1);
+            renderGiaiThuongTable();
+        }
+    }
+
+    function capNhatTienThuong(index, value) {
+        var tien = parseInt(value) || 0;
+        if (tien < 0) tien = 0;
+        danhSachGiaiThuong[index].TienThuongXepLoai = tien;
+    }
+
+    function renderGiaiThuongTable() {
+        var tbody = $("#tbGiaiThuongBody");
+        tbody.empty();
+
+        if (danhSachGiaiThuong.length === 0) {
+            tbody.append(`<tr><td colspan="4" class="text-center text-muted">Chưa có giải thưởng nào</td></tr>`);
+        } else {
+            danhSachGiaiThuong.sort((a, b) => a.GiaiThuongXepLoai - b.GiaiThuongXepLoai);
+            for (var i = 0; i < danhSachGiaiThuong.length; i++) {
+                var gt = danhSachGiaiThuong[i];
+                tbody.append(`
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><span class="badge badge-primary">${getTenXepLoai(gt.GiaiThuongXepLoai)}</span></td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" value="${gt.TienThuongXepLoai}"
+                                min="0" step="1000" onchange="capNhatTienThuong(${i}, this.value)" style="max-width: 200px; display: inline-block;" />
+                            <span class="ml-2">VNĐ</span>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="xoaGiaiThuong(${i})">
+                                <i class="fa fa-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+    }
+
+    function resetGiaiThuongForm() {
+        $("#GiaiThuongXepLoai").val("");
+        $("#TienThuongXepLoai").val(0);
+    }
+
+    function loadPhanThuongByDotXetDuyet(dotXetDuyetId) {
+        if (!dotXetDuyetId || dotXetDuyetId <= 0) return;
+        $.get(`/DotXetDuyet/GetPhanThuongByDotXetDuyet?dotXetDuyetId=${dotXetDuyetId}`, function (res) {
+            danhSachGiaiThuong = res || [];
+            renderGiaiThuongTable();
+        }).fail(function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách giải thưởng.");
+        });
+    }
+
+    function loadData() {
+        var id = @Model;
+        renderGiaiThuongTable();
+
+        if (id > 0) {
+            showLoadingModal();
+            $.get("/DotXetDuyet/GetById?id=" + id, function (res) {
+                if (res.Item) {
+                    $("#TenDotXetDuyet").val(res.Item.TenDotXetDuyet);
+                    if (res.Item.NamXetDuyet) {
+                        $("#NamXetDuyet").val(res.Item.NamXetDuyet);
+                    }
+                    $("#GhiChu").val(res.Item.GhiChu);
+                    if (res.Item.TuNgay) {
+                        var tuNgayStr = res.Item.TuNgay;
+                        if (tuNgayStr.indexOf('/Date(') >= 0) {
+                            var tuNgay = new Date(parseInt(tuNgayStr.replace(/\/Date\((-?\d+)\)\//, '$1')));
+                            $("#TuNgay").val(tuNgay.toISOString().split('T')[0]);
+                        } else {
+                            var tuNgay = new Date(tuNgayStr);
+                            $("#TuNgay").val(tuNgay.toISOString().split('T')[0]);
+                        }
+                    }
+                    if (res.Item.DenNgay) {
+                        var denNgayStr = res.Item.DenNgay;
+                        if (denNgayStr.indexOf('/Date(') >= 0) {
+                            var denNgay = new Date(parseInt(denNgayStr.replace(/\/Date\((-?\d+)\)\//, '$1')));
+                            $("#DenNgay").val(denNgay.toISOString().split('T')[0]);
+                        } else {
+                            var denNgay = new Date(denNgayStr);
+                            $("#DenNgay").val(denNgay.toISOString().split('T')[0]);
+                        }
+                    }
+                    loadPhanThuongByDotXetDuyet(id);
+                }
+                hideLoadingModal();
+            }).fail(function () {
+                hideLoadingModal();
+                toastr.error("Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng tải lại trang.");
+            });
+        }
+    }
+
+    function luuGiaiThuong(dotXetDuyetId, callback) {
+        var data = {
+            dotXetDuyetId: dotXetDuyetId,
+            danhSach: danhSachGiaiThuong
+        };
+
+        $.ajax({
+            url: "/DotXetDuyet/LuuDanhSachPhanThuong",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (res) {
+                if (res.Success) {
+                    callback(true);
+                } else {
+                    toastr.error(res.Error || "Lỗi khi lưu danh sách giải thưởng.");
+                    callback(false);
+                }
+            },
+            error: function () {
+                toastr.error("Lỗi khi lưu danh sách giải thưởng.");
+                callback(false);
+            }
+        });
+    }
+
+    function addOrUpdate() {
+        var tuNgay = $("#TuNgay").val();
+        var denNgay = $("#DenNgay").val();
+
+        if (!tuNgay || !denNgay) {
+            toastr.warning("Vui lòng chọn đầy đủ từ ngày và đến ngày.");
+            return;
+        }
+
+        if (new Date(tuNgay) > new Date(denNgay)) {
+            toastr.warning("Từ ngày không được lớn hơn đến ngày.");
+            return;
+        }
+
+        showLoadingModal();
+        $.post("/DotXetDuyet/ThemOrCapNhat", {
+            Id: $("#Id").val(),
+            TenDotXetDuyet: $("#TenDotXetDuyet").val(),
+            NamXetDuyet: $("#NamXetDuyet").val() || null,
+            GhiChu: $("#GhiChu").val(),
+            TuNgay: tuNgay,
+            DenNgay: denNgay
+        }, function (data) {
+            if (data.Errors && data.Errors.length > 0) {
+                hideLoadingModal();
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else {
+                var dotXetDuyetId = data.DotXetDuyetId || parseInt($("#Id").val()) || 0;
+                if (dotXetDuyetId > 0 && danhSachGiaiThuong.length > 0) {
+                    luuGiaiThuong(dotXetDuyetId, function (success) {
+                        hideLoadingModal();
+                        if (success) {
+                            toastr.success("Lưu thành công.");
+                            window.location.href = "/DotXetDuyet";
+                        }
+                    });
+                } else {
+                    hideLoadingModal();
+                    toastr.success("Lưu thành công.");
+                    window.location.href = "/DotXetDuyet";
+                }
+            }
+        }).fail(function (xhr, status, error) {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>
+

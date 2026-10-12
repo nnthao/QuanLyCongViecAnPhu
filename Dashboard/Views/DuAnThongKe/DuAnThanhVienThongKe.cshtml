@@ -1,0 +1,416 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê thành viên dự án";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .thong-ke-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .thong-ke-table th,
+    .thong-ke-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .thong-ke-table thead th {
+        background-color: #d4edda;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .thong-ke-table thead th.header-du-an {
+        background-color: #fff3cd;
+    }
+
+    .thong-ke-table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .thong-ke-table tbody td {
+        text-align: center;
+    }
+
+    .thong-ke-table tbody td.text-left {
+        text-align: left;
+    }
+
+    .cell-green {
+        background-color: #d4edda !important;
+    }
+
+    .cell-orange {
+        background-color: #ffe0b2 !important;
+    }
+
+    .cell-yellow {
+        background-color: #fff3cd !important;
+    }
+
+    .cell-white {
+        background-color: #ffffff !important;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        max-height: calc(100vh - 200px);
+    }
+
+    .clickable-number {
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .clickable-number:hover {
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    .loading-text {
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                        <div class="card-title" style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+                            <b style="font-size: 18px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fa fa-table"></i> @ViewBag.Title
+                            </b>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 20px;">
+                        <div class="table-container">
+                            <table class="thong-ke-table" id="tableThongKe">
+                                <thead id="theadThongKe">
+                                    <tr id="trHeader1">
+                                        <th rowspan="2" style="min-width: 200px; vertical-align: middle;">Họ tên</th>
+                                        <th rowspan="2" style="min-width: 120px; vertical-align: middle;">Số nhóm tham gia</th>
+                                        <th rowspan="2" style="min-width: 100px; vertical-align: middle;">Thử nghiệm</th>
+                                        <th rowspan="2" style="min-width: 100px; vertical-align: middle;">Trưởng nhóm</th>
+                                    </tr>
+                                    <tr id="trHeader2">
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyThongKe">
+                                    <tr>
+                                        <td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Chi tiết dự án -->
+<div class="modal fade" id="modalChiTietDuAn" tabindex="-1" role="dialog" aria-labelledby="modalChiTietDuAnLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <h5 class="modal-title" id="modalChiTietDuAnLabel">
+                    <i class="fa fa-folder-open"></i> Chi tiết dự án tham gia
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6 style="margin-bottom: 15px;"><b>Thành viên: <span id="modalTenUser" style="color: #667eea;"></span></b></h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">STT</th>
+                                <th>Tên dự án</th>
+                                <th style="width: 120px; text-align: center;">Mức độ hỗ trợ</th>
+                                <th style="width: 120px; text-align: center;">Vai trò</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyChiTietDuAn">
+                            <tr>
+                                <td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="tfootChiTietDuAn" style="display: none;">
+                            <tr style="background-color: #f8f9fa; font-weight: 600;">
+                                <td colspan="2" style="text-align: right; padding-right: 20px;">Tổng mức độ hỗ trợ:</td>
+                                <td id="tongMucDoHoTro" style="text-align: center; color: #e74c3c; font-size: 16px;">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        loadData();
+    });
+
+    function loadData() {
+        ajaxGet('/DuAnThongKe/GetDuAnThanhVienThongKe', function (res) {
+            var thanhViens = res || [];
+            
+            ajaxGet('/DuAnThongKe/GetListDuAnNotThuNghiem', function (duAns) {
+                var danhSachDuAn = duAns || [];
+                
+                renderTable(thanhViens, danhSachDuAn);
+            }, function (err) {
+                console.error('GetListDuAnNotThuNghiem error:', err);
+                renderTable(thanhViens, []);
+            });
+        }, function (err) {
+            console.error('GetDuAnThanhVienThongKe error:', err);
+            var tbody = $('#tbodyThongKe');
+            tbody.empty();
+            tbody.append('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function renderTable(thanhViens, danhSachDuAn) {
+        var thead = $('#theadThongKe');
+        var tbody = $('#tbodyThongKe');
+        var trHeader1 = $('#trHeader1');
+        var trHeader2 = $('#trHeader2');
+        
+        tbody.empty();
+        trHeader2.empty();
+        
+        danhSachDuAn.forEach(function(duAn) {
+            var soThanhVien = thanhViens.filter(tv => tv.DanhSachDuAnThamGia && tv.DanhSachDuAnThamGia.indexOf(duAn.Id) !== -1).length;
+            var th1 = $('<th>').text(`${duAn.Ten || ''} - ${soThanhVien}`);
+            th1.addClass('header-du-an');
+            trHeader1.append(th1);
+            
+            var th2 = $('<th>').text(soThanhVien);
+            th2.addClass('header-du-an');
+            if (soThanhVien >= 4) {
+                th2.addClass('cell-green');
+            } else {
+                th2.addClass('cell-yellow');
+            }
+            trHeader2.append(th2);
+        });
+        
+        if (thanhViens.length === 0) {
+            var colspan = 4 + danhSachDuAn.length;
+            tbody.append(`<tr><td colspan="${colspan}" class="text-center">Không có dữ liệu</td></tr>`);
+            return;
+        }
+        
+        thanhViens.forEach(function(thanhVien) {
+            var tr = $('<tr>');
+            
+            tr.append($('<td>').text(thanhVien.TenUser || '').addClass('text-left'));
+            
+            var soNhomThamGia = thanhVien.SoNhomThamGia || 0;
+            var tdSoNhom = $('<td>');
+            if (soNhomThamGia > 0) {
+                var spanSoNhom = $('<span>').text(soNhomThamGia).addClass('clickable-number');
+                spanSoNhom.attr('onclick', `showChiTietDuAn(${thanhVien.UserId}, '${(thanhVien.TenUser || '').replace(/'/g, "\\'")}')`);
+                tdSoNhom.append(spanSoNhom);
+            } else {
+                tdSoNhom.text(soNhomThamGia);
+            }
+            if (soNhomThamGia >= 1 && soNhomThamGia <= 2) {
+                tdSoNhom.addClass('cell-green');
+            } else if (soNhomThamGia >= 3) {
+                tdSoNhom.addClass('cell-orange');
+            }
+            tr.append(tdSoNhom);
+            
+            var soDuAnThuNghiem = thanhVien.SoDuAnThuNghiem || 0;
+            var tdThuNghiem = $('<td>');
+            if (soDuAnThuNghiem > 0) {
+                var spanThuNghiem = $('<span>').text(soDuAnThuNghiem).addClass('clickable-number');
+                spanThuNghiem.attr('onclick', `showChiTietDuAnThuNghiem(${thanhVien.UserId}, '${(thanhVien.TenUser || '').replace(/'/g, "\\'")}')`);
+                tdThuNghiem.append(spanThuNghiem);
+            } else {
+                tdThuNghiem.text(soDuAnThuNghiem);
+            }
+            if (soDuAnThuNghiem === 1) {
+                tdThuNghiem.addClass('cell-green');
+            } else if (soDuAnThuNghiem >= 2) {
+                tdThuNghiem.addClass('cell-orange');
+            }
+            tr.append(tdThuNghiem);
+            
+            var soDuAnTruongNhom = thanhVien.SoDuAnTruongNhom || 0;
+            var tdTruongNhom = $('<td>');
+            if (soDuAnTruongNhom > 0) {
+                var spanTruongNhom = $('<span>').text(soDuAnTruongNhom).addClass('clickable-number');
+                spanTruongNhom.attr('onclick', `showChiTietDuAnTruongNhom(${thanhVien.UserId}, '${(thanhVien.TenUser || '').replace(/'/g, "\\'")}')`);
+                tdTruongNhom.append(spanTruongNhom);
+            } else {
+                tdTruongNhom.text(soDuAnTruongNhom);
+            }
+            if (soDuAnTruongNhom === 1) {
+                tdTruongNhom.addClass('cell-yellow');
+            }
+            tr.append(tdTruongNhom);
+            
+            danhSachDuAn.forEach(function(duAn) {
+                var isThamGia = thanhVien.DanhSachDuAnThamGia && thanhVien.DanhSachDuAnThamGia.indexOf(duAn.Id) !== -1;
+                var td = $('<td>');
+                if (isThamGia) {
+                    td.text('X');
+                }
+                tr.append(td);
+            });
+            
+            tbody.append(tr);
+        });
+    }
+
+    function showChiTietDuAn(userId, tenUser) {
+        $('#modalTenUser').text(tenUser);
+        $('#modalChiTietDuAn').modal('show');
+        
+        var tbody = $('#tbodyChiTietDuAn');
+        tbody.html('<tr><td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+
+        ajaxGet(`/DuAnThongKe/GetListDuAnByUserId?userId=${userId}`, function (res) {
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+
+            if (res && res.length > 0) {
+                var tongMucDoHoTro = 0;
+                res.forEach(function (item, index) {
+                    var vaiTro = item.IsTruongNhom ? '<span class="badge badge-danger">Trưởng nhóm</span>' : '<span class="badge badge-info">Thành viên</span>';
+                    var mucDoHoTro = item.MucDoHoTro || 0;
+                    tongMucDoHoTro += mucDoHoTro;
+                    
+                    var tenDuAnLink = item.Id ? `<a href="/DuAn/Form?id=${item.Id}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;" title="Click để xem chi tiết dự án">${item.Ten || ''}</a>` : (item.Ten || '');
+                    var row = `<tr>
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td>${tenDuAnLink}</td>
+                        <td style="text-align: center; font-weight: 600;">${mucDoHoTro}</td>
+                        <td style="text-align: center;">${vaiTro}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+                
+                $('#tongMucDoHoTro').text(tongMucDoHoTro);
+                $('#tfootChiTietDuAn').show();
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function (err) {
+            console.error('GetListDuAnByUserId error:', err);
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+            tbody.append('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function showChiTietDuAnThuNghiem(userId, tenUser) {
+        $('#modalTenUser').text(tenUser);
+        $('#modalChiTietDuAn').modal('show');
+        
+        var tbody = $('#tbodyChiTietDuAn');
+        tbody.html('<tr><td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+
+        ajaxGet(`/DuAnThongKe/GetListDuAnThuNghiemByUserId?userId=${userId}`, function (res) {
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+
+            if (res && res.length > 0) {
+                var tongMucDoHoTro = 0;
+                res.forEach(function (item, index) {
+                    var vaiTro = item.IsTruongNhom ? '<span class="badge badge-danger">Trưởng nhóm</span>' : '<span class="badge badge-info">Thành viên</span>';
+                    var mucDoHoTro = item.MucDoHoTro || 0;
+                    tongMucDoHoTro += mucDoHoTro;
+                    
+                    var tenDuAnLink = item.Id ? `<a href="/DuAn/Form?id=${item.Id}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;" title="Click để xem chi tiết dự án">${item.Ten || ''}</a>` : (item.Ten || '');
+                    var row = `<tr>
+                        <td style="font-weight: 600;">${index + 1}</td>
+                        <td>${tenDuAnLink}</td>
+                        <td style="text-align: center; font-weight: 600;">${mucDoHoTro}</td>
+                        <td style="text-align: center;">${vaiTro}</td>
+                    </tr>`;
+                    tbody.append(row);
+                });
+                
+                $('#tongMucDoHoTro').text(tongMucDoHoTro);
+                $('#tfootChiTietDuAn').show();
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function (err) {
+            console.error('GetListDuAnThuNghiemByUserId error:', err);
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+            tbody.append('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function showChiTietDuAnTruongNhom(userId, tenUser) {
+        $('#modalTenUser').text(tenUser);
+        $('#modalChiTietDuAn').modal('show');
+        
+        var tbody = $('#tbodyChiTietDuAn');
+        tbody.html('<tr><td colspan="4" class="text-center loading-text">Đang tải dữ liệu...</td></tr>');
+
+        ajaxGet(`/DuAnThongKe/GetListDuAnByUserId?userId=${userId}`, function (res) {
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+
+            if (res && res.length > 0) {
+                var duAnTruongNhom = res.filter(item => item.IsTruongNhom);
+                if (duAnTruongNhom.length > 0) {
+                    var tongMucDoHoTro = 0;
+                    duAnTruongNhom.forEach(function (item, index) {
+                        var vaiTro = '<span class="badge badge-danger">Trưởng nhóm</span>';
+                        var mucDoHoTro = item.MucDoHoTro || 0;
+                        tongMucDoHoTro += mucDoHoTro;
+                        
+                        var tenDuAnLink = item.Id ? `<a href="/DuAn/Form?id=${item.Id}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;" title="Click để xem chi tiết dự án">${item.Ten || ''}</a>` : (item.Ten || '');
+                        var row = `<tr>
+                            <td style="font-weight: 600;">${index + 1}</td>
+                            <td>${tenDuAnLink}</td>
+                            <td style="text-align: center; font-weight: 600;">${mucDoHoTro}</td>
+                            <td style="text-align: center;">${vaiTro}</td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                    
+                    $('#tongMucDoHoTro').text(tongMucDoHoTro);
+                    $('#tfootChiTietDuAn').show();
+                } else {
+                    tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+                }
+            } else {
+                tbody.append('<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function (err) {
+            console.error('GetListDuAnByUserId error:', err);
+            tbody.empty();
+            $('#tfootChiTietDuAn').hide();
+            tbody.append('<tr><td colspan="4" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+</script>

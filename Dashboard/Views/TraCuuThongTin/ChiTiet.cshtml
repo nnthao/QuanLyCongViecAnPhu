@@ -1,0 +1,97 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    ViewBag.Title =  "Chi tiết thông tin tra cứu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "MaTraCuu", label: "Mã tra cứu", col: 3, isReadonly: true, length: 100,
+                           moreClass: "col-sm-3 col-xs-12")
+                            @Html.CustomDatePicker(id: "NgayHieuLucStr", label: "Ngày hiệu lực", col: 2, moreClass: "col-sm-2 col-xs-12",isReadonly: true)
+                            @Html.CustomSelect2Empty(id: "TrangThai", label: "Trạng thái", col: 2, isReadonly: true, moreClass: "col-sm-2 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "DanhMucTraCuuThongTinId", label: "Danh mục tra cứu", col: 5, isReadonly: true, moreClass: "col-sm-5 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextBox(id: "TieuDe", label: "Tiêu đề", col: 12, isReadonly: true, length: 500, moreClass: "col-sm-5 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3, moreClass: "col-sm-3 col-xs-12", isReadonly:true)
+                        </div>
+                       
+                        @Html.Partial("~/Views/TraCuuThongTin/VanBanLienQuan.cshtml")
+                        
+                        @Html.Partial("~/Views/TraCuuThongTin/FileDinhKem.cshtml")
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <a class="btn btn-light mr-2" href="/TraCuuThongTin"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/TraCuuThongTin/VanBanChiTietModal.cshtml")
+
+<script>
+    const textFields = ["Id", "MaTraCuu", "TieuDe", "MoTa", "NgayHieuLucStr"];
+    const selectFields = ["TrangThai", "DanhMucTraCuuThongTinId"];
+    const radioFields = [];
+    const checkBoxFields = [];
+    const select2MultiFields = [];
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/QuanLyThongTinTraCuu/GetById?id=" + @Model, function funcCallback(res) {
+            $("#TrangThai").select2({
+                data: res.TrangThai,
+                language: "vi"
+            });
+
+            $("#DanhMucTraCuuThongTinId").select2({
+                data: res.DanhMucTraCuuThongTin,
+                language: "vi"
+            });
+
+            if (res.Item) {
+                setTimeout(function () {
+                    FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+
+                    for (let i = 0; i < select2MultiFields.length; i++) {
+                        if ($("#" + select2MultiFields[i])) {
+                            $("#" + select2MultiFields[i]).val(res.Item[select2MultiFields[i]] ? res.Item[select2MultiFields[i]].split(',') : "").trigger("change");
+                        }
+                    }
+
+                    hideLoadingModal();
+                }, 300);
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

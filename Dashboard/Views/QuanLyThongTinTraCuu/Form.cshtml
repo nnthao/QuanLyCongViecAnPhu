@@ -1,0 +1,182 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " quản lý thông tin tra cứu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<style>
+    /* Style cho table văn bản đã chọn */
+    #listVanBan tr {
+        transition: background-color 0.3s ease;
+    }
+
+        #listVanBan tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    #listVanBan td {
+        vertical-align: middle;
+    }
+
+    /* Style cho các button trong modal */
+    .modal-footer .btn {
+        margin-left: 5px;
+    }
+
+    /* Style cho checkbox column */
+    .bootstrap-table .bs-checkbox {
+        text-align: center;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "MaTraCuu", label: "Mã tra cứu", col: 3, required: true, length: 100,
+                           moreClass: "col-sm-3 col-xs-12")
+                            @Html.CustomDatePicker(id: "NgayHieuLucStr", label: "Ngày hiệu lực", col: 2, moreClass: "col-sm-2 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "TrangThai", label: "Trạng thái", col: 2, required: true, moreClass: "col-sm-2 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "DanhMucTraCuuThongTinId", label: "Danh mục tra cứu", col: 5, required: true, moreClass: "col-sm-5 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextBox(id: "TieuDe", label: "Tiêu đề", col: 12, required: true, length: 500, moreClass: "col-sm-5 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3, moreClass: "col-sm-3 col-xs-12")
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Văn bản liên quan</b></span></div>
+                            </div>
+                        </div>
+                        @Html.Partial("~/Views/QuanLyThongTinTraCuu/VanBanLienQuan.cshtml")
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>File đính kèm</b></span></div>
+                            </div>
+                        </div>
+                        @Html.Partial("~/Views/QuanLyThongTinTraCuu/FileDinhKem.cshtml")
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/QuanLyThongTinTraCuu"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/QuanLyThongTinTraCuu/VanBanModal.cshtml")
+@Html.Partial("~/Views/TraCuuThongTin/VanBanChiTietModal.cshtml")
+
+<script>
+    const textFields = ["Id", "MaTraCuu", "TieuDe", "MoTa", "NgayHieuLucStr"];
+    const selectFields = ["TrangThai", "DanhMucTraCuuThongTinId"];
+    const radioFields = [];
+    const checkBoxFields = [];
+    const select2MultiFields = [];
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/QuanLyThongTinTraCuu/GetById?id=" + @Model, function funcCallback(res) {
+            $("#TrangThai").select2({
+                data: res.TrangThai,
+                language: "vi"
+            });
+
+            $("#DanhMucTraCuuThongTinId").select2({
+                data: res.DanhMucTraCuuThongTin,
+                language: "vi"
+            });
+
+            if (res.Item) {
+                setTimeout(function () {
+                    FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+
+                    for (let i = 0; i < select2MultiFields.length; i++) {
+                        if ($("#" + select2MultiFields[i])) {
+                            $("#" + select2MultiFields[i]).val(res.Item[select2MultiFields[i]] ? res.Item[select2MultiFields[i]].split(',') : "").trigger("change");
+                        }
+                    }
+
+                    hideLoadingModal();
+                }, 300);
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+
+        // Lấy danh sách văn bản từ DOM thay vì từ selectedVanBanList
+        if (typeof getSelectedVanBanFromDOM !== 'undefined') {
+            var selectedVanBanList = getSelectedVanBanFromDOM();
+            var vanBanIds = selectedVanBanList.map(vb => vb.Id);
+            fd.append("VanBanLienQuanIds", vanBanIds.join(","));
+        }
+
+        //lay file ID
+        let listIds = TaiLieuDinhKemDatas.map(x => x.Id);
+        fd.append("TaiLieuDinhKemIds", listIds.join(','));
+        // save file
+        for (let i = 0; i < TaiLieuDinhKemDatas.length; i++) {
+            if (TaiLieuDinhKemDatas[i].IsUpload == false) {
+                fd.append("FileDinhKems", TaiLieuDinhKemDatas[i].File, TaiLieuDinhKemDatas[i].TenFile || TaiLieuDinhKemDatas[i].File.name);
+            }
+        }
+
+        return fd;
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+
+        var selectAll = selectFields.concat(select2MultiFields);
+        FormHelper.clearError(textFields, selectAll, radioFields, checkBoxFields);
+
+        ajaxPostFormData("/QuanLyThongTinTraCuu/ThemOrCapNhat", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else {
+                window.location.href = "/QuanLyThongTinTraCuu";
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

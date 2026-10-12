@@ -1,0 +1,243 @@
+<style>
+    #xemThongTinThanhVienModal .hanXuLy label {
+        font-weight: bold !important;
+        color: red;
+    }
+
+    #xemThongTinThanhVienModal .hanXuLy input,
+    #xemThongTinThanhVienModal .hanXuLy textarea {
+        color: red;
+        font-weight: bold;
+    }
+
+    #xemThongTinThanhVienModal .auto-resize-textarea {
+        overflow: hidden;
+        resize: vertical;
+        min-height: 38px;
+    }
+
+    #xemThongTinThanhVienModal .table-scroll {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="modal fade" id="xemThongTinThanhVienModal" tabindex="-1" role="dialog" aria-labelledby="xemThongTinThanhVienModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="xemThongTinThanhVienModalLabel">Thông tin công việc thành viên</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-2">
+                    <div class="col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label>Tên công việc:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="modal_TenCongViec" readonly />
+                                <div class="input-group-append">
+                                    <a id="modal_btnLinkIoffice" class="btn btn-info d-none" href="#" target="_blank" rel="noopener noreferrer">
+                                        <i class="fa fa-external-link"></i> Mở iOffice
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2 col-xs-12 hanXuLy">
+                        <div class="form-group">
+                            <label>Hạn xử lý</label>
+                            <input type="text" class="form-control" id="modal_HanXuLyThanhVienCanXuLyStr" readonly />
+                        </div>
+                    </div>
+                    <div class="col-sm-2 col-xs-12 hanXuLy">
+                        <div class="form-group">
+                            <label>Vai trò xử lý</label>
+                            <input type="text" class="form-control" id="modal_TenVaiTroXuLyThanhVienCanXuLy" readonly />
+                        </div>
+                    </div>
+                    <div class="col-sm-2 col-xs-12 hanXuLy">
+                        <div class="form-group">
+                            <label>Người theo dõi chỉ đạo</label>
+                            <input type="text" class="form-control" id="modal_TenNguoiTheoDoiChiDaoThanhVienCanXuLy" readonly />
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label>Nội dung công việc</label>
+                            <textarea class="form-control auto-resize-textarea" id="modal_NoiDung" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label>Ghi chú</label>
+                            <textarea class="form-control auto-resize-textarea" id="modal_GhiChu" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xs-12 hanXuLy">
+                        <div class="form-group">
+                            <label>Nội dung cần xử lý</label>
+                            <textarea class="form-control auto-resize-textarea" id="modal_NoiDungThanhVienCanXuLy" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-12 col-xs-12">
+                        <label>File đính kèm công việc:</label>
+                        <div id="modal_listFileDinhKem" class="border p-2 rounded bg-light" style="min-height: 40px;">
+                            <span class="text-muted">Không có file đính kèm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="txt-middle-line mb-3">
+                            <span><b>Tiến trình thực hiện</b></span>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="table table-bordered table-striped" id="modal_tbTienTrinhXuLy">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 180px;">Thời gian</th>
+                                        <th>Nội dung thực hiện</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal_thongTinXuLy">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function isPdfOrImageFileModal(filePath) {
+        if (!filePath) return false;
+        const extension = filePath.split('.').pop().toLowerCase();
+        const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+        return allowedExtensions.includes(extension);
+    }
+
+    function renderModalFileItem(duongDan, tenFile) {
+        if (!duongDan) return '';
+        const safeDuongDan = duongDan.replace(/'/g, "\\'");
+        const safeTenFile = (tenFile || '').replace(/'/g, "\\'");
+        const fullUrl = duongDan.startsWith('http://') || duongDan.startsWith('https://')
+            ? duongDan
+            : window.location.origin + (duongDan.startsWith('/') ? duongDan : '/' + duongDan);
+        const safeFullUrl = fullUrl.replace(/'/g, "\\'");
+
+        const copyBtn = `<button type="button" class="btn btn-success btn-sm mr-1 my-1" onclick="copyFileUrl('${safeFullUrl}')" title="Copy URL">
+            <i class="fa fa-copy"></i> Copy URL
+        </button>`;
+
+        let viewBtn = '';
+        if (isPdfOrImageFileModal(duongDan)) {
+            viewBtn = `<button type="button" class="btn btn-info btn-sm mr-1 my-1" onclick="openViewFileModal('${safeDuongDan}', '${safeTenFile}')" title="Xem file">
+                <i class="fa fa-eye"></i> Xem
+            </button>`;
+        }
+
+        const downloadBtn = `<button type="button" class="btn btn-primary btn-sm my-1" onclick="downloadFromLink('${safeDuongDan}', '${safeTenFile}')" title="Tải xuống">
+            <i class="fa fa-download"></i> Tải xuống
+        </button>`;
+
+        return `<div class="d-flex flex-wrap align-items-center justify-content-between border-bottom py-1">
+            <span class="mr-2 my-1 text-break">
+                <i class="fa fa-paperclip text-primary mr-1"></i>
+                <a href="javascript:void(0)" onclick="downloadFromLink('${safeDuongDan}', '${safeTenFile}')">${tenFile}</a>
+            </span>
+            <div>
+                ${copyBtn}
+                ${viewBtn}
+                ${downloadBtn}
+            </div>
+        </div>`;
+    }
+
+    function openXemThongTinModal(giaoViecThanhVienId, giaoViecId, thanhVienId) {
+        showLoadingModal();
+
+        $("#modal_TenCongViec").val('');
+        $("#modal_NoiDung").val('');
+        $("#modal_HanXuLyThanhVienCanXuLyStr").val('');
+        $("#modal_TenVaiTroXuLyThanhVienCanXuLy").val('');
+        $("#modal_GhiChu").val('');
+        $("#modal_NoiDungThanhVienCanXuLy").val('');
+        $("#modal_btnLinkIoffice").addClass("d-none").attr("href", "#");
+        $("#modal_listFileDinhKem").html('<span class="text-muted">Không có file đính kèm</span>');
+        $("#modal_thongTinXuLy").empty();
+
+        ajaxGet(`/GiaoViecThongTinTraCuu/XemThongTinGetById?GiaoViecId=${giaoViecId}&ThanhVienId=${thanhVienId}&GiaoViecThanhVienId=${giaoViecThanhVienId}`, function (res) {
+            if (res && res.Item) {
+                const item = res.Item;
+                $("#modal_TenCongViec").val(item.TenCongViec || '');
+                $("#modal_NoiDung").val(item.NoiDung || '');
+                $("#modal_HanXuLyThanhVienCanXuLyStr").val(item.HanXuLyThanhVienCanXuLyStr || '');
+                $("#modal_TenVaiTroXuLyThanhVienCanXuLy").val(item.TenVaiTroXuLyThanhVienCanXuLy || '');
+                $("#modal_TenNguoiTheoDoiChiDaoThanhVienCanXuLy").val(item.TenNguoiTheoDoiChiDaoThanhVienCanXuLy || '');
+                $("#modal_GhiChu").val(item.GhiChu || '');
+                $("#modal_NoiDungThanhVienCanXuLy").val(item.NoiDungThanhVienCanXuLy || '');
+
+                const iofficBaseUrl = "https://eoffice.vnpt.vn/qlvbdh/main?IzL1Dx9w5BxmCEtw5A9c6Bnb=CEt1CzAwJyHx4yjbTq9vCBtuTt9fCcPbUo..&IyLlCc5f5w5fCES.=DBny4Y9wDctV4zAxJybk5EA0&CBAkTA9f5o..=m2286&4c9lTFLwDctm=2&TFbm5B5xCcLw6B9k=0&6B9c3ytk5t9f5o..=";
+                if (item.IofficeNumber && item.IofficeNumber.toString().trim() !== "") {
+                    $("#modal_btnLinkIoffice").attr("href", iofficBaseUrl + item.IofficeNumber + "-2032169").removeClass("d-none");
+                }
+
+                if (item.GiaoViecFiles && item.GiaoViecFiles.length > 0) {
+                    const filesHtml = item.GiaoViecFiles.map(f => renderModalFileItem(f.DuongDan, f.TenFile)).join('');
+                    $("#modal_listFileDinhKem").html(filesHtml);
+                } else {
+                    $("#modal_listFileDinhKem").html('<span class="text-muted">Không có file đính kèm</span>');
+                }
+            }
+
+            ajaxGet(`/GiaoViecThongTinTraCuu/GetByTienTrinhCapNhatCuaThanhVien?giaoViecThanhVienId=${giaoViecThanhVienId}`, function (resProgress) {
+                hideLoadingModal();
+                if (resProgress && resProgress.Item && resProgress.Item.length > 0) {
+                    let html = '';
+                    for (let i = 0; i < resProgress.Item.length; i++) {
+                        const progress = resProgress.Item[i];
+                        const itemFiles = progress.Files || [];
+                        let filesHtml = '';
+                        for (let j = 0; j < itemFiles.length; j++) {
+                            filesHtml += renderModalFileItem(itemFiles[j].DuongDan, itemFiles[j].TenFile);
+                        }
+
+                        html += `<tr>
+                            <td>${progress.NgayTaoStr || ''}</td>
+                            <td>
+                                <div class="mb-2"><b>Nội dung đã xử lý:</b> ${progress.NoiDungXuLy || ''}</div>
+                                ${filesHtml}
+                            </td>
+                        </tr>`;
+                    }
+                    $("#modal_thongTinXuLy").html(html);
+                } else {
+                    $("#modal_thongTinXuLy").html('<tr><td colspan="2" class="text-center text-muted">Chưa có tiến trình thực hiện</td></tr>');
+                }
+
+                $("#xemThongTinThanhVienModal").modal("show");
+            }, function () {
+                hideLoadingModal();
+                $("#modal_thongTinXuLy").html('<tr><td colspan="2" class="text-center text-muted">Chưa có tiến trình thực hiện</td></tr>');
+                $("#xemThongTinThanhVienModal").modal("show");
+            });
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra khi tải thông tin. Vui lòng thử lại.");
+        });
+    }
+</script>

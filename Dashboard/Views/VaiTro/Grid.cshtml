@@ -1,0 +1,112 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Common;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using Dashboard.Models.ViewModel
+@using System.Web.Hosting
+@{
+    Layout = null;
+    var path = HostingEnvironment.MapPath("~/Temp/Menu.json");
+    var datas = MenuHelper.ReadMenuJsonFile(path);
+    var phongBanItems = CacheManagerHelper.GetPhongBanCacheNotDeleted()
+        .OrderBy(o => o.ThuTu)
+        .ThenBy(o => o.Ten)
+        .Select(o => new MultiSelectItem
+        {
+            Id = o.Id,
+            Text = o.Ten
+        }).ToList();
+    datas.Add(MenuHelper.DanhSachQuyenMoRong());
+}
+    <style>
+        .tbVaiTroGrid th, .tbVaiTroGrid td {
+            padding: 5px 10px;
+        }
+    </style>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal p-0 them-sua-dv" id="themSuaModal">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title"><span id="titleThemSuaModal"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="row">
+                        @Html.CustomTextBox(id: "Ten", label: "Vai trò", col: 12, required: true, length: 100)
+                    </div>
+                    <div class="row" id="vaiTroCheckboxList">
+                        @foreach (var item in datas)
+                        {
+                            if (!string.IsNullOrEmpty(item.Type) && item.Type.ToLower() == "header")
+                            {
+                                continue;
+                            }
+
+                            if (item.Datas.Count != 0)
+                            {
+                                @Html.CustomVaiTroGridCollapse(id: item.Key, label: item.Ten, datas: item.Datas.Select(o => new VaiTroGridData
+                               {
+                                   Key = o.Key,
+                                   Ten = o.Ten,
+                                   MoTa = o.MoTa
+                               }).ToList())
+                            }
+                            else
+                            {
+                                @Html.CustomVaiTroGridSingle(id: item.Key, label: item.Ten, key: item.Key, moTa: item.Ten)
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                        <img src="~/Content/img/loading.gif" height="25" />
+                    </button>
+                    <button type="button" class="btn btn-light" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                    <button type="button" id="btn-add" class="btn btn-success"><i class="fa fa-plus"></i> Thêm</button>
+                    <button type="button" id="btn-update" class="btn btn-success"><i class="fa fa-pencil"></i> Cập nhật</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal p-0" id="ganVaiTroKhacModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gán vai trò khác</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Gán vai trò <strong><span id="tenVaiTroGan"></span></strong> vào phần vai trò khác của người dùng thuộc các phòng ban được chọn.
+                    </p>
+                    <div class="row">
+                        @Html.CustomMultiSelect(
+                            id: "GanPhongBanIds",
+                            label: "Phòng ban",
+                            items: phongBanItems,
+                            col: 12,
+                            placeHolderText: "--- Chọn phòng ban ---",
+                            selectAllText: "Lựa chọn tất cả phòng ban")
+                    </div>
+                    <span id="GanPhongBanIdsError" class="text-danger" style="display:none;"></span>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-loading-gan-vai-tro" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                        <img src="~/Content/img/loading.gif" height="25" />
+                    </button>
+                    <button type="button" class="btn btn-light" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                    <button type="button" id="btn-assign-other-role" class="btn btn-success"><i class="fa fa-user-plus"></i> Gán vai trò</button>
+                </div>
+            </div>
+        </div>
+    </div>

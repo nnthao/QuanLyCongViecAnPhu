@@ -1,0 +1,53 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger" id="@Model.Id-Required">*</span>
+            }
+        </label>
+
+        <input @Model.TextboxType type="text" class="form-control" id="@Model.Id" maxlength="@Model.Length"
+               placeholder="@Model.PlaceHolderText" @(Model.IsReadonly ? "readonly" : "") min="@Model.Min" value="@(string.IsNullOrEmpty(Model.value) ? "" : Model.value)" 
+              >
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        function setInputFilter(textbox, inputFilter) {
+            ["input", "keydown", "keyup", "mousedown", "mouseup", "select", "contextmenu", "drop"].forEach(function (event) {
+                textbox.addEventListener(event, function () {
+                    if (inputFilter(this.value)) {
+                        this.oldValue = this.value;
+                        this.oldSelectionStart = this.selectionStart;
+                        this.oldSelectionEnd = this.selectionEnd;
+                    } else if (this.hasOwnProperty("oldValue")) {
+                        this.value = this.oldValue;
+                        this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+                    }
+                });
+            });
+        }
+
+        let id = '@Model.Id';
+        let isDecimal = '@Model.IsDecimal';
+        let valueItem = '@Model.value';
+
+        if (isDecimal === "True") {
+            setInputFilter(document.getElementById(id), function (value) {
+                return /^-?\d*[.,]?\d*$/.test(value);
+            });
+        } else {
+            setInputFilter(document.getElementById(id), function(value) {
+                return /^\d*$/.test(value);
+            });
+        }
+
+        if (valueItem != '' && valueItem != null) {
+        }
+    });
+</script>

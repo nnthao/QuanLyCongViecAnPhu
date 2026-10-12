@@ -1,0 +1,255 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Sáng kiến CNTT";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = ViewBag.IsAdmin != null && (bool)ViewBag.IsAdmin;
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <a href="/SangKienCNTT/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 12, moreClass: "p-t-5")
+                            </div>
+                            <div class="col-sm-6 col-xs-12 mb-2">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Nhập từ khóa">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                        <button id="btn-clear" class="btn btn-light" type="button">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <label for="FilterNamSangKien">Năm sáng kiến</label>
+                                <input type="text" id="FilterNamSangKien" class="form-control" placeholder="Nhập năm">
+                            </div>
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <label for="FilterXepLoaiSangKien">Xếp loại sáng kiến</label>
+                                <select id="FilterXepLoaiSangKien" class="form-control">
+                                    <option value="">--- Tất cả ---</option>
+                                    <option value="Loại I">Loại I</option>
+                                    <option value="Loại II">Loại II</option>
+                                    <option value="Loại III">Loại III</option>
+                                    <option value="Đạt giải">Đạt giải</option>
+                                    <option value="Không đạt giải">Không đạt giải</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-1 col-xs-12 mb-2">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" onclick="xuatBaoCao()">
+                                    <i class="fa fa-file-excel-o"></i> Xuất Báo Cáo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/SangKienCNTT/GetListSangKienCNTT"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenSangKien">Tên sáng kiến</th>
+                                            <th data-field="NamSangKien">Năm sáng kiến</th>
+                                            <th data-field="TenNguoiNop">Người nộp</th>
+                                            <th data-field="MoTaChiTiet">Mô tả chi tiết</th>
+                                            <th data-field="DanhSachFile" data-formatter="fileSangKienFormatter">File đính kèm</th>
+                                            <th data-field="XepLoaiSangKien">Xếp loại sáng kiến</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    var selectedId = 0;
+    const isAdmin = @isAdmin.ToString().ToLower();
+    const currentUserId = @(ViewBag.CurrentUserId ?? 0);
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function fileSangKienFormatter(value, row, index) {
+        if (!row.DanhSachFile || row.DanhSachFile.length === 0) {
+            return '<span class="text-muted">Không có file</span>';
+        }
+        var fileLinks = [];
+        for (var i = 0; i < row.DanhSachFile.length; i++) {
+            var file = row.DanhSachFile[i];
+            var fileName = (file.TenFile || 'File').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            var filePath = (file.DuongDan || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            fileLinks.push(`<a href="javascript:void(0);" onclick="downloadFromLink('${filePath}', '${fileName}')" title="${fileName}" class="m-r-5"><i class="fa fa-file"></i> ${fileName}</a>`);
+        }
+        return fileLinks.join('<br>');
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        var canEditDelete = isAdmin || (row.NguoiNopId && row.NguoiNopId === currentUserId);
+        const btnSua = canEditDelete ? `<a href="/SangKienCNTT/Form?id=${row.Id}" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>` : "";
+        const btnXoa = canEditDelete ? `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>` : "";
+
+        if (row.IsDeleted) {
+            var btnKhoiPhucFinal = canEditDelete ? btnKhoiPhuc : "";
+            return [
+                btnSua + btnKhoiPhucFinal
+            ].join("");
+        }
+
+        return [
+            btnSua + btnXoa
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá sáng kiến CNTT này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/SangKienCNTT/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data && data.Success === false) {
+                        toastr.error(data.Error || "Bạn không có quyền xóa sáng kiến này.");
+                    } else {
+                        toastr.success("Xoá thành công.");
+                        search();
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục sáng kiến CNTT này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/SangKienCNTT/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data && data.Success === false) {
+                        toastr.error(data.Error || "Bạn không có quyền khôi phục sáng kiến này.");
+                    } else {
+                        toastr.success("Khôi phục thành công.");
+                        search();
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function clearFilters() {
+        $("#FilterNamSangKien").val("");
+        $("#FilterXepLoaiSangKien").val("");
+        $("#DaXoaSearch").prop("checked", false);
+        $("#txt-search").val("");
+        search();
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.NamSangKienFilter = $("#FilterNamSangKien").val();
+        params.XepLoaiSangKienFilter = $("#FilterXepLoaiSangKien").val();
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    function xuatBaoCao() {
+        showLoadingModal();
+
+        var namSangKien = $("#FilterNamSangKien").val() || "";
+        var xepLoaiSangKien = $("#FilterXepLoaiSangKien").val() || "";
+        var daXoa = $('#DaXoaSearch').is(":checked");
+        var search = $("#txt-search").val() || "";
+
+        var url = "/SangKienCNTT/XuatBaoCao?";
+        url += "namSangKien=" + encodeURIComponent(namSangKien);
+        url += "&xepLoaiSangKien=" + encodeURIComponent(xepLoaiSangKien);
+        url += "&daXoa=" + daXoa;
+        if (search) {
+            url += "&search=" + encodeURIComponent(btoa(unescape(encodeURIComponent(search))));
+        }
+
+        window.location.href = url;
+        setTimeout(function() {
+            hideLoadingModal();
+        }, 1000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(search);
+        $("#FilterNamSangKien").on('input', function() {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(search, 500);
+        });
+        $("#FilterXepLoaiSangKien").change(search);
+        $("#btn-clear").click(clearFilters);
+    });
+
+</script>
+
+

@@ -1,0 +1,241 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@model Dashboard.Models.Entities.UserGridVo
+@{
+
+    ViewBag.Title = "Thông tin tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var user = Model;
+}
+<style>
+    #tbThongTin label {
+        display: none !important;
+    }
+
+    #tbThongTin .form-group {
+        margin: 0 !important;
+    }
+
+    #tbThongTin td {
+        padding: 5px 10px !important;
+    }
+
+    td.rowFirst {
+        width: 30%;
+        text-align: right;
+    }
+
+    .input-show-text input {
+        border: none !important;
+        background: #fff !important;
+    }
+
+    .img-shadow {
+        border-radius: 50% !important;
+        border: 2px solid #fff;
+        box-shadow: 0 3px 6px rgba(0,0,0,.16),0 3px 6px rgba(0,0,0,.23) !important;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>Thông tin tài khoản</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2 col-sm-2 col-xs-12"></div>
+                            <div class="col-md-8 col-sm-8 col-xs-12">
+                                <table width="100%" border="0" id="tbThongTin">
+                                    <tr>
+                                        <td class="rowFirst">
+                                            <b>Họ và tên: </b>
+                                        </td>
+                                        <td>
+                                            @Model.Name
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="rowFirst">
+                                            <b>Email: </b>
+                                        </td>
+                                        <td>
+                                            @Model.Email
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="rowFirst">
+                                            <b>Điện thoại: </b>
+                                        </td>
+                                        <td>
+                                            @(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-")
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="rowFirst">
+                                            <b>Telegram Id: </b>
+                                        </td>
+                                        <td>
+                                            @Model.TelegramId
+                                        </td>
+                                    </tr>
+                                    <tr class="d-none">
+                                        <td class="rowFirst">
+                                           
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success ml-3" onclick="testGuiTelegram();"><i class="fa fa-paper-plane" aria-hidden="true"></i> Test nhận tin nhắn</button>
+                                            <a class="btn  btn-sm btn-info ml-3" href="@Dashboard.Common.BienDungChung.BotUrl" target="_blank"><i class="fa fa-info-circle" aria-hidden="true"></i> Kết nối Telegram</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-2 col-sm-2 col-xs-12"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div data-backdrop="static" data-keyboard="false" class="modal p-0 " id="hdKetNoiTeModal">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><span>Hướng dẫn lấy Telegram Id</span></h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <iframe src="/Temp/HD-KetNoiTelegram.pdf"style="border: none; width: 100%; height: calc(100vh - 252px) !important ">
+                    </iframe>
+                </div>
+                <div class="modal-footer" style="display:block">
+                    <div class=" row-item grid" >
+                        <div style=" text-align: right;">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    const userFields = ["Name", "Phone", "CurrentPassword", "NewPassword", "RePassword", "TelegramId"];
+    const select2Fields = ["ChucDanhId", "IdPhongBan"];
+
+    function clearError() {
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}Error`;
+            if (idElement) {
+                $(idElement).empty();
+            }
+        };
+
+        for (let i = 0; i < select2Fields.length; i++) {
+            const idElement = `#${select2Fields[i]}Error`;
+            if (idElement) {
+                $(idElement).empty();
+            }
+        };
+    }
+
+    function openButtonFooter() {
+        $(".btn-footer button").attr("disabled", false);
+        $("#btn-loading").addClass("invisible");
+    }
+
+    function openLoading() {
+        $(".btn-footer button").attr("disabled", true);
+        $("#btn-loading").removeClass("invisible");
+    }
+
+    $("#btn-CapNhatMatKhau").click(function () {
+        clearError();
+        openLoading();
+
+        var fd = new FormData();
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}`;
+            fd.append(userFields[i], $(idElement).val());
+        };
+
+        $.ajax({
+            url: "/ThongTinTaiKhoan/CapNhatMatKhau",
+            data: fd,
+            processData: false,
+            contentType: false,
+            type: "POST",
+            success: function (data) {
+                openButtonFooter();
+
+                if (data && data.Id > 0) {
+                    toastr.success("Xử lý thành công");
+                    XoaFormMatKhau();
+                }
+                else if (data && data.Errors.length > 0) {
+                    data.Errors.map((item) => {
+                        var idError = "#" + item.Name;
+                        $(idError).show();
+                        $(idError).text(item.Description);
+
+                        return "";
+                    });
+                }
+            },
+            error: function () {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            }
+        });
+    });
+
+    function XoaFormMatKhau() {
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}`;
+            if (idElement) {
+                $(idElement).val("");
+            }
+        };
+    }
+
+    function capNhatTelegramId() {
+        var fd = new FormData();
+        fd.append("TelegramId", $("#TelegramId").val());
+        ajaxPostFormData("/ThongTinTaiKhoan/CapNhatTelegramId", fd, function funcCallback(data) {
+            toastr.success("Xử lý thành công");
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        })
+
+    }
+
+    function testGuiTelegram() {
+        ajaxGet("/ThongBao/TestGuiTelegramAsync", function calFunction(res) {
+            toastr.success("Thục hiện thành công");
+
+        }, function errFunct(err) {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function hdKetNoiTelegram() {
+        $("#hdKetNoiTeModal").modal("show");
+    }
+
+    $("#chooseAvatar").on('change', function () {
+        if (this.files[0]) {
+            var FR = new FileReader();
+
+            FR.addEventListener("load", function (e) {
+                document.getElementById("userAvatar").src = e.target.result;
+            });
+
+            FR.readAsDataURL(this.files[0]);
+        }
+    });
+</script>

@@ -1,0 +1,44 @@
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>File đính kèm</b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <table id="bsTaiLieuDinhKem"
+               data-locale="vi-VN">
+            <thead class="thead-light">
+                <tr>
+                    <th data-field="TenFile">File</th>
+                    <th data-width="200" data-align="center" data-field="operate"
+                        data-formatter="actionTaiLieuDinhKem">&nbsp;</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script>
+    function loadFileDinhKem() {
+        ajaxGet("/TraCuuThongTin/GetFileDinhKemById?id=" + @Model, function funcCallback(data) {
+            TaiLieuDinhKemDatas = data;
+            $("#bsTaiLieuDinhKem").bootstrapTable("destroy");
+            $("#bsTaiLieuDinhKem").bootstrapTable({ data: TaiLieuDinhKemDatas });
+        }, function funcError() {
+            $('#fileDinhKem').html('<p class="text-danger">Có lỗi xảy ra khi tải file đính kèm.</p>');
+        });
+    }
+
+    function actionTaiLieuDinhKem(value, row, index) {
+        // Chỉ hiển thị nút Tải xuống nếu file đã lưu trên server (có DuongDan)
+        if (row.DuongDan) {
+            return `<button onclick="downloadFromLink('${row.DuongDan}', '${row.TenFile}')" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+             <i class='fa fa-download'></i> Tải xuống</button>`;
+        }
+        return '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadFileDinhKem();
+    });
+</script>

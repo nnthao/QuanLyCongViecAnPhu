@@ -1,0 +1,494 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@{
+    ViewBag.Title = "Tài liệu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .clipboard-upload-zone {
+        margin-top: 10px;
+        padding: 16px;
+        border: 2px dashed #17a2b8;
+        border-radius: 6px;
+        background-color: #f4fbfd;
+        color: #0c5460;
+        text-align: center;
+        cursor: text;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .clipboard-upload-zone:focus,
+    .clipboard-upload-zone.is-active {
+        outline: none;
+        background-color: #e8f7fb;
+        border-color: #138496;
+    }
+
+    .clipboard-upload-zone.is-dragover {
+        background-color: #dff3f8;
+        border-color: #0f6f7e;
+    }
+
+    .clipboard-upload-zone .hint {
+        margin: 0;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12">
+                                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalThemFile">
+                                    <i class="fa fa-plus"></i> Thêm file
+                                </button>
+                            </div>
+                            @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 3,
+                                   moreClass: "col-sm-3 col-xs-12 p-t-15")
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/DoanVien_TaiLieu/GetAll"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenFile">Tên file</th>
+                                            <th data-field="NgayTaoStr" data-formatter="ngayTaoFormatter">Ngày tạo</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal thêm file -->
+<div class="modal fade" id="modalThemFile" tabindex="-1" role="dialog" aria-labelledby="modalThemFileLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalThemFileLabel">Thêm file</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <label class="btn btn-primary" for="fileUpload">
+                            <input id="fileUpload" type="file" class="d-none" multiple accept="@BienDungChung.AllowedFileExtensions">
+                            <i class="fa fa-upload"></i> Chọn file
+                        </label>
+                        <p id="fileUploadError" class="text-danger m-t-5"></p>
+                        <div id="fileDropZone" class="clipboard-upload-zone" contenteditable="true" tabindex="0">
+                            <p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row m-t-15">
+                    <div class="col-sm-12">
+                        <div id="fileList" class="list-group"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="btnLuuFile">
+                    <i class="fa fa-save"></i> Lưu
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var selectedFiles = [];
+    var selectedId = 0;
+
+    function getClipboardImageExtension(mimeType) {
+        if (!mimeType) {
+            return 'png';
+        }
+
+        var mimeParts = mimeType.split('/');
+        if (mimeParts.length < 2) {
+            return 'png';
+        }
+
+        return mimeParts[1].replace('jpeg', 'jpg');
+    }
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function ngayTaoFormatter(value, row, index) {
+        if (!value) return '';
+        var date = new Date(value);
+        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnTai = `<a href="/DoanVien_TaiLieu/Download?id=${row.Id}" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-download'></i> Tải</a>`;
+        const btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+
+        if (row.IsDeleted) {
+            return [
+                btnKhoiPhuc
+            ].join("");
+        }
+
+        return [
+            btnTai + btnXoa
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá file này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/DoanVien_TaiLieu/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Xoá thành công.");
+                    search();
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục file này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/DoanVien_TaiLieu/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    toastr.success("Khôi phục thành công.");
+                    search();
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    // Lấy danh sách extension được phép từ webconfig
+    var allowedExtensionsStr = '@BienDungChung.AllowedFileExtensions';
+    var allowedExtensions = allowedExtensionsStr ? allowedExtensionsStr.split(',').map(function(ext) {
+        return ext.trim().toLowerCase();
+    }) : ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.txt', '.zip', '.rar'];
+
+    function validateFileExtension(fileName) {
+        if (!fileName) {
+            return false;
+        }
+        var lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) {
+            return false;
+        }
+        var extension = '.' + fileName.substring(lastDotIndex + 1).toLowerCase();
+        return allowedExtensions.includes(extension);
+    }
+
+    function addSelectedFiles(files) {
+        var hasError = false;
+        var errorMessages = [];
+
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            if (!validateFileExtension(file.name)) {
+                hasError = true;
+                errorMessages.push(`File "${file.name}" cÃ³ Ä‘á»‹nh dáº¡ng khÃ´ng Ä‘Æ°á»£c phÃ©p.`);
+            } else {
+                var isDuplicate = selectedFiles.some(function(f) {
+                    return f.name === file.name && f.size === file.size;
+                });
+                if (!isDuplicate) {
+                    selectedFiles.push(file);
+                }
+            }
+        }
+
+        if (hasError) {
+            $('#fileUploadError').html(errorMessages.join('<br>'));
+        } else {
+            $('#fileUploadError').text('');
+        }
+
+        updateFileList();
+    }
+
+    function resetFileDropZone() {
+        $('#fileDropZone').html('<p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>');
+    }
+
+    // Xử lý chọn file
+    $('#fileUpload').on('change', function () {
+        var files = this.files;
+        var hasError = false;
+        var errorMessages = [];
+
+        if (files.length === 0) {
+            $(this).val('');
+            return;
+        }
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            if (!validateFileExtension(file.name)) {
+                hasError = true;
+                errorMessages.push(`File "${file.name}" có định dạng không được phép.`);
+            } else {
+                // Kiểm tra xem file đã tồn tại trong danh sách chưa (theo tên)
+                var isDuplicate = selectedFiles.some(function(f) {
+                    return f.name === file.name && f.size === file.size;
+                });
+                if (!isDuplicate) {
+                    selectedFiles.push(file);
+                }
+            }
+        }
+
+        if (hasError) {
+            $('#fileUploadError').html(errorMessages.join('<br>'));
+        } else {
+            $('#fileUploadError').text('');
+        }
+
+        updateFileList();
+        $(this).val('');
+    });
+
+    $('#modalThemFile').on('shown.bs.modal', function () {
+        resetFileDropZone();
+    });
+
+    $(document).on('focus', '#fileDropZone', function () {
+        $(this).addClass('is-active');
+    });
+
+    $(document).on('blur', '#fileDropZone', function () {
+        $(this).removeClass('is-active');
+        resetFileDropZone();
+    });
+
+    $(document).on('dragenter dragover', '#fileDropZone', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('is-dragover');
+    });
+
+    $(document).on('dragleave', '#fileDropZone', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('is-dragover');
+    });
+
+    $(document).on('drop', '#fileDropZone', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('is-dragover');
+
+        let dropEvent = e.originalEvent || e;
+        let files = dropEvent.dataTransfer ? dropEvent.dataTransfer.files : null;
+
+        resetFileDropZone();
+
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        addSelectedFiles(files);
+    });
+
+    $(document).on('paste', '#fileDropZone', function (e) {
+        let clipboardEvent = e.originalEvent || e;
+        let clipboardData = clipboardEvent.clipboardData;
+        let files = [];
+
+        if (!clipboardData || !clipboardData.items) {
+            return;
+        }
+
+        for (var i = 0; i < clipboardData.items.length; i++) {
+            let item = clipboardData.items[i];
+            if (item.kind === 'file' && item.type.indexOf('image/') === 0) {
+                let blob = item.getAsFile();
+                if (blob) {
+                    let extension = getClipboardImageExtension(blob.type);
+                    let fileName = 'clipboard-image-' + new Date().getTime() + '-' + i + '.' + extension;
+                    files.push(new File([blob], fileName, { type: blob.type }));
+                }
+            }
+        }
+
+        e.preventDefault();
+        resetFileDropZone();
+
+        if (files.length === 0) {
+            return;
+        }
+
+        addSelectedFiles(files);
+    });
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFileList();
+    }
+
+    function updateFileList() {
+        var html = '';
+        if (selectedFiles.length === 0) {
+            $('#fileList').html('');
+            return;
+        }
+        for (var i = 0; i < selectedFiles.length; i++) {
+            var file = selectedFiles[i];
+            html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${i})">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>`;
+        }
+        $('#fileList').html(html);
+    }
+
+    // Xử lý lưu file
+    $('#btnLuuFile').on('click', function () {
+        if (selectedFiles.length === 0) {
+            $('#fileUploadError').text('Vui lòng chọn ít nhất một file.');
+            return;
+        }
+
+        showLoadingModal();
+
+        var fd = new FormData();
+        for (var i = 0; i < selectedFiles.length; i++) {
+            fd.append('files', selectedFiles[i]);
+        }
+
+        $.ajax({
+            url: '/DoanVien_TaiLieu/ThemOrCapNhat',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                hideLoadingModal();
+                if (data.Errors && data.Errors.length > 0) {
+                    var errorMsg = data.Errors.map(function (e) { return e.Description; }).join('<br>');
+                    $('#fileUploadError').html(errorMsg);
+                    if (data.Success && data.SuccessCount > 0) {
+                        toastr.success(`Đã lưu ${data.SuccessCount} file thành công.`);
+                        $('#modalThemFile').modal('hide');
+                        selectedFiles = [];
+                        $('#fileList').empty();
+                        $('#fileUpload').val('');
+                        search();
+                    }
+                } else {
+                    toastr.success('Lưu file thành công.');
+                    $('#modalThemFile').modal('hide');
+                    selectedFiles = [];
+                    $('#fileList').empty();
+                    $('#fileUpload').val('');
+                    search();
+                }
+            },
+            error: function () {
+                hideLoadingModal();
+                toastr.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
+            }
+        });
+    });
+
+    // Reset modal khi đóng
+    $('#modalThemFile').on('hidden.bs.modal', function () {
+        selectedFiles = [];
+        $('#fileList').empty();
+        $('#fileUpload').val('');
+        $('#fileUploadError').text('');
+        resetFileDropZone();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DaXoaSearch").change(function () {
+            search();
+        });
+    });
+</script>
+
+

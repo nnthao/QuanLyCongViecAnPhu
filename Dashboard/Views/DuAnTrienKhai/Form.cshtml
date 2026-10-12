@@ -1,0 +1,401 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " dự án triển khai";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<style>
+    .trien-khai-table td,
+    .trien-khai-table th {
+        vertical-align: middle;
+    }
+
+    .timeline-shell {
+        border: 1px solid #dbe4ee;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .timeline-header,
+    .timeline-row {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+    }
+
+    .timeline-header-left,
+    .timeline-row-name {
+        padding: 12px 14px;
+        border-right: 1px solid #e8eef5;
+        background: #f7fafc;
+    }
+
+    .timeline-header-right,
+    .timeline-row-chart {
+        position: relative;
+        min-height: 56px;
+        background-image: linear-gradient(to right, rgba(15, 23, 42, 0.08) 1px, transparent 1px);
+        background-size: calc(100% / 6) 100%;
+    }
+
+    .timeline-header-right {
+        min-height: 44px;
+        border-bottom: 1px solid #e8eef5;
+    }
+
+    .timeline-tick {
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: #4b5563;
+        white-space: nowrap;
+    }
+
+    .timeline-bar {
+        position: absolute;
+        top: 16px;
+        height: 24px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #0f4c81, #2f80c0);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+    }
+
+    .timeline-bar-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    .timeline-bar-label {
+        position: absolute;
+        right: 8px;
+        top: 3px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .timeline-empty {
+        padding: 24px;
+        text-align: center;
+        color: #6b7280;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input id="Id" value="@Model" type="hidden" />
+                        <div class="row">
+                            @Html.CustomTextBox(id: "Ten", label: "Tên triển khai", col: 12, required: true, length: 500)
+                        </div>
+                        <div class="row">
+                            @Html.CustomSelect2Empty(id: "DuAnId", label: "Dự án mẫu", col: 6, required: true, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "DonViId", label: "Đơn vị triển khai", col: 6, required: true, moreClass: "col-sm-6 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomDatePicker(id: "NgayBatDauStr", label: "Ngày bắt đầu tổng thể", col: 6, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomDatePicker(id: "NgayKetThucStr", label: "Ngày kết thúc tổng thể", col: 6, moreClass: "col-sm-6 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3)
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Hạng mục triển khai</b></span></div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="text-muted">Danh sách này được copy từ cấu hình hạng mục công việc đã định nghĩa.</div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="napHangMucMau()">
+                                        <i class="fa fa-refresh"></i> Nạp lại hạng mục mẫu
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered trien-khai-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:70px;">TT</th>
+                                                <th style="min-width:220px;">Hạng mục</th>
+                                                <th style="min-width:140px;">Bắt đầu</th>
+                                                <th style="min-width:140px;">Kết thúc</th>
+                                                <th style="width:120px;">Tiến độ %</th>
+                                                <th style="min-width:220px;">Ghi chú</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyHangMuc"></tbody>
+                                    </table>
+                                </div>
+                                <span id="HangMucsError" class="text-danger m-b-0 d-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Theo dõi tiến độ</b></span></div>
+                                <div class="timeline-shell" id="timelineShell">
+                                    <div class="timeline-empty">Chưa có dữ liệu thời gian để hiển thị tiến độ.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/DuAnTrienKhai"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    var currentId = @Model;
+    var hangMucDatas = [];
+
+    function parseDate(value) {
+        if (!value) return null;
+        const parts = value.split('/');
+        if (parts.length !== 3) return null;
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        const dt = new Date(year, month, day);
+        if (isNaN(dt.getTime())) return null;
+        return dt;
+    }
+
+    function formatDate(value) {
+        if (!value) return "";
+        if (typeof value === "string" && value.indexOf("/") >= 0) return value;
+        const dt = new Date(value);
+        if (isNaN(dt.getTime())) return "";
+        const day = String(dt.getDate()).padStart(2, '0');
+        const month = String(dt.getMonth() + 1).padStart(2, '0');
+        const year = dt.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    function renderHangMucTable() {
+        let html = "";
+        if (!hangMucDatas || hangMucDatas.length === 0) {
+            html = '<tr><td colspan="6" class="text-center text-muted">Chưa có hạng mục triển khai.</td></tr>';
+        } else {
+            hangMucDatas.forEach(function (item, index) {
+                html += `
+                    <tr>
+                        <td><input class="form-control" type="number" value="${item.ThuTu || (index + 1)}" onchange="updateHangMuc(${index}, 'ThuTu', this.value)" /></td>
+                        <td>
+                            <input class="form-control" type="text" value="${htmlEncode(item.TenHangMuc || '')}" onchange="updateHangMuc(${index}, 'TenHangMuc', this.value)" />
+                            <small class="text-muted">${htmlEncode(item.MoTa || '')}</small>
+                        </td>
+                        <td><input class="form-control" type="text" placeholder="dd/MM/yyyy" value="${item.NgayBatDauStr || ''}" onchange="updateHangMuc(${index}, 'NgayBatDauStr', this.value); renderTimeline();" /></td>
+                        <td><input class="form-control" type="text" placeholder="dd/MM/yyyy" value="${item.NgayKetThucStr || ''}" onchange="updateHangMuc(${index}, 'NgayKetThucStr', this.value); renderTimeline();" /></td>
+                        <td><input class="form-control" type="number" min="0" max="100" value="${item.TienDo || 0}" onchange="updateHangMuc(${index}, 'TienDo', this.value); renderTimeline();" /></td>
+                        <td><textarea class="form-control" rows="2" onchange="updateHangMuc(${index}, 'GhiChu', this.value)">${htmlEncode(item.GhiChu || '')}</textarea></td>
+                    </tr>`;
+            });
+        }
+        $("#tbodyHangMuc").html(html);
+    }
+
+    function htmlEncode(value) {
+        return $("<div />").text(value).html();
+    }
+
+    function updateHangMuc(index, field, value) {
+        if (!hangMucDatas[index]) return;
+        if (field === "ThuTu" || field === "TienDo") {
+            hangMucDatas[index][field] = value ? parseInt(value, 10) : 0;
+            return;
+        }
+        hangMucDatas[index][field] = value;
+    }
+
+    function renderTimeline() {
+        const items = (hangMucDatas || []).filter(function (x) {
+            return x.NgayBatDauStr && x.NgayKetThucStr;
+        });
+
+        if (items.length === 0) {
+            $("#timelineShell").html('<div class="timeline-empty">Chưa có dữ liệu thời gian để hiển thị tiến độ.</div>');
+            return;
+        }
+
+        const dates = [];
+        items.forEach(function (x) {
+            const from = parseDate(x.NgayBatDauStr);
+            const to = parseDate(x.NgayKetThucStr);
+            if (from && to) {
+                dates.push(from);
+                dates.push(to);
+            }
+        });
+
+        if (dates.length === 0) {
+            $("#timelineShell").html('<div class="timeline-empty">Dữ liệu ngày chưa hợp lệ.</div>');
+            return;
+        }
+
+        const minDate = new Date(Math.min.apply(null, dates));
+        const maxDate = new Date(Math.max.apply(null, dates));
+        const totalDays = Math.max(1, Math.round((maxDate - minDate) / 86400000) + 1);
+
+        let html = '<div class="timeline-header"><div class="timeline-header-left"><b>Hạng mục</b></div><div class="timeline-header-right">';
+        for (let i = 0; i <= 6; i++) {
+            const ratio = i / 6;
+            const tickDate = new Date(minDate.getTime() + ratio * (maxDate - minDate));
+            html += `<div class="timeline-tick" style="left:${ratio * 100}%">${formatDate(tickDate)}</div>`;
+        }
+        html += '</div></div>';
+
+        items.sort(function (a, b) { return (a.ThuTu || 0) - (b.ThuTu || 0); }).forEach(function (item) {
+            const from = parseDate(item.NgayBatDauStr);
+            const to = parseDate(item.NgayKetThucStr);
+            if (!from || !to) return;
+
+            const offset = Math.max(0, Math.round((from - minDate) / 86400000));
+            const duration = Math.max(1, Math.round((to - from) / 86400000) + 1);
+            const left = (offset / totalDays) * 100;
+            const width = (duration / totalDays) * 100;
+            const progress = Math.max(0, Math.min(100, item.TienDo || 0));
+
+            html += `
+                <div class="timeline-row">
+                    <div class="timeline-row-name">
+                        <div><b>${htmlEncode(item.TenHangMuc || '')}</b></div>
+                        <div class="text-muted">${item.NgayBatDauStr || ''} - ${item.NgayKetThucStr || ''}</div>
+                    </div>
+                    <div class="timeline-row-chart">
+                        <div class="timeline-bar" style="left:${left}%; width:${width}%;">
+                            <div class="timeline-bar-progress" style="width:${progress}%;"></div>
+                            <div class="timeline-bar-label">${progress}%</div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        $("#timelineShell").html(html);
+    }
+
+    function napHangMucMau() {
+        const duAnId = $("#DuAnId").val();
+        ajaxGet("/DuAnTrienKhai/GetHangMucMau?duAnId=" + (duAnId || 0), function (res) {
+            hangMucDatas = (res.Data || []).map(function (x) {
+                return {
+                    Id: x.Id || 0,
+                    DuAnHangMucId: x.DuAnHangMucId || 0,
+                    TenHangMuc: x.TenHangMuc || "",
+                    MoTa: x.MoTa || "",
+                    ThuTu: x.ThuTu || 0,
+                    NgayBatDauStr: x.NgayBatDauStr || "",
+                    NgayKetThucStr: x.NgayKetThucStr || "",
+                    TienDo: x.TienDo || 0,
+                    GhiChu: x.GhiChu || ""
+                };
+            });
+            renderHangMucTable();
+            renderTimeline();
+        });
+    }
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/DuAnTrienKhai/GetById?id=" + currentId, function (res) {
+            hideLoadingModal();
+
+            $("#DuAnId").select2({
+                data: res.DuAn ? (res.DuAn.Data || []) : [],
+                language: "vi",
+                width: "100%"
+            });
+
+            $("#DonViId").select2({
+                data: res.DonVi ? (res.DonVi.Data || []) : [],
+                language: "vi",
+                width: "100%"
+            });
+
+            if (res.Item) {
+                $("#Ten").val(res.Item.Ten || "");
+                $("#DuAnId").val(res.Item.DuAnId).trigger("change");
+                $("#DonViId").val(res.Item.DonViId).trigger("change");
+                $("#NgayBatDauStr").val(res.Item.NgayBatDauStr || "");
+                $("#NgayKetThucStr").val(res.Item.NgayKetThucStr || "");
+                $("#MoTa").val(res.Item.MoTa || "");
+                hangMucDatas = res.Item.HangMucs || [];
+                renderHangMucTable();
+                renderTimeline();
+            } else {
+                napHangMucMau();
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getFormData() {
+        const fd = new FormData();
+        fd.append("Id", $("#Id").val());
+        fd.append("Ten", $("#Ten").val());
+        fd.append("DuAnId", $("#DuAnId").val());
+        fd.append("DonViId", $("#DonViId").val());
+        fd.append("NgayBatDauStr", $("#NgayBatDauStr").val());
+        fd.append("NgayKetThucStr", $("#NgayKetThucStr").val());
+        fd.append("MoTa", $("#MoTa").val());
+        fd.append("HangMucsJson", JSON.stringify(hangMucDatas || []));
+        return fd;
+    }
+
+    function addOrUpdate() {
+        $("#HangMucsError").empty();
+        showLoadingModal();
+        ajaxPostFormData("/DuAnTrienKhai/ThemOrCapNhat", getFormData(), function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map(function (item) {
+                    const idError = "#" + item.Id + "Error";
+                    if ($(idError).length > 0) {
+                        $(idError).text(item.Description);
+                    } else if (item.Id === "HangMucs") {
+                        $("#HangMucsError").text(item.Description);
+                    }
+                    return "";
+                });
+                return;
+            }
+
+            window.location.href = "/DuAnTrienKhai";
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

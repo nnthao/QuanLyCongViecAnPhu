@@ -1,0 +1,9 @@
+CREATE TABLE DonVi (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Ten NVARCHAR(200) NULL,
+    TenTrim NVARCHAR(200) NULL,
+    IsDeleted BIT NULL,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20260511223000');

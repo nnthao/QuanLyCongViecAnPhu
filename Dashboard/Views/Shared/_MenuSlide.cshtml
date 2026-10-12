@@ -1,0 +1,210 @@
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+<style>
+    .nav-link .badge {
+        top: unset !important;
+    }
+
+    .badge {
+       font-size:90%;
+    }
+
+    /* Làm menu nổi bật hơn */
+    .nav-link {
+        font-weight: 400 !important;
+        transition: all 0.3s ease !important;
+        border-radius: 4px !important;
+        margin: 2px 8px !important;
+    }
+
+    .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        transform: translateX(5px) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .nav-link.active {
+        background-color: rgba(0, 123, 255, 0.3) !important;
+        color: #fff !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4) !important;
+        border-left: 3px solid #007bff !important;
+    }
+
+    .nav-link.active:hover {
+        background-color: rgba(0, 123, 255, 0.4) !important;
+    }
+
+    .nav-icon {
+        font-size: 1.1em !important;
+        margin-right: 8px !important;
+    }
+
+    .nav-header {
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        color: #c2c7d0 !important;
+        padding: 10px 20px 5px !important;
+        margin-top: 10px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .nav-treeview {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .nav-treeview .nav-item {
+        margin: 0 !important;
+    }
+
+    .nav-treeview .nav-link {
+        padding-left: 40px !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 0.95em !important;
+        font-weight: 400 !important;
+        margin: 1px 8px !important;
+    }
+
+    .nav-treeview .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        padding-left: 42px !important;
+    }
+
+    .has-treeview > .nav-link {
+        font-weight: 400 !important;
+    }
+
+    .menu-open > .nav-link {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+</style>
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="/" class="brand-link">
+        <img src="~/Content/img/quochuy.png" alt="Quốc Huy" class="brand-image img-circle elevation-3"
+             style="opacity: 1; background-color: transparent;">
+        <span class="brand-text font-weight-light">Sở VHTTDL</span>
+    </a>
+
+
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="true" id="menuContainer">
+
+                
+            </ul>
+        </nav>
+    </div>
+</aside>
+<script>
+    // Hàm tạo menu
+    function generateMenu(menuList, containerId) {
+        const container = document.getElementById(containerId);
+
+        menuList.forEach(item => {
+            let menuHtml = "";
+
+            // Nếu là header
+            if (item.Type && item.Type.toLowerCase() === "header") {
+                menuHtml = `<li class="nav-header">${item.Title}</li>`;
+            }
+            // Nếu có submenu
+            else if (item.Datas && item.Datas.length > 0) {
+                menuHtml = ` <li class="nav-item has-treeview">
+                <a href="#" class="nav-link">
+                    <i class="nav-icon ${item.Icon}"></i>
+                    <p>
+                      ${item.Ten} 
+                        <i class="right fa fa-angle-left"> </i>
+                        ${item.SpanCount ? `<span id="${item.SpanCount}" class="badge badge-info right d-none">0</span>` : ``}
+                    </p>
+                </a>
+
+                 <ul class="nav nav-treeview">
+                        ${item.Datas.map(sub => `
+                              <li class="nav-item">
+                                    <a href="${sub.Url}" class="nav-link">
+                                        <i class="fa fa-circle-o  nav-icon"></i>
+                                        <p>${sub.Ten} ${sub.SpanCount ? `<span id="${sub.SpanCount}" class="badge badge-info right d-none">0</span>`:``}</p>
+                                    </a>
+                                </li>
+                        `).join('')}
+                    </ul>
+                </li>`;
+            }
+            // Menu 1 cấp
+            else {
+                menuHtml = `
+                     <li class="nav-item">
+                        <a href="${item.Url}" class="nav-link">
+                            <i class="nav-icon ${item.Icon}"></i>
+                            <p>
+                                ${item.Ten}
+                            </p>
+                        </a>
+                    </li>`;
+            }
+            $("#" + containerId).append(menuHtml);
+        });
+    }
+
+    function hienMenuSoDem() {
+        setTimeout(function () {
+            ajaxGet("/GiaoViec/DemSoLuongCongViecDaGiao", function calFunction(res) {
+                if (res) {
+                    if (res.congViecDaGiao ) {
+                        $("#GiaoViecCount").text(res.congViecDaGiao).removeClass("d-none");
+                    }
+                    if (res.congViecCanXuLy) {
+                        $("#GiaoViecCanXuLyCount").text(res.congViecCanXuLy).removeClass("d-none");
+                        $("#QuanLyGiaoViecKey").text(res.congViecCanXuLy).removeClass("d-none");
+                    }
+                    if (res.congViecDaChuyenGiaoChuaHoanThanh) {
+                        $("#GiaoViecDaChuyenGiaoCount").text(res.congViecDaChuyenGiaoChuaHoanThanh).removeClass("d-none");
+                    }
+                }
+            }, function errFunct(err) {
+
+            });
+        }, 300)
+    }
+
+    // Gọi hàm tạo menu
+    document.addEventListener("DOMContentLoaded", function () {
+        ajaxGet("/CauHinhMenu/LayDanhSachMenuTheoQuyen", function callbackFunc(res) {
+            generateMenu(res, "menuContainer");
+
+            setTimeout(function () {
+                var currentUrl = window.location.pathname.toLowerCase();
+                // Tìm tất cả các menu link trong sidebar
+                document.querySelectorAll('#menuContainer a.nav-link').forEach(function (link) {
+                    var linkUrl = link.getAttribute('href')?.toLowerCase();
+
+                    // So sánh URL hiện tại với URL trong href
+                    if (linkUrl && currentUrl === linkUrl) {
+                        // Thêm class active cho chính link đó
+                        link.classList.add('active');
+
+                        // Mở rộng menu cha nếu có
+                        var treeview = link.closest('.nav-treeview');
+                        if (treeview) {
+                            treeview.style.display = 'block'; // đảm bảo mở dropdown
+                            var parentLi = treeview.closest('.nav-item');
+                            if (parentLi) {
+                                parentLi.classList.add('menu-open');
+                                parentLi.querySelector('a.nav-link').classList.add('active');
+                            }
+                        }
+                    }
+                });
+            }, 500)
+        }, function errorFunc(res) {
+
+        })
+
+        hienMenuSoDem();
+    });
+</script>

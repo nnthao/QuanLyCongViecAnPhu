@@ -1,0 +1,222 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    ViewBag.Title = "Thông tin đã xử lý";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model Dashboard.Models.ViewModel.ParamControllerToView
+<style>
+    /* Style cho table văn bản đã chọn */
+    #listVanBan tr {
+        transition: background-color 0.3s ease;
+    }
+
+        #listVanBan tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    #listVanBan td {
+        vertical-align: middle;
+    }
+
+    /* Style cho các button trong modal */
+    .modal-footer .btn {
+        margin-left: 5px;
+    }
+
+    /* Style cho checkbox column */
+    .bootstrap-table .bs-checkbox {
+        text-align: center;
+    }
+
+    .hanXuLy label {
+        font-weight: bold !important;
+        color: red;
+    }
+
+    .hanXuLy input {
+        color: red;
+        font-weight: bold;
+    }
+
+    .auto-resize-textarea {
+        overflow: hidden;
+        resize: none;
+        min-height: 38px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" type="hidden" value="@Model" />
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="form-group">
+                                    <label>Tên công việc:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="TenCongViec" maxlength="10000" readonly />
+                                        <div class="input-group-append">
+                                            <a id="btnLinkIoffice" class="btn btn-info d-none" href="#" target="_blank" rel="noopener noreferrer"><i class="fa fa-external-link"></i> Mở iOffice</a>
+                                        </div>
+                                    </div>
+                                    <p id="TenCongViecError" class="text-danger m-b-0"></p>
+                                </div>
+                            </div>
+                            @Html.CustomTextBox(id: "HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
+                            @Html.CustomTextBox(id: "TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
+                            @Html.CustomTextBox(id: "TenNguoiTheoDoiChiDaoThanhVienCanXuLy", label: "Người theo dõi chỉ đạo", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 6, moreClass: "col-sm-6 col-xs-12", row: 2, isReadonly: true)
+                            @Html.CustomTextArea(id: "NoiDungThanhVienCanXuLy", label: "Nội dung cần xử lý", col: 6, moreClass: "col-sm-6 col-xs-12 hanXuLy", row: 2, isReadonly: true)
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 col-xs-12 d-none">
+                                @Html.Partial("~/Views/GiaoViecThongTinTraCuu/VanBanLienQuan.cshtml")
+                            </div>
+                            <div class="col-sm-12 col-xs-12 mb-2">
+                                @Html.Partial("~/Views/GiaoViecThongTinTraCuu/FileDinhKem.cshtml")
+                            </div>
+                        </div>
+                        @Html.Partial("~/Views/GiaoViecThongTinTraCuu/CapNhatCongViec.cshtml")
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/GiaoViec"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const textFields = ["Id", "TenCongViec", "GhiChu", "NoiDungXuLy", "NoiDungThanhVienCanXuLy", "HanXuLyThanhVienCanXuLyStr", "TenVaiTroXuLyThanhVienCanXuLy", "TenNguoiTheoDoiChiDaoThanhVienCanXuLy"];
+    const selectFields = [];
+    const radioFields = [];
+    const checkBoxFields = [];
+    const select2MultiFields = [];
+
+    function autoResizeTextarea(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    function initAutoResizeTextareas() {
+        $('#GhiChu, #NoiDungThanhVienCanXuLy').each(function () {
+            $(this).addClass('auto-resize-textarea');
+            autoResizeTextarea(this);
+        });
+    }
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/GiaoViecThongTinTraCuu/XemThongTinGetById?GiaoViecId=@Model.GiaoViecId&ThanhVienId=@Model.ThanhVienId&GiaoViecThanhVienId=@Model.GiaoViecThanhVienId", function funcCallback(res) {
+            if (res.Item) {
+                FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+                if (res.Item.GiaoViecFiles && res.Item.GiaoViecFiles.length > 0) {
+                    TaiLieuDinhKemDatas = res.Item.GiaoViecFiles.map(function (f) {
+                        return {
+                            Id: f.Id,
+                            TenFile: f.TenFile,
+                            DuongDan: f.DuongDan,
+                            IsUpload: true
+                        };
+                    });
+                    $("#bsTaiLieuDinhKem").bootstrapTable("destroy");
+                    $("#bsTaiLieuDinhKem").bootstrapTable({ data: TaiLieuDinhKemDatas });
+                }
+                if (res.Item.GiaoViecVanBanLienQuans) {
+                    setVanBanLienQuan(res.Item.GiaoViecVanBanLienQuans, true);
+                }
+
+                var iofficBaseUrl = "https://eoffice.vnpt.vn/qlvbdh/main?IzL1Dx9w5BxmCEtw5A9c6Bnb=CEt1CzAwJyHx4yjbTq9vCBtuTt9fCcPbUo..&IyLlCc5f5w5fCES.=DBny4Y9wDctV4zAxJybk5EA0&CBAkTA9f5o..=m2286&4c9lTFLwDctm=2&TFbm5B5xCcLw6B9k=0&6B9c3ytk5t9f5o..=";
+                if (res.Item.IofficeNumber && res.Item.IofficeNumber.toString().trim() !== "") {
+                    $("#btnLinkIoffice").attr("href", iofficBaseUrl + res.Item.IofficeNumber + "-2032169").removeClass("d-none");
+                } else {
+                    $("#btnLinkIoffice").addClass("d-none").attr("href", "#");
+                }
+
+                initAutoResizeTextareas();
+                hideLoadingModal();
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getThongTinNhanViecArray() {
+        var arr = [];
+        $('#thongTinNhanViec tr[data-user-id]').each(function () {
+            var userId = $(this).data('user-id');
+            var tenNhanVien = $(this).find('td:first').text().trim(); // Lấy tên từ cột đầu tiên
+            var noiDungNhiemVu = $(this).find('.noi-dung-nhiem-vu').val() || '';
+            var hanXuLy = $(this).find('.han-xu-ly').val() || '';
+            arr.push({
+                ThanhVienId: userId,
+                ThanhVien: tenNhanVien,
+                NoiDungNhiemVu: noiDungNhiemVu,
+                HanXuLyStr: hanXuLy
+            });
+        });
+        return arr;
+    }
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+        fd.append("GiaoViecThanhVienId", @Model.GiaoViecThanhVienId);
+        fd.append("PhanTramHoanThanh", $('input[name="phanTramHoanThanh"]:checked').val() || 0);
+
+        for (let i = 0; i < capNhatSelectedFiles.length; i++) {
+            fd.append("FileDinhKems", capNhatSelectedFiles[i], capNhatSelectedFiles[i].name);
+        }
+
+        return fd;
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+
+        var selectAll = selectFields.concat(select2MultiFields);
+        FormHelper.clearError(textFields, selectAll, radioFields, checkBoxFields);
+
+        ajaxPostFormData("/GiaoViecThongTinTraCuu/ThemTienTrinhXuLyCuaThanhVien", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).html(item.Description);
+                    return "";
+                });
+            } else {
+                window.location.href = "/GiaoViecThongTinTraCuu";
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadData();
+    })
+</script>

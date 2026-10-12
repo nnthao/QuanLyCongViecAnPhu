@@ -1,0 +1,229 @@
+﻿
+@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div id="@Model.Id-upload-file-dinh-kem-for-update" class="col-md-12">
+    <div id="@Model.Id-TepDaTaiLen">
+        <div>
+            Tệp đã tải lên:
+        </div>
+        <div class="row" id="@Model.Id-data-file-upload">
+            <div class="col-sm-12">
+                <table id="@Model.Id-bs-table-upload-file"
+                       data-toggle="table"
+                       data-toolbar="#get"
+                       data-url="/TaiLieuDoanhNghiep/GetAll"
+                       data-pagination="true"
+                       data-side-pagination="server"
+                       data-page-size="30"
+                       data-page-list="[30, 50, 100, 200]"
+                       data-locale="vi-VN"
+                       data-row-attributes="rowAttributes"
+                       data-sort-name="NgayTao"
+                       data-sort-order="desc">
+                    <thead>
+                        <tr>
+                            <th data-field="Ten"  >Tên</th>
+                            <th data-field="TenNguoiTao"  >Người tạo</th>
+                            <th data-field="NgayTao"  
+                                data-formatter="dateTimeFormatter" data-align="right">Ngày tạo</th>
+                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatterFileDinhKemForUpdate" data-events="operateEventsForUpdate">&nbsp;</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="@Model.Id-TepDinhKem">
+        <div>
+            <div class="row">
+                <label class="col-md-2" style="font-weight: unset !important;">
+                    Tệp Đính Kèm
+                </label>
+                <div class="col-md-10 text-center">
+                    <label class="btn btn-primary" for="@Model.Id-file-upload" style="float:left">
+                        <input id="@Model.Id-file-upload-for-upload" type="file" class="d-none" multiple accept="@Dashboard.Common.BienDungChung.AllowedFileExtensions">
+                        <i class="fa fa-upload"></i> Tải lên
+                    </label>
+                    <p id="@Model.Id-ErrorFileIdError-for-update" class="text-danger m-b-0" style="font-style: italic;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 p-t-15">
+                <table id="@Model.Id-bs-FileDinhKem-for-update"
+                       data-locale="vi-VN">
+                    <thead>
+                        <tr>
+                            <th data-field="Name">File đã đính kèm</th>
+                            <th data-width="100%" data-align="center" data-field="operate"
+                                data-formatter="operateFormatterFileDinhKemForUpdateCuaTaoMoi">&nbsp;</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div data-backdrop="static" data-keyboard="false" class="modal p-0" id="@Model.Id-xoaFileModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                Bạn muốn xóa file này: <strong><span id="@Model.Id-tenFileDelete"></span></strong>
+            </div>
+            <div class="modal-footer">
+                <button id="@Model.Id-btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                    <img src="~/Content/img/loading.gif" height="25" />
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss-modal="modal2"><i class="fa fa-times"></i> Đóng</button>
+                <button type="button" id="@Model.Id-btn-delete-file" class="btn btn-danger"><i class="fa fa-trash"></i> Xóa</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var fileDinhKemDatasForUpdate = [];
+
+    var idBtnDowmLoad = '@Model.Id' + "-btn-download-item-for-update";
+    var idBtnDelete = '@Model.Id' + "-btn-delete-item-for-update";
+
+    function operateFormatterFileDinhKemForUpdate(value, row, index) {
+        const btnDownload = `<button id='${idBtnDowmLoad}' class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-download'></i> Tải về
+            </button>`;
+        const btnXoa = `<button id='${idBtnDelete}' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-trash'></i> Xóa
+            </button>`;
+
+        if ('@Model.ShowDelete' == "True") {
+            return [
+                btnDownload + btnXoa
+            ].join("");
+        }
+
+        return [
+            btnDownload
+        ].join("");
+    }
+
+    var idBtnDeleteClick = 'click' + ' ' + idBtnDelete;
+    //Open Model when update
+    window.operateEventsForUpdate = {
+        'click #@Model.Id-btn-delete-item-for-update': function (e, value, row, index) {
+            selectedIdFile = row.Id;
+            $("#@Model.Id-tenFileDelete").text(row.Ten);
+            $(".modal-footer button").attr("disabled", false);
+            $("#@Model.Id-btn-loading").addClass("invisible");
+            $("#@Model.Id-xoaFileModal").show();
+        },
+        'click #@Model.Id-btn-download-item-for-update': function (e, value, row, index) {
+            let link = document.createElement('a');
+            link.href = "/TaiLieuDoanhNghiep/DownloadTaiLieuV2?id=" + row.Id;
+            link.download = row.Ten;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+    }
+
+    function dateTimeFormatter(value) {
+        if (value) {
+            return `<span>${DateTimeHelper.convertStringDateTimeToDateTimeLocal(value)}</span>`;
+        }
+
+        return "";
+    }
+
+    //delete item
+    $("#@Model.Id-btn-delete-file").click(function () {
+        $("#@Model.Id-btn-loading").removeClass("invisible");
+        console.log($(this));
+        var fd = new FormData();
+        fd.append("Id", selectedIdFile);
+
+        $.ajax({
+            url: "/TaiLieuDoanhNghiep/XoaV2",
+            data: fd,
+            processData: false,
+            contentType: false,
+            type: "POST",
+            success: function (data) {
+                if (data) {
+                    $('#@Model.Id-bs-table-upload-file').bootstrapTable('refresh');
+                    $("#@Model.Id-xoaFileModal").hide();
+                    toastr.success("Xử lý thành công");
+                } else {
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                }
+            },
+            error: function () {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            }
+        });
+    });
+
+    // START Upload File
+    function operateFormatterFileDinhKemForUpdateCuaTaoMoi(value, row, index) {
+        let deleteBtn = `<button id='@Model.Id-btn-delete-item-for-update-file' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'
+                        onclick="deleteFileForUpdate(${index});">
+                    <i class='fa fa-trash'></i> Xóa
+                </button>`;
+        return [
+            deleteBtn
+        ].join("");
+    }
+
+    function deleteFileForUpdate(index) {
+        $("#@Model.Id-bs-FileDinhKem-for-update").bootstrapTable("destroy");
+        fileDinhKemDatasForUpdate.splice(index, 1);
+        $("#@Model.Id-bs-FileDinhKem-for-update").bootstrapTable({ data: fileDinhKemDatasForUpdate });
+    }
+
+     document.addEventListener('DOMContentLoaded', function () {
+        $("#@Model.Id-bs-FileDinhKem-for-update").bootstrapTable({ data: fileDinhKemDatasForUpdate });
+
+        $("button[data-dismiss-modal=modal2]").click(function () {
+            $('#@Model.Id-xoaFileModal').hide();
+        });
+    });
+
+    $("#@Model.Id-file-upload-for-upload").change(function () {
+        var errorElementId = '@Model.Id-ErrorFileIdError-for-update';
+        $('#' + errorElementId).text('');
+        
+        let input = this;
+        if (input.files && input.files.length > 0) {
+            var hasError = false;
+            for (var i = 0; i < input.files.length; i++) {
+                if (!validateFileExtension(input.files[i], errorElementId)) {
+                    hasError = true;
+                    break;
+                }
+                fileDinhKemDatasForUpdate.push({
+                    "Id": 0,
+                    "Name": input.files[i].name,
+                    "File": input.files[i]
+                });
+            }
+
+            if (!hasError) {
+                $("#@Model.Id-bs-FileDinhKem-for-update").bootstrapTable("destroy");
+                $("#@Model.Id-bs-FileDinhKem-for-update").bootstrapTable({ data: fileDinhKemDatasForUpdate });
+                $(this).val('');
+            } else {
+                fileDinhKemDatasForUpdate = [];
+            }
+        }
+    });
+
+// END Upload File
+</script>

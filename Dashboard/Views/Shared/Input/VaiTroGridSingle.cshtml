@@ -1,0 +1,15 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-sm-12" style="margin-bottom:10px">
+    <table id="@Model.Id-tblData" class="tbVaiTroGrid  table table-bordered table-hover">
+        <thead>
+            <tr class="table-primary">
+                <th style="width: 300px">@Model.Label</th>
+                <th style="font-weight: unset;">@Model.MoTa</th>
+                <th style="width: 50px; text-align: center; vertical-align: middle;">
+                    <input type="checkbox" value="@Model.Id" id="@Model.Id" />
+                </th>
+            </tr>
+        </thead>
+    </table>
+</div>

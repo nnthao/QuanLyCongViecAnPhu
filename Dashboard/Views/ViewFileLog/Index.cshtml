@@ -1,0 +1,66 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@{
+    ViewBag.Title = "Xem log hệ thống";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model ParamControllerToView
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="card card-primary" style="width:100%">
+                <div class="card-header">
+                    <div class="card-title">
+                        <b>@ViewBag.Title</b>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class=" row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">@ViewBag.Title</div>
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <button class="btn btn-success" id="clearLogTemp" onclick="clearLogTemp();"><i class="fa fa-trash"></i> Xóa log Temp</button>
+                                            <button class="btn btn-primary" onclick="scrollToBottom();"><i class="fa fa-trash"></i> Go to end</button>
+
+                                        
+                                        </div>
+                                        <div class="col-sm-6 text-right">
+                                            <a class="btn btn-success" href="/ViewFileLog/DanhSach"> Danh sách</a>
+                                        </div>
+                                        <div class="col-sm-12 col-xs-12 p-t-10 p-b-10 mt-3">
+                                            <div class="form-group">
+                                                <textarea style="height: calc(100vh - 220px);" class="form-control" rows="5" id="comment"> @Model.Value</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function clearLogTemp() {
+        $("#clearLogTemp").prop("disabled", true);
+        $.get("/ViewFileLog/ClearLogTemp", function (data, status) {
+            if (data) {
+                $("#clearLogTemp").prop("disabled", false);
+                toastr.success("Xử lý thành công");
+            }
+        });
+    }
+
+    function scrollToBottom() {
+        var textarea = document.getElementById("comment");
+        textarea.scrollTop = textarea.scrollHeight;
+    }
+</script>
+

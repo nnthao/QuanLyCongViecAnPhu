@@ -1,0 +1,201 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@{
+    ViewBag.Title = "Cấu hình Web.config";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-12 p-b-10">
+                                <button type="button" class="btn btn-success" onclick="moFormThemMoi();">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Key</th>
+                                                <th>Value</th>
+                                                <th style="width: 200px;">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            <tr>
+                                                <td colspan="3" class="text-center">Đang tải dữ liệu...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="formModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formModalTitle">Thêm mới cấu hình</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formAppSetting">
+                    <input type="hidden" id="IsEdit" value="0" />
+                    <div class="form-group">
+                        <label for="Key">Key <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="Key" required />
+                        <small class="form-text text-muted">Tên key không được trùng với key đã có</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="Value">Value</label>
+                        <textarea class="form-control" id="Value" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" class="btn btn-success" onclick="luuAppSetting();">
+                    <i class="fa fa-save"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadData() {
+        ajaxGet("/CauHinhWebConfig/GetAll", function funcCallback(response) {
+            if (response && response.Data && response.Data.length > 0) {
+                let html = '';
+                response.Data.forEach(function (item) {
+                    const valueEscaped = (item.Value || '').replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+                    html += `<tr>`;
+                    html += `<td>${item.Key || ''}</td>`;
+                    html += `<td>${(item.Value || '').replace(/\n/g, '<br/>')}</td>`;
+                    html += `<td>`;
+                    html += `<button class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5' onclick='moFormSua("${item.Key}", "${valueEscaped}");'>`;
+                    html += `<i class='fa fa-pencil'></i> Sửa</button>`;
+                    html += `<button class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5' onclick='xoaAppSetting("${item.Key}");'>`;
+                    html += `<i class='fa fa-trash'></i> Xóa</button>`;
+                    html += `</td>`;
+                    html += `</tr>`;
+                });
+                $("#tableBody").html(html);
+            } else {
+                $("#tableBody").html('<tr><td colspan="3" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        }, function funcError() {
+            $("#tableBody").html('<tr><td colspan="3" class="text-center text-danger">Đã có lỗi xảy ra khi tải dữ liệu</td></tr>');
+        });
+    }
+
+    function moFormThemMoi() {
+        $("#IsEdit").val("0");
+        $("#Key").val("");
+        $("#Value").val("");
+        $("#Key").prop("disabled", false);
+        $("#formModalTitle").text("Thêm mới cấu hình");
+        $("#formModal").modal("show");
+    }
+
+    function moFormSua(key, value) {
+        $("#IsEdit").val("1");
+        $("#Key").val(key);
+        $("#Value").val(value.replace(/\\n/g, '\n'));
+        $("#Key").prop("disabled", true);
+        $("#formModalTitle").text("Sửa cấu hình");
+        $("#formModal").modal("show");
+    }
+
+    function luuAppSetting() {
+        const key = $("#Key").val().trim();
+        const value = $("#Value").val();
+        const isEdit = $("#IsEdit").val() === "1";
+
+        if (!key) {
+            toastr.error("Key không được để trống");
+            return;
+        }
+
+        showLoadingModal();
+
+        const fd = new FormData();
+        fd.append("key", key);
+        fd.append("value", value || "");
+
+        ajaxPostFormData("/CauHinhWebConfig/Save", fd, function funcCallback(response) {
+            hideLoadingModal();
+
+            if (response.Errors && response.Errors.length > 0) {
+                const errorMessages = response.Errors.map(function (error) {
+                    return error.Description;
+                }).join('<br/>');
+                toastr.error(errorMessages);
+            } else {
+                toastr.success(isEdit ? "Cập nhật thành công" : "Thêm mới thành công");
+                $("#formModal").modal("hide");
+                loadData();
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function xoaAppSetting(key) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa key "${key}"?`)) {
+            return;
+        }
+
+        showLoadingModal();
+
+        const fd = new FormData();
+        fd.append("key", key);
+
+        ajaxPostFormData("/CauHinhWebConfig/Delete", fd, function funcCallback(response) {
+            hideLoadingModal();
+
+            if (response.Errors && response.Errors.length > 0) {
+                const errorMessages = response.Errors.map(function (error) {
+                    return error.Description;
+                }).join('<br/>');
+                toastr.error(errorMessages);
+            } else {
+                toastr.success("Xóa thành công");
+                loadData();
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>
+

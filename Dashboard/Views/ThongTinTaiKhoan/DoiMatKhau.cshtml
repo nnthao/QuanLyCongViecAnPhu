@@ -1,0 +1,191 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@model Dashboard.Models.Entities.UserGridVo
+@{
+
+    ViewBag.Title = "Thông tin tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    #tbThongTin label {
+        display: none !important;
+    }
+
+    #tbThongTin .form-group {
+        margin: 0 !important;
+    }
+
+    #tbThongTin td {
+        padding: 5px 10px !important;
+    }
+
+    td.rowFirst {
+        width: 200px;
+        text-align: right;
+    }
+
+    .input-show-text input {
+        border: none !important;
+        background: #fff !important;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>Đổi mật khẩu</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-2 col-xs-12"></div>
+                            <div class="col-md-6 col-sm-8 col-xs-12">
+                                <table width="100%" border="0" id="tbThongTin">
+                                    <tr>
+                                        <td class="rowFirst">
+                                            Mật khẩu hiện tại: <span class="text-danger">*</span>
+                                        </td>
+                                        <td>
+                                            @Html.CustomTextBox(id: "CurrentPassword", label: "", col: 12,
+                                                required: true, length: 100, moreClass: "col-xs-12",
+                                                isPasswordType: true)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="rowFirst">
+                                            Mật khẩu mới: <span class="text-danger">*</span>
+                                        </td>
+                                        <td>
+                                            @Html.CustomTextBox(id: "NewPassword", label: "", col: 12,
+                                                required: true, length: 100, moreClass: "col-xs-12",
+                                                isPasswordType: true)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="rowFirst">
+                                            Nhập lại mật khẩu mới: <span class="text-danger">*</span>
+                                        </td>
+                                        <td>
+                                            @Html.CustomTextBox(id: "RePassword", label: "", col: 12,
+                                                required: true, length: 100, moreClass: "col-xs-12",
+                                                isPasswordType: true)
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-3 col-sm-2 col-xs-12"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 btn-footer text-center">
+                                <hr />
+                                <button id="btn-loading" type="button" class="btn btn-default invisible m-l-5 m-r-5">
+                                    <img src="~/Content/img/loading.gif" height="25" />
+                                </button>
+                                <button id="btn-CapNhatMatKhau" class="btn btn-primary m-l-5 m-r-5">
+                                    <i class="fa fa-pencil"></i> Cập nhật
+                                </button>
+                                <button onclick="XoaFormMatKhau();" class="btn btn-default m-l-5 m-r-5">
+                                    <i class="fa fa-refresh"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    const userFields = ["Name", "Phone", "CurrentPassword", "NewPassword", "RePassword", "TelegramId"];
+    const select2Fields = ["ChucDanhId", "IdPhongBan"];
+
+    function clearError() {
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}Error`;
+            if (idElement) {
+                $(idElement).empty();
+            }
+        };
+
+        for (let i = 0; i < select2Fields.length; i++) {
+            const idElement = `#${select2Fields[i]}Error`;
+            if (idElement) {
+                $(idElement).empty();
+            }
+        };
+    }
+
+    function openButtonFooter() {
+        $(".btn-footer button").attr("disabled", false);
+        $("#btn-loading").addClass("invisible");
+    }
+
+    function openLoading() {
+        $(".btn-footer button").attr("disabled", true);
+        $("#btn-loading").removeClass("invisible");
+    }
+
+    $("#btn-CapNhatMatKhau").click(function () {
+        clearError();
+        openLoading();
+
+        var fd = new FormData();
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}`;
+            fd.append(userFields[i], $(idElement).val());
+        };
+
+        $.ajax({
+            url: "/ThongTinTaiKhoan/CapNhatMatKhau",
+            data: fd,
+            processData: false,
+            contentType: false,
+            type: "POST",
+            success: function (data) {
+                openButtonFooter();
+
+                if (data && data.Id > 0) {
+                    toastr.success("Xử lý thành công");
+                    XoaFormMatKhau();
+                }
+                else if (data && data.Errors.length > 0) {
+                    data.Errors.map((item) => {
+                        var idError = "#" + item.Name;
+                        $(idError).show();
+                        $(idError).text(item.Description);
+
+                        return "";
+                    });
+                }
+            },
+            error: function () {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            }
+        });
+    });
+
+    function XoaFormMatKhau() {
+        for (let i = 0; i < userFields.length; i++) {
+            const idElement = `#${userFields[i]}`;
+            if (idElement) {
+                $(idElement).val("");
+            }
+        };
+    }
+
+    $("#chooseAvatar").on('change', function () {
+        if (this.files[0]) {
+            var FR = new FileReader();
+
+            FR.addEventListener("load", function (e) {
+                document.getElementById("userAvatar").src = e.target.result;
+            });
+
+            FR.readAsDataURL(this.files[0]);
+        }
+    });
+</script>

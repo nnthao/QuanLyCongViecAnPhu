@@ -1,0 +1,498 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@using Dashboard.Models.Entities;
+@using System.Linq;
+@using System.Security.Claims;
+@{
+    ViewBag.Title = "Thống kê số lượng công việc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var dauThang = Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var cuoiThang = Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy");
+
+    var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+    var phongBanCurrentId = UserClaimHelper.GetPhongBanId(identity);
+    var isSystemUser = UserClaimHelper.GetIsSystemUser(identity);
+    var isQuyenGiaoViecTatCaPhongBan = UserClaimHelper.IsQuyenAllow(identity, QuyenMoRong.QuyenGiaoViecTatCaPhongBan.ToString());
+    var phongBanList = new List<Dashboard.Models.Entities.PhongBanGridVo>();
+    var phongBanIds = new List<int>();
+
+    if (isSystemUser || isQuyenGiaoViecTatCaPhongBan)
+    {
+        phongBanList = UltiHelper.GetPhongBanTreeSorted(0, true);
+        phongBanIds = phongBanList.Select(pb => pb.Id).ToList();
+    }
+    else if (phongBanCurrentId != 0)
+    {
+        var allPhongBans = CacheManagerHelper.GetPhongBanCache();
+        var phongBanCurrent = allPhongBans.FirstOrDefault(pb => pb.Id == phongBanCurrentId && pb.IsDeleted != true && pb.IsPhongNhanViec != false);
+
+        // Thêm phòng ban hiện tại trước
+        if (phongBanCurrent != null)
+        {
+            phongBanList.Add(phongBanCurrent);
+            phongBanIds.Add(phongBanCurrent.Id);
+        }
+
+        // Lấy danh sách phòng ban con đã được sắp xếp theo cấu trúc cây (giống LichHop)
+        var phongBanChildrenLookups = UltiHelper.GetPhongBanChildrenSorted(phongBanCurrentId);
+        var phongBanChildren = phongBanChildrenLookups
+            .Select(lookup => allPhongBans.FirstOrDefault(pb => pb.Id == lookup.id && pb.IsDeleted != true && pb.IsPhongNhanViec != false))
+            .Where(pb => pb != null)
+            .ToList();
+
+        phongBanList.AddRange(phongBanChildren);
+        phongBanIds.AddRange(phongBanChildren.Select(pb => pb.Id));
+    }
+
+    var phongBans = phongBanList;
+
+    // Tạo danh sách ID phòng ban dạng string để dùng trong JavaScript
+    var phongBanIdsStr = string.Join(",", phongBanIds);
+}
+
+@model ParamControllerToView
+
+<style>
+    .stat-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .stat-table thead th {
+        text-align: center;
+        padding: 12px 15px;
+        font-weight: 600;
+    }
+
+    .stat-table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+
+    .stat-badge {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-block;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .stat-badge-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .stat-badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .stat-badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: #a0aec0;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .error-state {
+        padding: 20px;
+        text-align: center;
+        color: #e53e3e;
+        background: #fed7d7;
+        border-radius: 8px;
+    }
+
+    /* Filter section styling - subtle enhancement */
+    .filter-section-wrapper {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .filter-section-wrapper .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .filter-section-wrapper .form-control,
+    .filter-section-wrapper input[type="text"],
+    .filter-section-wrapper input[type="date"] {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .filter-section-wrapper .form-control:focus,
+    .filter-section-wrapper input[type="text"]:focus,
+    .filter-section-wrapper input[type="date"]:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="card card-primary" style="width:100%">
+                <div class="card-header">
+                    <div class="card-title">
+                        <b>@ViewBag.Title</b>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="filter-section-wrapper">
+                        <div class="row">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao Từ ngày", col: 3, required: true, moreClass: "col-sm-3 col-xs-12", value: dauThang)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 3, required: true, moreClass: "col-sm-3 col-xs-12", value: cuoiThang)
+                            @Html.CustomMultiSelect(
+                                id: "phongBanMultiSelect",
+                                label: "Chọn phòng ban",
+                                items: phongBans,
+                                getId: pb => pb.Id,
+                                getText: pb => pb.Ten,
+                                col: 4,
+                                placeHolderText: "--- Chọn phòng ban ---",
+                                moreClass: "col-sm-4 col-xs-12",
+                                selectAllText: "Lựa chọn tất cả phòng ban"
+                            )
+                            <div class="col-sm-2 col-xs-12">
+                                <div class="form-group">
+                                    <label style="width:100%">&nbsp;</label>
+                                    <button id="btn-thong-ke" onclick="thongKe();" class="btn btn-primary" type="button">
+                                        <i class="fa fa-search"></i> Thống kê
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-12">
+                            <div class="card card-outline card-primary h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Top 10 thành viên có số lượng công việc được giao nhiều nhất</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top10ThanhVienContainer">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <p>Vui lòng chọn điều kiện và thống kê để xem dữ liệu</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-12">
+                            <div class="card card-outline card-success h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Top 10 thành viên có số lượng công việc được giao ít nhất</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top10ThanhVienItContainer">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <p>Vui lòng chọn điều kiện và thống kê để xem dữ liệu</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-12">
+                            <div class="card card-outline card-info h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Top 10 thành viên có việc sớm hạn nhiều nhất</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top10ThanhVienSomHanContainer">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <p>Vui lòng chọn điều kiện và thống kê để xem dữ liệu</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-12">
+                            <div class="card card-outline card-danger h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Top 10 thành viên có việc trễ hạn nhiều nhất</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top10ThanhVienTreHanContainer">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <p>Vui lòng chọn điều kiện và thống kê để xem dữ liệu</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // ===========================================
+    // MULTI-SELECT HELPER FUNCTIONS
+    // ===========================================
+    
+    // Danh sách ID phòng ban có thể có (từ server-side)
+    var allPhongBanIds = '@phongBanIdsStr'.split(',').filter(id => id.trim() !== '');
+
+    // Function để lấy danh sách ID phòng ban đã chọn
+    // Nếu không có phòng ban nào được check, trả về tất cả ID phòng ban có thể có
+    function getSelectedPhongBanIds() {
+        // Lấy trực tiếp từ DOM để đảm bảo lấy được tất cả các checkbox đã checked (không filter visible)
+        var selectedCheckboxes = $('#phongBanMultiSelect_options input[type="checkbox"]:not([value="all"]):checked');
+        if (selectedCheckboxes.length > 0) {
+            return selectedCheckboxes.map(function() {
+                return $(this).val();
+            }).get().join(',');
+        }
+        // Nếu không có phòng ban nào được check, trả về tất cả ID phòng ban có thể có
+        return allPhongBanIds.join(',');
+    }
+
+    function loadTop10ThanhVien() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        var phongBanIds = getSelectedPhongBanIds();
+
+        if (!tuNgay || !denNgay) {
+            $("#top10ThanhVienContainer").html('<div class="empty-state"><div class="empty-state-icon">📅</div><p>Vui lòng chọn từ ngày và đến ngày</p></div>');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", tuNgay);
+        fd.append("DenNgayStr", denNgay);
+        fd.append("PhongBanIdsStr", phongBanIds);
+
+        showLoadingModal();
+        ajaxPostFormData("/ThongKeCongViecTheoCaNhanSoLuong/GetTop10ThanhVienCoNhieuCongViec", fd,
+            function funcCallback(response) {
+                hideLoadingModal();
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('<br/>');
+                    $("#top10ThanhVienContainer").html('<div class="error-state">' + errorMessages + '</div>');
+                } else if (response.Data && response.Data.length > 0) {
+                    var html = '<table class="table table-bordered table-striped stat-table">';
+                    html += '<thead><tr><th style="width: 8%">STT</th><th>Tên thành viên</th><th>Phòng ban</th><th style="width: 15%; text-align: center;">Số lượng</th></tr></thead>';
+                    html += '<tbody>';
+                    response.Data.forEach(function (item, index) {
+                        html += '<tr>';
+                        html += '<td style="text-align: center; font-weight: 600;">' + (index + 1) + '</td>';
+                        html += '<td>' + (item.TenThanhVien || 'Không xác định') + '</td>';
+                        html += '<td>' + (item.TenPhongBan || '') + '</td>';
+                        html += '<td style="text-align: center;"><span class="stat-badge stat-badge-primary">' + item.SoLuong + '</span></td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    $("#top10ThanhVienContainer").html(html);
+                } else {
+                    $("#top10ThanhVienContainer").html('<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có dữ liệu</p></div>');
+                }
+            },
+            function funcError() {
+                hideLoadingModal();
+                $("#top10ThanhVienContainer").html('<div class="error-state">Đã có lỗi xảy ra. Vui lòng thử lại.</div>');
+            }
+        );
+    }
+
+    function loadTop10ThanhVienIt() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        var phongBanIds = getSelectedPhongBanIds();
+
+        if (!tuNgay || !denNgay) {
+            $("#top10ThanhVienItContainer").html('<div class="empty-state"><div class="empty-state-icon">📅</div><p>Vui lòng chọn từ ngày và đến ngày</p></div>');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", tuNgay);
+        fd.append("DenNgayStr", denNgay);
+        fd.append("PhongBanIdsStr", phongBanIds);
+
+        showLoadingModal();
+        ajaxPostFormData("/ThongKeCongViecTheoCaNhanSoLuong/GetTop10ThanhVienCoItCongViec", fd,
+            function funcCallback(response) {
+                hideLoadingModal();
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('<br/>');
+                    $("#top10ThanhVienItContainer").html('<div class="error-state">' + errorMessages + '</div>');
+                } else if (response.Data && response.Data.length > 0) {
+                    var html = '<table class="table table-bordered table-striped stat-table">';
+                    html += '<thead><tr><th style="width: 8%">STT</th><th>Tên thành viên</th><th>Phòng ban</th><th style="width: 15%; text-align: center;">Số lượng</th></tr></thead>';
+                    html += '<tbody>';
+                    response.Data.forEach(function (item, index) {
+                        html += '<tr>';
+                        html += '<td style="text-align: center; font-weight: 600;">' + (index + 1) + '</td>';
+                        html += '<td>' + (item.TenThanhVien || 'Không xác định') + '</td>';
+                        html += '<td>' + (item.TenPhongBan || '') + '</td>';
+                        var badgeClass = item.SoLuong === 0 ? 'stat-badge stat-badge-danger' : 'stat-badge stat-badge-warning';
+                        html += '<td style="text-align: center;"><span class="' + badgeClass + '">' + item.SoLuong + '</span></td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    $("#top10ThanhVienItContainer").html(html);
+                } else {
+                    $("#top10ThanhVienItContainer").html('<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có dữ liệu</p></div>');
+                }
+            },
+            function funcError() {
+                hideLoadingModal();
+                $("#top10ThanhVienItContainer").html('<div class="error-state">Đã có lỗi xảy ra. Vui lòng thử lại.</div>');
+            }
+        );
+    }
+
+    function thongKe() {
+        loadTop10ThanhVien();
+        loadTop10ThanhVienIt();
+        loadTop10ThanhVienSomHan();
+        loadTop10ThanhVienTreHan();
+    }
+
+    // Gọi loadTop10ThanhVien và loadTop10ThanhVienIt khi thay đổi điều kiện
+    document.addEventListener("DOMContentLoaded", function () {
+        // Load dữ liệu khi trang load
+        setTimeout(function () {
+            loadTop10ThanhVien();
+            loadTop10ThanhVienIt();
+            loadTop10ThanhVienSomHan();
+            loadTop10ThanhVienTreHan();
+        }, 500);
+    });
+
+    function loadTop10ThanhVienSomHan() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        var phongBanIds = getSelectedPhongBanIds();
+
+        if (!tuNgay || !denNgay) {
+            $("#top10ThanhVienSomHanContainer").html('<div class="empty-state"><div class="empty-state-icon">📅</div><p>Vui lòng chọn từ ngày và đến ngày</p></div>');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", tuNgay);
+        fd.append("DenNgayStr", denNgay);
+        fd.append("PhongBanIdsStr", phongBanIds);
+
+        showLoadingModal();
+        ajaxPostFormData("/ThongKeCongViecTheoCaNhanSoLuong/GetTop10ThanhVienCoNhieuCongViecSomHan", fd,
+            function funcCallback(response) {
+                hideLoadingModal();
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('<br/>');
+                    $("#top10ThanhVienSomHanContainer").html('<div class="error-state">' + errorMessages + '</div>');
+                } else if (response.Data && response.Data.length > 0) {
+                    var html = '<table class="table table-bordered table-striped stat-table">';
+                    html += '<thead><tr><th style="width: 8%">STT</th><th>Tên thành viên</th><th>Phòng ban</th><th style="width: 15%; text-align: center;">Số lượng</th></tr></thead>';
+                    html += '<tbody>';
+                    response.Data.forEach(function (item, index) {
+                        html += '<tr>';
+                        html += '<td style="text-align: center; font-weight: 600;">' + (index + 1) + '</td>';
+                        html += '<td>' + (item.TenThanhVien || 'Không xác định') + '</td>';
+                        html += '<td>' + (item.TenPhongBan || '') + '</td>';
+                        html += '<td style="text-align: center;"><span class="stat-badge stat-badge-primary">' + item.SoLuong + '</span></td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    $("#top10ThanhVienSomHanContainer").html(html);
+                } else {
+                    $("#top10ThanhVienSomHanContainer").html('<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có dữ liệu</p></div>');
+                }
+            },
+            function funcError() {
+                hideLoadingModal();
+                $("#top10ThanhVienSomHanContainer").html('<div class="error-state">Đã có lỗi xảy ra. Vui lòng thử lại.</div>');
+            }
+        );
+    }
+
+    function loadTop10ThanhVienTreHan() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        var phongBanIds = getSelectedPhongBanIds();
+
+        if (!tuNgay || !denNgay) {
+            $("#top10ThanhVienTreHanContainer").html('<div class="empty-state"><div class="empty-state-icon">📅</div><p>Vui lòng chọn từ ngày và đến ngày</p></div>');
+            return;
+        }
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", tuNgay);
+        fd.append("DenNgayStr", denNgay);
+        fd.append("PhongBanIdsStr", phongBanIds);
+
+        showLoadingModal();
+        ajaxPostFormData("/ThongKeCongViecTheoCaNhanSoLuong/GetTop10ThanhVienCoNhieuCongViecTreHan", fd,
+            function funcCallback(response) {
+                hideLoadingModal();
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('<br/>');
+                    $("#top10ThanhVienTreHanContainer").html('<div class="error-state">' + errorMessages + '</div>');
+                } else if (response.Data && response.Data.length > 0) {
+                    var html = '<table class="table table-bordered table-striped stat-table">';
+                    html += '<thead><tr><th style="width: 8%">STT</th><th>Tên thành viên</th><th>Phòng ban</th><th style="width: 15%; text-align: center;">Số lượng</th></tr></thead>';
+                    html += '<tbody>';
+                    response.Data.forEach(function (item, index) {
+                        html += '<tr>';
+                        html += '<td style="text-align: center; font-weight: 600;">' + (index + 1) + '</td>';
+                        html += '<td>' + (item.TenThanhVien || 'Không xác định') + '</td>';
+                        html += '<td>' + (item.TenPhongBan || '') + '</td>';
+                        html += '<td style="text-align: center;"><span class="stat-badge stat-badge-danger">' + item.SoLuong + '</span></td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    $("#top10ThanhVienTreHanContainer").html(html);
+                } else {
+                    $("#top10ThanhVienTreHanContainer").html('<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có dữ liệu</p></div>');
+                }
+            },
+            function funcError() {
+                hideLoadingModal();
+                $("#top10ThanhVienTreHanContainer").html('<div class="error-state">Đã có lỗi xảy ra. Vui lòng thử lại.</div>');
+            }
+        );
+    }
+</script>

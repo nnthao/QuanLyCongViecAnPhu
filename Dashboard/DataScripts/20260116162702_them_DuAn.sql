@@ -1,0 +1,19 @@
+CREATE TABLE DuAn (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Ten NVARCHAR(500) NULL,
+    MucDoHoTro INT NULL,
+    MoTa NVARCHAR(MAX) NULL,
+    IsDeleted BIT NULL DEFAULT 0,
+    PRIMARY KEY (Id)
+);
+
+CREATE TABLE DuAnThanhVien (
+    Id INT IDENTITY(1,1) NOT NULL,
+    DuAnId INT NULL,
+    UserId INT NULL,
+    IsTruongNhom BIT NULL DEFAULT 0,
+    IsDeleted BIT NULL DEFAULT 0,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20260116162702');

@@ -1,0 +1,223 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.ViewModel;
+
+<div class="modal fade" id="cuocHopDangKyFormModal" tabindex="-1" role="dialog" aria-labelledby="cuocHopDangKyFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document" style="max-width: 1200px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="cuocHopDangKyFormModalTitle"><b>Thêm mới lịch đăng ký</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                @Html.Partial("~/Views/CuocHopDangKy/ThongTinChung.cshtml", new ParamControllerToView { Id = 0 })
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveCuocHopForm()" class="btn btn-success" id="btnCuocHopSave">
+                    <i class="fa fa-save"></i> <span id="btnCuocHopSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const cuocHopTextFields = [
+        "Id", "TenCuocHop", "NguoiThamGiaKhac", "GhiChu", "NoiDung",
+        "PhongHopTxt", "NgayDienRaStr"
+    ];
+    const cuocHopSelectFields = ["PhongHopId", "LyDoId"];
+    const cuocHopRadioFields = [];
+    const cuocHopCheckBoxFields = ["IsThongBao"];
+    const cuocHopSelect2MultiFields = ["NguoiThamGia", "PhongBanThamGiaIds"];
+
+    function resetCuocHopModalForm() {
+        $("#Id").val(0);
+        $("#TenCuocHop").val('');
+        $("#NguoiThamGiaKhac").val('');
+        $("#GhiChu").val('');
+        $("#NoiDung").val('');
+        $("#PhongHopTxt").val('');
+        $("#NgayDienRaStr").val('');
+        $("#BatDauStr input").val('');
+        $("#KetThucStr input").val('');
+        $("#BatDauStrError").empty();
+        $("#KetThucStrError").empty();
+        $("#TaiLieuCuocHopError").empty();
+        $("#IsThongBao").prop('checked', false);
+        $("#cuocHopDangKyFormModal .modal-footer button").prop("disabled", false);
+
+        if ($("#NguoiThamGia").hasClass("select2-hidden-accessible")) {
+            $("#NguoiThamGia").val([]).trigger('change');
+        }
+        if ($("#PhongBanThamGiaIds").hasClass("select2-hidden-accessible")) {
+            $("#PhongBanThamGiaIds").val([]).trigger('change');
+        }
+        if ($("#LyDoId").hasClass("select2-hidden-accessible")) {
+            $("#LyDoId").val('').trigger('change');
+        }
+
+        TaiLieuCuocHopDatas = [];
+        if (typeof renderTaiLieuCuocHopTable === 'function') {
+            renderTaiLieuCuocHopTable();
+        }
+    }
+
+    function openCuocHopFormModal(id) {
+        resetCuocHopModalForm();
+        $("#Id").val(id);
+        $("#cuocHopDangKyFormModal .modal-footer button").prop("disabled", false);
+        showLoadingModal();
+
+        ajaxGet(`/CuocHopDangKy/GetById?id=${id}`, function (res) {
+            hideLoadingModal();
+            $("#cuocHopDangKyFormModal .modal-footer button").prop("disabled", false);
+
+            if (res.Error) {
+                toastr.error(res.Error);
+                return;
+            }
+
+            if (res.User && res.User.Data) {
+                if (!$("#NguoiThamGia").hasClass("select2-hidden-accessible")) {
+                    $("#NguoiThamGia").select2({
+                        data: res.User.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                } else {
+                    $("#NguoiThamGia").empty().select2({
+                        data: res.User.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                }
+            }
+
+            if (res.PhongBan && res.PhongBan.Data) {
+                if (!$("#PhongBanThamGiaIds").hasClass("select2-hidden-accessible")) {
+                    $("#PhongBanThamGiaIds").select2({
+                        data: res.PhongBan.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                } else {
+                    $("#PhongBanThamGiaIds").empty().select2({
+                        data: res.PhongBan.Data,
+                        language: "vi",
+                        multiple: true
+                    });
+                }
+            }
+
+            if (res.LyDo && res.LyDo.Data) {
+                if (!$("#LyDoId").hasClass("select2-hidden-accessible")) {
+                    $("#LyDoId").select2({
+                        data: res.LyDo.Data,
+                        language: "vi"
+                    });
+                } else {
+                    $("#LyDoId").empty().select2({
+                        data: res.LyDo.Data,
+                        language: "vi"
+                    });
+                }
+            }
+
+            if (id > 0) {
+                $("#cuocHopDangKyFormModalTitle").html("<b>Cập nhật lịch đăng ký</b>");
+                $("#btnCuocHopSaveText").text("Cập nhật");
+
+                if (res.Item) {
+                    setTimeout(function () {
+                        FormHelper.setValueForUpdate(res.Item, cuocHopTextFields, cuocHopSelectFields, cuocHopRadioFields, cuocHopCheckBoxFields);
+                        $("#BatDauStr input").val(res.Item.BatDauStr || '');
+                        $("#KetThucStr input").val(res.Item.KetThucStr || '');
+
+                        for (let i = 0; i < cuocHopSelect2MultiFields.length; i++) {
+                            let fieldName = cuocHopSelect2MultiFields[i];
+                            if ($("#" + fieldName).length) {
+                                $("#" + fieldName).val(res.Item[fieldName] ? res.Item[fieldName].split(',') : []).trigger("change");
+                            }
+                        }
+                    }, 200);
+                }
+            } else {
+                $("#cuocHopDangKyFormModalTitle").html("<b>Thêm mới lịch đăng ký</b>");
+                $("#btnCuocHopSaveText").text("Thêm mới");
+            }
+
+            if (typeof ajaxTaiLieuCuocHopServer === 'function') {
+                ajaxTaiLieuCuocHopServer();
+            }
+
+            $("#cuocHopDangKyFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getCuocHopFormData() {
+        var fd = FormHelper.getFormData(cuocHopTextFields, cuocHopSelectFields, cuocHopRadioFields, cuocHopCheckBoxFields);
+
+        if (typeof TaiLieuCuocHopDatas !== 'undefined') {
+            for (let i = 0; i < TaiLieuCuocHopDatas.length; i++) {
+                if (TaiLieuCuocHopDatas[i].IsUpload == false) {
+                    fd.append("FileDinhKems", TaiLieuCuocHopDatas[i].File, TaiLieuCuocHopDatas[i].Name || TaiLieuCuocHopDatas[i].File.name);
+                }
+            }
+        }
+
+        fd.append("BatDauStr", $("#BatDauStr input").val());
+        fd.append("KetThucStr", $("#KetThucStr input").val());
+
+        let nguoiThamGiaVal = $("#NguoiThamGia").val();
+        fd.append("NguoiThamGia", nguoiThamGiaVal && nguoiThamGiaVal.length ? "," + nguoiThamGiaVal.join() + "," : "");
+        let phongBanThamGiaIds = $("#PhongBanThamGiaIds").val();
+        fd.append("PhongBanThamGiaIds", phongBanThamGiaIds && phongBanThamGiaIds.length ? "," + phongBanThamGiaIds.join() + "," : "");
+
+        return fd;
+    }
+
+    function saveCuocHopForm() {
+        showLoadingModal();
+        $("#BatDauStrError").empty();
+        $("#KetThucStrError").empty();
+
+        var selectAll = cuocHopSelectFields.concat(cuocHopSelect2MultiFields);
+        FormHelper.clearError(cuocHopTextFields, selectAll, cuocHopRadioFields, cuocHopCheckBoxFields);
+
+        ajaxPostFormData("/CuocHopDangKy/ThemOrCapNhat", getCuocHopFormData(), function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.forEach((item) => {
+                    if (item.Id === "Permission") {
+                        toastr.error(item.Description);
+                    } else {
+                        var idError = "#" + item.Name;
+                        if ($(idError).length) {
+                            $(idError).show().text(item.Description);
+                        } else {
+                            toastr.error(item.Description);
+                        }
+                    }
+                });
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#cuocHopDangKyFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+</script>

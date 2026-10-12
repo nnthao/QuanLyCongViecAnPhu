@@ -1,0 +1,155 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers.Input;
+@using Dashboard.Common;
+@using System.Security.Claims;
+
+@{
+    Layout = "~/Views/Shared/_LayoutInfo.cshtml";
+    ViewBag.Title = "Lịch họp";
+}
+@model int
+
+<div class="row">
+    <div class="col-sm-12">
+        <div id="btnTaoLichXeTuCuocHopDiv"></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr class="table-primary"><td colspan="2"><strong>Thông tin</strong></td></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Thành phần tham dự</strong></td>
+                    <td><span id="NguoiThamGiaKhac"></span></td>
+                </tr>
+                <tr>
+                    <td><strong>Ngày</strong></td>
+                    <td><span id="NgayDienRaStr"></span></td>
+                </tr>
+                <tr>
+                    <td><strong>Khoảng thời gian</strong></td>
+                    <td><span id="BatDauStr"></span> - <span id="KetThucStr"></span></td>
+                </tr>
+                <tr>
+                    <td><strong>Địa điểm</strong></td>
+                    <td><span id="PhongHopTongTxt"></span></td>
+                </tr>
+                <tr>
+                    <td><strong>Ghi chú</strong></td>
+                    <td><span id="GhiChu"></span></td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="table table-bordered">
+            <thead>
+                <tr class="table-primary"><td colspan="2"><strong>Tài liệu</strong></td></tr>
+            </thead>
+            <tbody id="taiLieu">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function huyLichXe(id) {
+        if (confirm("Bạn muốn huỷ lịch xe này?")) {
+            showLoadingModal();
+
+            var fd = new FormData();
+            fd.append("Id", id);
+
+            ajaxPostFormData("/DieuHanhXeDieuPhoiXe/HuyCapXe", fd, function callBackFunc(res) {
+                hideLoadingModal();
+                toastr.success("Huỷ cấp thành công.");
+
+                setTimeout(function () {
+                    window.parent.location.reload();
+                }, 300);
+            }, function errFunc(err) {
+
+            });
+        }
+    }
+
+    const textFields = ["Id", "TenCuocHop", "SoNguoiThamGia", "GhiChu", "NoiDung", "PhongHopTongTxt", "NguoiChuTriStr", "NguoiThamGiaStr", "NguoiThamGiaKhac", "PhongBanThamGia", "NgayDienRaStr", "BatDauStr", "KetThucStr", "CoQuanChuTri", "CoQuanThamGia"];
+
+    function openViewFile(duongDan, fileName) {
+        if (window.parent && typeof window.parent.openViewFileModal === "function") {
+            window.parent.openViewFileModal(duongDan, fileName);
+        } else if (typeof openViewFileModal === "function") {
+            openViewFileModal(duongDan, fileName);
+        }
+    }
+
+    function openChiTiet() {
+        $("#btnTaoLichXeTuCuocHopDiv").empty();
+        showLoadingModal();
+
+        if (@Model) {
+            const meetingId = @Model;
+            ajaxGet(`/LichHop/GetThongTinCuocHop?id=${meetingId}`, function (data) {
+                hideLoadingModal();
+                if (data.CuocHop) {
+                    let row = data.CuocHop;
+                    for (let i = 0; i < textFields.length; i++) {
+                        if ($("#" + textFields[i])) {
+                            $("#" + textFields[i]).text(row[textFields[i]] ? row[textFields[i]] : "");
+                        }
+                    }
+                }
+
+                $("#taiLieu").empty();
+                if (data.TaiLieus && data.TaiLieus.length != 0) {
+                    const allowedViewExtensions = ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+                    for (let i = 0; i < data.TaiLieus.length; i++) {
+                        let row = data.TaiLieus[i];
+                        let duongDan = row.DuongDan || '';
+                        let fileName = row.Name || '';
+                        let extension = duongDan ? duongDan.split('.').pop().toLowerCase() : '';
+                        let isViewable = allowedViewExtensions.includes(extension);
+
+                        let viewBtn = isViewable
+                            ? `<button type="button" class="btn btn-info btn-sm m-l-5" onclick="openViewFile('${duongDan}', '${fileName}')" title="Xem file"><i class="fa fa-eye"></i> Xem</button>`
+                            : ``;
+                        let downloadBtn = duongDan
+                            ? `<button type="button" class="btn btn-primary btn-sm m-l-5" onclick="downloadFromLink('${duongDan}', '${fileName}')" title="Tải xuống"><i class="fa fa-download"></i> Tải xuống</button>`
+                            : ``;
+
+                        let clickHandler = isViewable
+                            ? `openViewFile('${duongDan}', '${fileName}')`
+                            : (duongDan ? `downloadFromLink('${duongDan}', '${fileName}')` : ``);
+
+                        $("#taiLieu").append(`
+                            <tr>
+                                <td class="align-middle">
+                                    <a href="javascript:void(0);" onclick="${clickHandler}" style="font-weight: 500;">
+                                        <i class="fa fa-paperclip text-primary mr-1"></i> ${fileName}
+                                    </a>
+                                </td>
+                                <td class="text-right align-middle" style="width: 180px;">
+                                    ${viewBtn}
+                                    ${downloadBtn}
+                                </td>
+                            </tr>
+                        `);
+                    }
+                } else {
+                    $("#taiLieu").append(`
+                        <tr>
+                            <td colspan="2" class="text-muted font-italic">Không có tài liệu đính kèm</td>
+                        </tr>
+                    `);
+                }
+            }, function (xhr) {
+                hideLoadingModal();
+                console.log("Status: " + xhr.status);
+                console.log("Response: " + xhr.responseText);
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        openChiTiet();
+    });
+</script>

@@ -1,0 +1,96 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " vai trò xử lý";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "Ten", label: "Tên vai trò xử lý", col: 6, required: true, length: 500, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomTextBox(id: "ThuTu", label: "Thứ tự", col: 6, required: false, length: 10, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomCheckBox(id: "IsThongKeGiaoViec", label: "Thống kê trong giao việc", col: 6, moreClass: "col-sm-6 col-xs-12 p-t-15")
+                            @Html.CustomCheckBox(id: "IsCanDinhKemFileKhiXacNhanHoanThanh", label: "Cần đính kèm file khi xác nhận hoàn thành công việc", col: 6, moreClass: "col-sm-6 col-xs-12 p-t-15")
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/VaiTroXuLy"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    function loadData() {
+        if (@Model !== 0) {
+            showLoadingModal();
+            ajaxGet(`/VaiTroXuLy/GetById?id=${@Model}`, function (res) {
+                if (res && res.Item) {
+                    $("#Ten").val(res.Item.Ten);
+                    $("#ThuTu").val(res.Item.ThuTu || '');
+                    $("#IsThongKeGiaoViec").prop("checked", res.Item.IsThongKeGiaoViec === true);
+                    $("#IsCanDinhKemFileKhiXacNhanHoanThanh").prop("checked", res.Item.IsCanDinhKemFileKhiXacNhanHoanThanh === true);
+                }
+                hideLoadingModal();
+            }, function () {
+                hideLoadingModal();
+            });
+        }
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#Id").val());
+        fd.append("Ten", $("#Ten").val());
+        fd.append("ThuTu", $("#ThuTu").val());
+        fd.append("IsThongKeGiaoViec", $("#IsThongKeGiaoViec").is(":checked"));
+        fd.append("IsCanDinhKemFileKhiXacNhanHoanThanh", $("#IsCanDinhKemFileKhiXacNhanHoanThanh").is(":checked"));
+
+        ajaxPostFormData("/VaiTroXuLy/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = `#${item.Id}`;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else {
+                window.location.href = "/VaiTroXuLy";
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

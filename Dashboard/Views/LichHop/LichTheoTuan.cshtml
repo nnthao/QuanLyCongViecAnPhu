@@ -1,0 +1,175 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers.Input;
+@using Dashboard.Common;
+@using Dashboard.Models.Entities;
+
+@{
+    Layout = null;
+
+    var now = DateTime.Now;
+    var tuans = DateTimeHelper.LayTuanTuNgay(now);
+
+    var tuanTxt = tuans.First().ToString("dd/MM/yyyy") + " - " + tuans.Last().ToString("dd/MM/yyyy");
+}
+<style>
+    #dt_lichdonvi thead tr, #dt_lichdonvi thead td {
+        background: #1667b0;
+        color: #fff;
+        text-align: center;
+        font-weight: bold
+    }
+
+    #dt_lichdonvi tbody td {
+        vertical-align: middle;
+    }
+
+    #dt_lichdonvi .buoi {
+        background: #eee;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #dt_lichdonvi .thuNgay {
+        background: #eee;
+        font-weight: bold;
+        font-style: italic;
+    }
+
+</style>
+
+<div class="row">
+    <div class="col-sm-4 d-flex align-items-center">
+    </div>
+    <div class="col-sm-4">
+        <div class="form-group row" id="DateDemo">
+            <div class="input-group">
+                <input type="hidden" id="tuanNow" value="@tuanTxt" />
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-empty" id="basic-addon1"><b>Chọn tuần:</b> </span>
+                </div>
+                <input type="text" id="weeklyDatePicker" class="form-control" value="">
+                <div class="input-group-append">
+                    <span class="input-group-text" id="NgayDienRaStr-Calendar"><i class="fa fa-calendar"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4 text-right">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Xuất dữ liệu
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <button class="dropdown-item" onclick="xuatFile(@BienDungChung.LOAI_LICH_TUAN,@BienDungChung.LOAI_FILE_EXCEL);">Xuất Excel</button>
+                <button class="dropdown-item" onclick="xuatFile(@BienDungChung.LOAI_LICH_TUAN,@BienDungChung.LOAI_FILE_PDF);">Xuất PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <table id="dt_lichdonvi" class="table table-bordered table-hover" width="100%" style="margin-bottom: 5px;table-layout: fixed;overflow-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th colspan="2" width="150">Thời gian</th>
+                    <th width="200">Tên lịch</th>
+                    <th width="200">Thành phần</th>
+                    <th width="150">Địa điểm</th>
+                    <th id="th_ghichu" width="100" style="">Ghi chú</th>
+                    <th id="th_cqcb" style="display: none;">CQCB</th>
+                    <th id="th_thaotac" width="100" style="display: none;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="lichBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function hienLichTuan(idElm, sangList, name) {
+        let sangCout = sangList.length;
+        if (sangCout == 0) {
+            $("#" + idElm).append(`<tr><td class="buoi">${name}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
+        }
+        else {
+            let first = true;
+
+            for (let j = 0; j < sangList.length; j++) {
+                let sangItem = sangList[j];
+                let iconCar = sangItem.DieuHanhXeId ? `<a href="javascript:void(0);" onclick="moFormChiTietThongTinXe(${sangItem.DieuHanhXeId})"><i class="fa fa-car"></i></a>` : ``;
+
+                let sangRow = first ? `<td rowspan="${sangCout}" class="buoi">${name}</td>` : ``;
+                let tenLich = sangItem.TenCuocHop ? sangItem.TenCuocHop : ``;
+                let diaDiemTxt = sangItem.PhongHopTxt ? sangItem.PhongHopTxt : (sangItem.TenPhongHop ? sangItem.TenPhongHop : (sangItem.PhongHopTongTxt ? sangItem.PhongHopTongTxt : ''));
+                let tenLichStyle = `style="color: #014b92; font-weight: bold;"`;
+                $("#lichBody").append(`<tr>${sangRow} <td>${sangItem.BatDauStr} - ${sangItem.KetThucStr ? sangItem.KetThucStr : "..."} </td>
+                <td>${tenLich ? `<a href="javascript:void(0);" onclick="moFormChiTiet(${sangItem.Id})" ${tenLichStyle}>${tenLich}</a>` : ``} ${iconCar}</td>
+                <td>
+                    ${sangItem.CoQuanThamGia ? `- ` + sangItem.CoQuanThamGia + `<br/>` : ``}
+                    ${sangItem.NguoiThamGiaKhac ? `${sangItem.NguoiThamGiaKhac}` : ``}
+                </td>
+                <td>${diaDiemTxt}</td>
+                <td>${sangItem.GhiChu ? sangItem.GhiChu : ""}</td></tr>`);
+
+                first = false;
+            }
+        }
+    }
+
+    function getDanhSanhTuan() {
+        showLoadingModal();
+        const formData = new FormData();
+        formData.append("TuanHienTai", $("#tuanNow").val());
+        formData.append("TuanTimKiem", $("#weeklyDatePicker").val());
+        formData.append("IsLichCaNhan", String($("#IsLichCaNhan").prop("checked")));
+        formData.append("CoQuanCurrentId", $("#CoQuanCurrentId").val());
+        ajaxPostFormData("/LichHop/GetListLichHop", formData, function (res) {
+            hideLoadingModal();
+            $("#lichBody").empty();
+            if (res) {
+                for (let i = 0; i < res.length; i++) {
+                    let item = res[i];
+                    $("#lichBody").append(` <tr class="thuNgay"><td colspan="6" class="textBold"><i>${item.Thu}, ${item.NgayStr} </i></td></tr>`);
+                    hienLichTuan("lichBody", item.Sangs, "Sáng", item.Id);
+                    hienLichTuan("lichBody", item.Chieus, "Chiều", item.Id);
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#weeklyDatePicker").datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+
+        let currentTuan = $("#tuanNow").val();
+        let weeklyBeforeChange = $("#tuanNow").val();
+        //Get the value of Start and End of Week
+        $('#weeklyDatePicker').on('dp.change', function (e) {
+            var value = $("#weeklyDatePicker").val();
+            if (value) {
+                var firstDate = moment(value, "DD/MM/YYYY").day(1).format("DD/MM/YYYY");
+                var lastDate = moment(value, "DD/MM/YYYY").day(7).format("DD/MM/YYYY");
+                $("#weeklyDatePicker").val(firstDate + " - " + lastDate);
+            }
+            else {
+                $("#weeklyDatePicker").val("");
+            }
+
+            if ($("#weeklyDatePicker").val() && $("#weeklyDatePicker").val() != weeklyBeforeChange) {
+                weeklyBeforeChange = $("#weeklyDatePicker").val();
+                getDanhSanhTuan();
+            }
+        });
+
+        $("#weeklyDatePicker").val($("#tuanNow").val());
+
+        getDanhSanhTuan();
+
+    });
+</script>

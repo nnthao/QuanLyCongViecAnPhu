@@ -1,0 +1,59 @@
+﻿@model Dashboard.Models.HtmlHelpers.Select2.Select2ViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger">*</span>
+            }
+        </label>
+        <select id="@Model.Id"></select>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+
+<script type="text/javascript">
+ document.addEventListener('DOMContentLoaded', function () {
+    function decodeEntities(encodedString) {
+        var textArea = document.createElement('textarea');
+        textArea.innerHTML = encodedString;
+        return textArea.value;
+    }
+
+    var id = '@Model.Id';
+    var url = '@Model.Url';
+
+    $.ajax({
+        url: decodeEntities(url),
+        processData: false,
+        contentType: false,
+        type: "GET",
+        success: function (data) {
+            if (data && data.Data.length > 0) {
+                $("#" + id).select2({
+                    data: data.Data,
+                    language: "vi",
+                    multiple: '@Model.MultiSelect2' == "True" ? true : false,
+                    disabled: '@Model.IsReadonly' == "True" ? true : false,
+                });
+
+                var placeHolder = '@Html.Raw(Model.PlaceHolder)';
+                if (placeHolder) {
+                    $("#" + id).select2({
+                        placeholder: placeHolder
+                    });
+                }
+            }
+            else {
+                $("#"+ id).select2({
+                    data: [],
+                    language: "vi",
+                    multiple: '@Model.MultiSelect2' == "True" ? true : false,
+                });
+            }
+        }
+    });
+});
+</script>

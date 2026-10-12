@@ -1,0 +1,38 @@
+<style>
+    .bootstrap-table .no-records-found {
+        display: none !important;
+    }
+</style>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>File đính kèm</b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 tb-height-auto">
+        <table id="bsTaiLieuDinhKem"
+               data-locale="vi-VN">
+            <thead class="thead-light">
+                <tr>
+                    <th data-field="TenFile"  data-formatter="tenFileFormat">File</th>
+                    @*<th data-width="200" data-align="center" data-field="operate"
+                        data-formatter="actionTaiLieuDinhKem">&nbsp;</th>*@
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    var TaiLieuDinhKemDatas = [];
+    $("#bsTaiLieuDinhKem").bootstrapTable("destroy");
+    $("#bsTaiLieuDinhKem").bootstrapTable({ data: TaiLieuDinhKemDatas });
+
+
+    function actionTaiLieuDinhKem(value, row, index) {
+        let downloadBtn =
+            `<button onclick="downloadFromLink('${row.DuongDan}', '${row.TenFile}')" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-download'></i> Tải xuống</button>`;
+
+        return downloadBtn;
+    }
+</script>

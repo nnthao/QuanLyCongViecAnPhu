@@ -1,0 +1,136 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê mức độ hoàn thành theo phòng ban";
+    Layout = null;
+
+    var dauThang = Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var cuoiThang = Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy");
+}
+<style>
+    #thongKeTable th {
+        text-align: center;
+    }
+</style>
+<input id="PhongBanId" value="" type="hidden" />
+<input id="IsHoanThanhType" value="" type="hidden" />
+
+<div class="modal fade" id="hoanThanhCongViecModal" tabindex="-1" role="dialog" aria-labelledby="vanBanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vanBanModalLabel">Chi tiết hoàn thành công việc</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table id="bs-tableVanBan"
+                               data-toggle="table"
+                               data-toolbar="#get"
+                               data-url="/GiaoViecThongKe/GetListChiTietHoanThanhCongViecPhongBan"
+                               data-pagination="true"
+                               data-side-pagination="server"
+                               data-page-size="30"
+                               data-page-list="[30, 50, 100, 200]"
+                               data-locale="vi-VN"
+                               data-query-params="queryParamsChiTietCongViec"
+                               data-sort-name="HanXuLy"
+                               data-id-field="Id"
+                               data-sort-order="desc">
+                            <thead>
+                                <tr>
+                                    <th data-field="PhongBan">Phòng ban</th>
+                                    <th data-field="ThanhVien">Người thưc hiện</th>
+                                    <th data-field="TenCongViec">Tên công việc</th>
+                                    <th data-field="NoiDung" data-formatter="noiDungChiTietFormatter">Nội dung</th>
+                                    <th data-field="NgayGiaoViecStr">Ngày giao việc</th>
+                                    <th data-field="NgayHoanThanhStr">Ngày hoàn thành</th>
+                                    <th data-field="HanXuLyStr" data-class="text-danger">Hạn xử lý</th>
+                                    <th data-field="TrangThaiHoanThanh" data-formatter="trangThaiHoanThanhFormatter">Trạng thái</th>
+                                    <th data-width="200" data-formatter="operateFormatter">&nbsp;</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: inline;text-align:center">
+                <button type="button" class="btn btn-default mr-3" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    function queryParamsChiTietCongViec(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.PhongBanId = $("#PhongBanId").val();
+        params.IsHoanThanhType = $("#IsHoanThanhType").val();
+        return params;
+    }
+
+    function searchChiTietCongViec() {
+        $('#bs-tableVanBan').bootstrapTable('refresh');
+    }
+
+    function xemThongTinChiTietPhongBan(phongBanId, isType) {
+        if (phongBanId) {
+            // Cập nhật giá trị trước khi mở modal
+            $("#PhongBanId").val(phongBanId);
+            $("#IsHoanThanhType").val(isType);
+
+            // Xóa event listener cũ nếu có để tránh tích lũy
+            $("#hoanThanhCongViecModal").off('shown.bs.modal');
+
+            // Mở modal
+            $("#hoanThanhCongViecModal").modal("show");
+
+            // Refresh table sau khi modal đã hiển thị hoàn toàn
+            $("#hoanThanhCongViecModal").one('shown.bs.modal', function () {
+                // queryParamsChiTietCongViec sẽ tự động lấy giá trị mới từ input fields
+                $('#bs-tableVanBan').bootstrapTable('refresh');
+            });
+        }
+    }
+
+    function noiDungChiTietFormatter(value, row, index) {
+        return row.NoiDung || row.NoiDungNhiemVu || '';
+    }
+
+    function trangThaiHoanThanhFormatter(value, row, index) {
+        if (!value) return `<span class="badge badge-secondary">-</span>`;
+        var badgeClass = 'badge-secondary';
+        var valLower = value.toString().toLowerCase();
+        if (valLower.indexOf('sớm') !== -1) {
+            badgeClass = 'badge-success';
+        } else if (valLower.indexOf('đúng') !== -1) {
+            badgeClass = 'badge-primary';
+        } else if (valLower.indexOf('còn') !== -1) {
+            badgeClass = 'badge-info';
+        } else if (valLower.indexOf('trễ') !== -1 || valLower.indexOf('quá') !== -1) {
+            badgeClass = 'badge-danger';
+        }
+        return `<span class="badge ${badgeClass}">${value}</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        return `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId})" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'>
+                <i class='fa fa-eye'></i> Xem thông tin</button>`;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $(document).on('hidden.bs.modal', '.modal', function () {
+            if ($('.modal:visible').length) {
+                $(document.body).addClass('modal-open');
+            }
+        });
+    });
+</script>
+
+

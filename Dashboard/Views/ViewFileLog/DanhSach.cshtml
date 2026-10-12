@@ -1,0 +1,115 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@{
+    ViewBag.Title = "Danh sách file log";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var nowStr = DateTime.Now.ToString("dd/MM/yyyy");
+}
+<style>
+    .label {
+        text-transform: uppercase;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="card card-primary" style="width:100%">
+                <div class="card-header">
+                    <div class="card-title">
+                        <b>@ViewBag.Title</b>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class=" row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">@ViewBag.Title</div>
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <button class="btn btn-default">Xóa trước ngày</button>
+                                                    <input type="text" id="ngayLaySoLieu" name="ngayLaySoLieu" class="form-control" value="@nowStr" />
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text" id="ngayLaySoLieu-Calendar"><i class="fa fa-calendar"></i></span>
+                                                    </div>
+                                                    <button class="btn btn-danger" onclick="deleteFileTuNgay();">Xóa dữ liệu cũ</button>
+
+                                                   
+                                                </div>
+                                                <script>
+                                                      $("#ngayLaySoLieu").datepicker({
+                                                          autoclose: true,
+                                                          todayHighlight: true,
+                                                          format: 'dd/mm/yyyy',
+                                                      });
+                                                </script>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 text-right">
+                                            <a href="/ViewFileLog" class="btn btn-primary mn-5"><i class="fa fa-bars"></i> Log hiện tại</a>
+                                        </div>
+                                        <div class="col-sm-12 col-xs-12">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Tên file</th>
+                                                        <th>Ngày tạo</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="danhSachs">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function deleteFile(path) {
+        $.post("/ViewFileLog/DeleteListFile", { duongDan: path }, function (res) {
+            toastr.success("Xóa thành công!!!")
+            init();
+        });
+    }
+
+    function deleteFileTuNgay() {
+        $.post("/ViewFileLog/DeleteListFileFormDate", { dt: $("#ngayLaySoLieu").val() }, function (res) {
+            toastr.success("Xóa thành công!!!")
+            init();
+        });
+    }
+
+    function init() {
+        $("#danhSachs").empty();
+        $.get("/ViewFileLog/GetListFile", {}, function (res) {
+            if (res && res.length > 0) {
+                for (let i = 0; i < res.length; i++) {
+                    $("#danhSachs").append(`<tr>
+                     <td><a href="/ViewFileLog/DownloadLogFile?link=${res[i].Link}">${res[i].Ten}</a></td>
+                     <td>${res[i].NgayTaoStr}</td>
+                     <td><button class="btn btn-sm btn-danger" onclick="deleteFile('${res[i].DuongDan}')">Xóa</button></td>
+                 </tr>`)
+                }
+            }
+        });
+    }
+
+    $(function () {
+        init();
+    });
+
+</script>
+
+
+

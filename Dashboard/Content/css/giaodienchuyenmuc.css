@@ -1,0 +1,12 @@
+
+a {
+    text-decoration: none;
+}
+
+.background-news {
+    width: 100%;
+}
+
+.form-primary-news {
+    display: flex;
+}

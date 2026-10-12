@@ -1,0 +1,140 @@
+@{
+    ViewBag.Title = "Chuyển đổi dữ liệu vnEdu";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+
+<div class="container p-t-30">
+    <div class="row">
+        <div class="col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <b>Chuyển đổi dữ liệu vnEdu</b>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="Khoi">Khối <span class="text-danger">*</span></label>
+                                <select id="Khoi" name="Khoi" class="form-control">
+                                    <option value="">Chọn khối</option>
+                                    <option value="1">Khối 1</option>
+                                    <option value="6">Khối 6</option>
+                                    <option value="10">Khối 10</option>
+                                </select>
+                                <span id="KhoiError" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="FileImport">File Excel <span class="text-danger">*</span></label>
+                                <div class="custom-file">
+                                    <input type="file" id="FileImport" name="FileImport" class="custom-file-input" accept=".xlsx">
+                                    <label id="FileImportLabel" class="custom-file-label" for="FileImport">Chọn file .xlsx</label>
+                                </div>
+                                <span id="FileImportError" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-xs-12">
+                            <span id="SummaryError" class="text-danger"></span>
+                        </div>
+                        <div class="col-sm-12 col-xs-12 text-center m-t-10">
+                            <button id="btnChuyenDoi" type="button" class="btn btn-success">
+                                <i class="fa fa-exchange"></i> Chuyển đổi
+                            </button>
+                            <button id="btnLoading" type="button" class="btn btn-light d-none">
+                                <img src="~/Content/img/loading.gif" height="24" />
+                            </button>
+                        </div>
+                        <div id="downloadArea" class="col-sm-12 col-xs-12 text-center d-none"
+                         style="margin-top: 30px;" >
+                            <a id="downloadLink" class="btn btn-primary" href="#" target="_blank">
+                                <i class="fa fa-cloud-download"></i> Tải file kết quả
+                            </a>
+                            <p id="recordCountText" class="text-success m-t-10"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function clearServerErrors() {
+        $("#KhoiError").text("");
+        $("#FileImportError").text("");
+        $("#SummaryError").text("");
+        $("#downloadArea").addClass("d-none");
+    }
+
+    function setButtonLoading(isLoading) {
+        $("#btnChuyenDoi").prop("disabled", isLoading);
+        if (isLoading) {
+            $("#btnLoading").removeClass("d-none");
+            return;
+        }
+
+        $("#btnLoading").addClass("d-none");
+    }
+
+    function showServerErrors(errors) {
+        if (!errors || errors.length === 0) {
+            return;
+        }
+
+        errors.map(function (error) {
+            var errorElement = $(`#${error.Name}`);
+            if (errorElement.length > 0) {
+                errorElement.text(error.Description);
+                return "";
+            }
+
+            $("#SummaryError").append(`${error.Description}<br>`);
+            return "";
+        });
+    }
+
+    function getFormData() {
+        var formData = new FormData();
+        var fileInput = $("#FileImport")[0];
+        formData.append("Khoi", $("#Khoi").val());
+
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            formData.append("FileImport", fileInput.files[0]);
+        }
+
+        return formData;
+    }
+
+    function showDownloadResult(response) {
+        $("#downloadLink").attr("href", response.DownloadUrl);
+        $("#recordCountText").text(`Đã chuyển đổi ${response.RecordCount} hồ sơ.`);
+        $("#downloadArea").removeClass("d-none");
+        toastr.success("Chuyển đổi dữ liệu thành công.");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#FileImport").change(function () {
+            var fileName = this.files && this.files.length > 0 ? this.files[0].name : "Chọn file .xlsx";
+            $("#FileImportLabel").text(fileName);
+        });
+
+        $("#btnChuyenDoi").click(function () {
+            clearServerErrors();
+            setButtonLoading(true);
+
+            ajaxPostFormData("/VnEdu/ChuyenDoi", getFormData(), function (response) {
+                setButtonLoading(false);
+                if (response.Errors && response.Errors.length > 0) {
+                    showServerErrors(response.Errors);
+                    return;
+                }
+
+                showDownloadResult(response);
+            }, function () {
+                setButtonLoading(false);
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        });
+    });
+</script>

@@ -1,0 +1,742 @@
+﻿@{
+    ViewBag.Title = "Thống kê, Báo cáo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .chart-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .chart-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .chart-card .card-body {
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Biểu đồ thống kê -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Biểu đồ thống kê</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Biểu đồ theo loại công trình -->
+                            <div class="col-md-4">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Theo loại công trình</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartLoaiCongTrinh"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Biểu đồ theo mức độ hư hỏng -->
+                            <div class="col-md-4">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Theo mức độ hư hỏng</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartMucDoHuHong"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Biểu đồ theo trạng thái xử lý -->
+                            <div class="col-md-4">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Theo trạng thái xử lý</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartTrangThaiXuLy"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng thống kê với bộ lọc -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Danh sách công trình</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Bộ lọc -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Từ ngày:</label>
+                                <input type="date" id="tuNgay" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Đến ngày:</label>
+                                <input type="date" id="denNgay" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Loại công trình:</label>
+                                <select id="loaiCongTrinh" class="form-control">
+                                    <option value="">Tất cả</option>
+                                    <option value="1">Hồ</option>
+                                    <option value="2">Đập Dâng</option>
+                                    <option value="3">Đập Ngăn Mặn</option>
+                                    <option value="4">Trạm Khí Tượng</option>
+                                    <option value="5">Trạm Thủy Văn</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Trạng thái:</label>
+                                <select id="trangThai" class="form-control">
+                                    <option value="">Tất cả</option>
+                                    <option value="Chưa xử lý">Chưa xử lý</option>
+                                    <option value="Đang xử lý">Đang xử lý</option>
+                                    <option value="Đã xử lý">Đã xử lý</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary form-control" onclick="locDuLieu()">
+                                    <i class="fa fa-search"></i> Lọc
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bảng dữ liệu -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table-thongke"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/QuanLyCongTrinhHuHong/GetDanhSachCongTrinhLoc"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParamsThongKe"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="TenCongTrinh"
+                                       data-sort-order="asc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenCongTrinh">Tên công trình</th>
+                                            <th data-field="Diadiem">Địa điểm</th>
+                                            <th data-field="LoaiCongTrinh" data-formatter="loaiCongTrinhFormatter">Loại công trình</th>
+                                            <th data-field="ChuDauTu">Chủ đầu tư</th>
+                                            <th data-field="QuyMo">Quy mô</th>
+                                            <th data-field="DienTich">Diện tích</th>
+                                            <th data-field="MucDoHuHong">Mức độ hư hỏng</th>
+                                            <th data-field="NgayPhatHienHuHong" data-formatter="dateFormatter">Ngày phát hiện</th>
+                                            <th data-field="NguyenNhanHuHong">Nguyên nhân</th>
+                                            <th data-field="TrangThaiXuLy" data-formatter="trangThaiFormatter">Trạng thái xử lý</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatterThongKe" data-events="operateEventsThongKe">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Xuất báo cáo -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title">Xuất báo cáo</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">Định dạng:</label>
+                                <select id="formatBaoCao" class="form-control">
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="word">Word</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Từ ngày:</label>
+                                <input type="date" id="tuNgayBaoCao" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Đến ngày:</label>
+                                <input type="date" id="denNgayBaoCao" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-success form-control" onclick="xuatBaoCao()">
+                                    <i class="fa fa-download"></i> Xuất báo cáo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal chi tiết công trình -->
+<div class="modal fade" id="modalChiTiet" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết công trình</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalChiTietBody">
+                <!-- Nội dung chi tiết sẽ được load ở đây -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    var chartLoaiCongTrinh, chartMucDoHuHong, chartTrangThaiXuLy;
+
+    // Khởi tạo biểu đồ
+    function initCharts() {
+        console.log('Bắt đầu khởi tạo biểu đồ...');
+        
+        // Kiểm tra Chart.js đã load chưa
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js chưa được load!');
+            alert('Chart.js chưa được load!');
+            return;
+        }
+        
+        console.log('Chart.js đã load thành công');
+        
+        // Biểu đồ theo loại công trình
+        console.log('Đang gọi API GetThongKeTheoLoaiCongTrinh...');
+        
+        $.get("/QuanLyCongTrinhHuHong/GetThongKeTheoLoaiCongTrinh")
+            .done(function(data) {
+                console.log('Dữ liệu loại công trình nhận được:', data);
+                
+                var ctx = document.getElementById('chartLoaiCongTrinh');
+                if (!ctx) {
+                    console.error('Không tìm thấy canvas chartLoaiCongTrinh');
+                    alert('Không tìm thấy canvas chartLoaiCongTrinh');
+                    return;
+                }
+                
+                console.log('Canvas chartLoaiCongTrinh tìm thấy:', ctx);
+                
+                // Hủy biểu đồ cũ nếu đã tồn tại
+                if (chartLoaiCongTrinh && typeof chartLoaiCongTrinh.destroy === 'function') {
+                    chartLoaiCongTrinh.destroy();
+                }
+
+                // Tạo biểu đồ cột đơn giản
+                chartLoaiCongTrinh = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels || ['Hồ', 'Đập Dâng', 'Đập Ngăn Mặn', 'Trạm Khí Tượng', 'Trạm Thủy Văn'],
+                        datasets: [{
+                            label: 'Số lượng công trình',
+                            data: data.datasets ? data.datasets[0].data : [0, 0, 0, 0, 0],
+                            backgroundColor: data.datasets ? data.datasets[0].backgroundColor : ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                            borderColor: data.datasets ? data.datasets[0].backgroundColor : ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                            borderWidth: 2,
+                            borderRadius: 5,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Thống kê theo loại công trình',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    title: function(context) {
+                                        return context[0].label;
+                                    },
+                                    label: function(context) {
+                                        var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        var percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : '0';
+                                        return [
+                                            'Số lượng công trình: ' + context.parsed.y,
+                                            'Chiếm tỉ lệ: ' + percentage + '%'
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0,
+                                    font: {
+                                        size: 12
+                                    },
+                                    callback: function(value) {
+                                        // Chỉ hiển thị số nguyên, ẩn mốc thập phân nếu có
+                                        return Number.isInteger(value) ? (value + ' công trình') : '';
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        }
+                    }
+                });
+                console.log('Biểu đồ loại công trình đã được tạo thành công');
+            })
+            .fail(function(xhr, status, error) {
+                console.error('Lỗi khi load dữ liệu loại công trình:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                alert('Lỗi khi load dữ liệu: ' + error);
+                $('#chartLoaiCongTrinh').parent().html('<div class="alert alert-danger">Không thể load dữ liệu biểu đồ loại công trình: ' + error + '</div>');
+            });
+
+        // Biểu đồ theo mức độ hư hỏng
+        console.log('Đang gọi API GetThongKeTheoMucDoHuHong...');
+        
+        $.get("/QuanLyCongTrinhHuHong/GetThongKeTheoMucDoHuHong")
+            .done(function(data) {
+                console.log('Dữ liệu mức độ hư hỏng nhận được:', data);
+                
+                var ctx = document.getElementById('chartMucDoHuHong');
+                if (!ctx) {
+                    console.error('Không tìm thấy canvas chartMucDoHuHong');
+                    alert('Không tìm thấy canvas chartMucDoHuHong');
+                    return;
+                }
+                
+                console.log('Canvas chartMucDoHuHong tìm thấy:', ctx);
+                
+                // Tạo biểu đồ tròn (doughnut)
+                if (chartMucDoHuHong && typeof chartMucDoHuHong.destroy === 'function') {
+                    chartMucDoHuHong.destroy();
+                }
+                chartMucDoHuHong = new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.labels || ['Nhẹ', 'Trung bình', 'Nặng'],
+                        datasets: [{
+                            label: 'Số lượng hư hỏng',
+                            data: data.datasets ? data.datasets[0].data : [2, 1, 1],
+                            backgroundColor: data.datasets ? data.datasets[0].backgroundColor : ['#4BC0C0', '#FFCE56', '#FF6384'],
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Thống kê theo mức độ hư hỏng',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    title: function(context) {
+                                        return context[0].label;
+                                    },
+                                    label: function(context) {
+                                        var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        var percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : '0';
+                                        return [
+                                            'Số lượng hư hỏng: ' + context.parsed,
+                                            'Chiếm tỉ lệ: ' + percentage + '%'
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        cutout: '60%', // Tạo lỗ tròn ở giữa
+                        radius: '80%'  // Kích thước biểu đồ
+                    }
+                });
+                console.log('Biểu đồ mức độ hư hỏng đã được tạo thành công');
+            })
+            .fail(function(xhr, status, error) {
+                console.error('Lỗi khi load dữ liệu mức độ hư hỏng:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                alert('Lỗi khi load dữ liệu mức độ hư hỏng: ' + error);
+                $('#chartMucDoHuHong').parent().html('<div class="alert alert-danger">Không thể load dữ liệu biểu đồ mức độ hư hỏng: ' + error + '</div>');
+            });
+
+        // Biểu đồ theo trạng thái xử lý
+        // Chống cache để luôn lấy dữ liệu mới
+        $.get("/QuanLyCongTrinhHuHong/GetThongKeTheoTrangThaiXuLy?_=" + Date.now())
+            .done(function(data) {
+                console.log('Dữ liệu trạng thái xử lý:', data);
+                
+                var ctx = document.getElementById('chartTrangThaiXuLy');
+                if (!ctx) {
+                    console.error('Không tìm thấy canvas chartTrangThaiXuLy');
+                    alert('Không tìm thấy canvas chartTrangThaiXuLy');
+                    return;
+                }
+                
+                // Hủy biểu đồ cũ nếu đã tồn tại
+                if (chartTrangThaiXuLy && typeof chartTrangThaiXuLy.destroy === 'function') {
+                    chartTrangThaiXuLy.destroy();
+                }
+
+                // Dữ liệu an toàn nếu API không trả về đúng cấu trúc
+                var safeLabels = data.labels || ['Chưa xử lý', 'Đang xử lý', 'Đã xử lý'];
+                var safeDataset = (data.datasets && data.datasets[0]) ? data.datasets[0] : {
+                    data: [0, 0, 0],
+                    backgroundColor: ['#FF6384', '#FFCE56', '#4BC0C0']
+                };
+
+                // Nếu tổng bằng 0, thông báo không có dữ liệu để hiển thị
+                var totalTrangThai = (safeDataset.data || []).reduce(function(a,b){ return a + (parseFloat(b) || 0); }, 0);
+                console.log('Tổng số lượng trạng thái xử lý:', totalTrangThai);
+                if (!totalTrangThai) {
+                    $('#chartTrangThaiXuLy').parent().html('<div class="alert alert-info mb-0">Chưa có dữ liệu trạng thái xử lý để hiển thị</div>');
+                    return;
+                }
+
+                try {
+                    chartTrangThaiXuLy = new Chart(ctx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: safeLabels,
+                            datasets: [{
+                                label: 'Số lượng xử lý',
+                                data: safeDataset.data,
+                                backgroundColor: safeDataset.backgroundColor,
+                                borderColor: '#ffffff',
+                                borderWidth: 2,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true,
+                                        font: { size: 12 }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Thống kê theo trạng thái xử lý',
+                                    font: { size: 16, weight: 'bold' }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: 'white',
+                                    bodyColor: 'white',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return context[0].label;
+                                        },
+                                        label: function(context) {
+                                            var total = context.dataset.data.reduce(function(a,b){ return a + b; }, 0);
+                                            var percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : '0';
+                                            return [
+                                                'Số lượng: ' + context.parsed,
+                                                'Chiếm tỉ lệ: ' + percentage + '%'
+                                            ];
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '60%',
+                            radius: '80%'
+                        }
+                    });
+                    console.log('Biểu đồ trạng thái xử lý đã được tạo');
+                } catch (e) {
+                    console.error('Lỗi khi khởi tạo Chart trạng thái xử lý:', e);
+                    $('#chartTrangThaiXuLy').parent().html('<div class="alert alert-danger">Không thể khởi tạo biểu đồ trạng thái xử lý</div>');
+                }
+            })
+            .fail(function(xhr, status, error) {
+                console.error('Lỗi khi load dữ liệu trạng thái xử lý:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                alert('Lỗi khi load dữ liệu trạng thái xử lý: ' + error);
+                $('#chartTrangThaiXuLy').parent().html('<div class="alert alert-danger">Không thể load dữ liệu biểu đồ trạng thái xử lý: ' + error + '</div>');
+            });
+    }
+
+    // Bộ lọc dữ liệu
+    function locDuLieu() {
+        $('#bs-table-thongke').bootstrapTable('refresh');
+    }
+
+    // Query params cho bảng thống kê
+    function queryParamsThongKe(params) {
+        params.tuNgay = $('#tuNgay').val();
+        params.denNgay = $('#denNgay').val();
+        params.loaiCongTrinh = $('#loaiCongTrinh').val();
+        params.trangThai = $('#trangThai').val();
+        return params;
+    }
+
+    // Formatter cho loại công trình
+    function loaiCongTrinhFormatter(value, row, index) {
+        return getLoaiCongTrinhText(value);
+    }
+
+    // Formatter cho trạng thái xử lý
+    function trangThaiFormatter(value, row, index) {
+        if (!value) return '<span class="badge badge-secondary">Chưa xác định</span>';
+        
+        switch(value.toLowerCase()) {
+            case 'chưa xử lý':
+                return '<span class="badge badge-danger">Chưa xử lý</span>';
+            case 'đang xử lý':
+                return '<span class="badge badge-warning">Đang xử lý</span>';
+            case 'đã xử lý':
+            case 'đã khắc phục':
+                return '<span class="badge badge-success">Đã xử lý</span>';
+            default:
+                return '<span class="badge badge-secondary">' + value + '</span>';
+        }
+    }
+
+    // Formatter cho bảng thống kê
+    function operateFormatterThongKe(value, row, index) {
+        const btnChiTiet = `<button id='btn-chi-tiet' class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Chi tiết</button>`;
+        const btnHinhAnh = `<button id='btn-hinh-anh' class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-image'></i> Hình ảnh</button>`;
+        
+        return [btnChiTiet + btnHinhAnh].join("");
+    }
+
+    // Events cho bảng thống kê
+    window.operateEventsThongKe = {
+        'click #btn-chi-tiet': function (e, value, row, index) {
+            showChiTietCongTrinh(row.Id);
+        },
+        'click #btn-hinh-anh': function (e, value, row, index) {
+            showHinhAnhCongTrinh(row.Id);
+        }
+    };
+
+    // Hiển thị chi tiết công trình
+    function showChiTietCongTrinh(id) {
+        $.get("/QuanLyCongTrinhHuHong/GetChiTietCongTrinh?id=" + id, function(res) {
+            if (res.Item) {
+                var html = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><strong>Tên công trình:</strong> ${res.Item.TenCongTrinh || ''}</h6>
+                            <h6><strong>Địa điểm:</strong> ${res.Item.Diadiem || ''}</h6>
+                            <h6><strong>Loại công trình:</strong> ${getLoaiCongTrinhText(res.Item.LoaiCongTrinh)}</h6>
+                            <h6><strong>Chủ đầu tư:</strong> ${res.Item.ChuDauTu || ''}</h6>
+                            <h6><strong>Quy mô:</strong> ${res.Item.QuyMo || ''}</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><strong>Diện tích:</strong> ${res.Item.DienTich || ''}</h6>
+                            <h6><strong>Thông số kỹ thuật:</strong> ${res.Item.ThongSoKiThuat || ''}</h6>
+                            <h6><strong>Mức độ hư hỏng:</strong> ${res.Item.MucDoHuHong || 'Chưa xác định'}</h6>
+                            <h6><strong>Ngày phát hiện:</strong> ${res.Item.NgayPhatHienHuHong || 'Chưa xác định'}</h6>
+                            <h6><strong>Trạng thái xử lý:</strong> ${res.Item.TrangThaiXuLy || 'Chưa xác định'}</h6>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Nguyên nhân hư hỏng:</strong></h6>
+                            <p>${res.Item.NguyenNhanHuHong || 'Không có thông tin'}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Ghi chú:</strong></h6>
+                            <p>${res.Item.GhiChu || 'Không có ghi chú'}</p>
+                        </div>
+                    </div>
+                `;
+                $('#modalChiTietBody').html(html);
+                $('#modalChiTiet').modal('show');
+            }
+        });
+    }
+
+    // Hiển thị hình ảnh công trình
+    function showHinhAnhCongTrinh(id) {
+        // Placeholder for image display
+        var html = `
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h5>Hình ảnh công trình</h5>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Chức năng hiển thị hình ảnh sẽ được phát triển
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#modalChiTietBody').html(html);
+        $('#modalChiTiet').modal('show');
+    }
+
+    // Xuất báo cáo
+    function xuatBaoCao() {
+        var format = $('#formatBaoCao').val();
+        var tuNgay = $('#tuNgayBaoCao').val();
+        var denNgay = $('#denNgayBaoCao').val();
+        
+        if (!tuNgay || !denNgay) {
+            alert('Vui lòng chọn khoảng thời gian');
+            return;
+        }
+        
+        var url = `/QuanLyCongTrinhHuHong/XuatBaoCao?format=${format}&tuNgay=${tuNgay}&denNgay=${denNgay}`;
+        window.open(url, '_blank');
+    }
+
+    // Helper function
+    function getLoaiCongTrinhText(loai) {
+        var loaiText = {
+            '1': 'Hồ',
+            '2': 'Đập Dâng', 
+            '3': 'Đập Ngăn Mặn',
+            '4': 'Trạm Khí Tượng',
+            '5': 'Trạm Thủy Văn'
+        };
+        return loaiText[loai] || 'Không xác định';
+    }
+
+    // Row attributes
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    // Initialize on page load
+    $(document).ready(function() {
+        console.log('Document ready, bắt đầu khởi tạo biểu đồ...');
+        
+        // Kiểm tra jQuery đã load chưa
+        if (typeof $ === 'undefined') {
+            console.error('jQuery chưa được load!');
+            return;
+        }
+        
+        // Kiểm tra Chart.js đã load chưa
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js chưa được load!');
+            alert('Chart.js chưa được load! Vui lòng refresh trang.');
+            return;
+        }
+        
+        // Khởi tạo trực tiếp biểu đồ với dữ liệu thật
+        setTimeout(function() {
+            initCharts();
+        }, 100);
+    });
+</script>

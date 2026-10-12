@@ -1,0 +1,103 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using System.Configuration;
+@using Dashboard.Common;
+<style>
+    #nguoiLienQuanTab .search {
+        width: 100%;
+    }
+</style>
+<div class="row">
+    <div class="col-sm-6 col-xs-12">
+        File mẫu: <a href="javascript:void(0);" onclick="taiFileMauNoiDungCuocHop();">Mau_Noi_Dung_Cuoc_Hop.xlsx</a>
+    </div>
+    <div class="col-sm-6 col-xs-12 text-right">
+        <input id="FileNoiDUngCuocHopImportUpload" type="file" class="d-none" style="display:none" accept="@Dashboard.Common.BienDungChung.AllowedFileExtensions">
+        <button class="btn btn-primary" id="btnUploadFileNoiDungCuocHop" onclick="clickUploadFileNoiDungCuocHop()">
+        <i class="fa fa-upload"></i> Tải lên file nội  dung cuộc họp (.xlsx)</button>
+       
+        <p id="NoiDungCuocHopError" style=" margin-top: 5px; color: red;"></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 col-xs-12" style="padding: 0 10px">
+        <table id="bsNoiDungCuocHop"
+               data-toggle="table"
+               data-pagination="false"
+               data-locale="vi-VN"
+               data-sort-name="Id"
+               data-sort-order="asc">
+            <thead>
+                <tr>
+                    <th data-field="Id" data-width="30" data-class="text-right">STT</th>
+                    <th data-field="ThoiGian">Thời gian</th>
+                    <th data-field="NoiDung">Nội dung</th>
+                    <th data-field="NguoiTrinhBay">Người trình bày</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script>
+    let NoiDungCuocHops = [];
+    $("#bsNoiDungCuocHop").bootstrapTable("destroy");
+    $("#bsNoiDungCuocHop").bootstrapTable({ data: NoiDungCuocHops });
+
+    $("#FileNoiDUngCuocHopImportUpload").change(function () {
+        let input = this;
+        if (input.files && input.files.length > 0) {
+            $("#NoiDungCuocHopError").empty();
+            $("#btnUploadFileNoiDungCuocHop").prop("disabled", true);
+
+            var fd = new FormData();
+            fd.append("TaiLieus", input.files[0]);
+
+            $('#FileNoiDUngCuocHopImportUpload').val('');
+
+            $.ajax({
+                url: "/CuocHopDangKy/ImportFileNoiDungCuocHop",
+                data: fd,
+                processData: false,
+                contentType: false,
+                type: "POST",
+                success: function (data) {
+                    $("#btnUploadFileNoiDungCuocHop").prop("disabled", false);
+
+                    if (data && data.Errors && data.Errors.length > 0) {
+                        data.Errors.map((item) => {
+                            var idError = "#" + item.Name;
+                            $(idError).show();
+                            $(idError).text(item.Description);
+
+                            return "";
+                        });
+                    }
+                    else {
+                        NoiDungCuocHops = data;
+                        $("#bsNoiDungCuocHop").bootstrapTable("destroy");
+                        $("#bsNoiDungCuocHop").bootstrapTable({ data: NoiDungCuocHops });
+                    }
+                },
+                error: function () {
+                    $("#btnUploadFileNoiDungCuocHop").prop("disabled", false);
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                }
+            });
+        }
+    });
+
+    function taiFileMauNoiDungCuocHop() {
+        let fileName = "Mau_Noi_Dung_Cuoc_Hop.xlsx";
+        let link = document.createElement('a');
+        link.href = "/Temp/" + fileName;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function clickUploadFileNoiDungCuocHop() {
+        $('#FileNoiDUngCuocHopImportUpload').click();
+    }
+</script>

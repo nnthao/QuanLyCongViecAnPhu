@@ -1,0 +1,111 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Báo cáo đập dâng";
+}
+<section class="content">
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Báo cáo đập dâng</h3>
+                    <div class="card-tools">
+                        <a class="btn btn-primary" href="#" onclick="exportBaoCao()">
+                            <i class="fa fa-download"></i> Xuất Báo Cáo
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="table" data-toggle="table" data-url="/BaoCaoDapDang/GetAll" data-pagination="true" data-side-pagination="server" data-page-list="[30, 50, 100, 200]" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" data-sort-name="TenCongTrinh" data-sort-order="asc">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" data-field="Id" data-sortable="true" data-visible="false">ID</th>
+                                <th rowspan="2" data-field="TT" data-formatter="sttFormatter">TT</th>
+                                <th rowspan="2" data-field="TenCongTrinh" data-sortable="true">Tên công trình</th>
+                                <th rowspan="2" data-field="Diadiem" data-sortable="true">Địa điểm</th>
+                                <th rowspan="2" data-field="NamHoanThanhCongTrinh" data-sortable="true">Năm HT</th>
+                                <th rowspan="2" data-field="SoLanNangCapSuaChua" data-sortable="true">Số lần NC, SC lớn</th>
+                                <th rowspan="2" data-field="NamNangCapSuaChuaGanNhat" data-sortable="true">Năm NC, SC gần nhất</th>
+                                <th rowspan="2" data-field="DienTichLuuVuc_Km2" data-sortable="true">FLv (km2)</th>
+                                <th colspan="2">F tưới (ha)</th>
+                                <th colspan="2">Đập</th>
+                                <th colspan="2">Cống lấy nước</th>
+                                <th rowspan="2" data-field="DonViQuanLyCongTrinh" data-sortable="true">Đơn vị trực tiếp quản lý</th>
+                                <th rowspan="2" data-field="TrangThai" data-sortable="true">Trạng thái</th>
+                                <th rowspan="2" data-field="GhiChu" data-sortable="true">Ghi chú</th>
+                                <th rowspan="2" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">Thao tác</th>
+                            </tr>
+                            <tr>
+                                <th data-field="DienTichTuoiThietKe_Ha" data-sortable="true">TK</th>
+                                <th data-field="DienTichTuoiThucTe_Ha" data-sortable="true">TT</th>
+                                <th data-field="ChieuCaoDapLonNhatTrenCongTrinhPhanKhongTran_M" data-sortable="true">Hmax (m)</th>
+                                <th data-field="ChieuDaiPhanKhongTran_M" data-sortable="true">L (m)</th>
+                                <th data-field="KichThuocCongCapNuoc_Cm" data-sortable="true">Kích thước (m)</th>
+                                <th data-field="VatLieuCongCapNuoc" data-sortable="true">Vật liệu</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <script>
+        var sttCounter = 0;
+
+        function sttFormatter(value, row, index) {
+            sttCounter++;
+            return sttCounter;
+        }
+
+        function loaiCongTrinhFormatter(value, row, index) {
+            var loaiCongTrinhMap = {
+                0: '--- Chọn ---',
+                1: 'Hồ',
+                2: 'Đập Dâng',
+                3: 'Đập Ngăn Mặn',
+                4: 'Trạm Khí Tượng',
+                5: 'Trạm Thủy Văn'
+            };
+            return loaiCongTrinhMap[value] || 'Không xác định';
+        }
+
+        function operateFormatter(value, row, index) {
+            const btnEdit = `<button id='btn-edit' class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-edit'></i> Sửa</button>`;
+            const btnDelete = `<button id='btn-delete' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
+
+            return [btnEdit + btnDelete].join("");
+        }
+
+        window.operateEvents = {
+            'click #btn-edit': function (e, value, row, index) {
+                window.location.href = '/BaoCaoDapDang/Form?id=' + row.Id;
+            },
+            'click #btn-delete': function (e, value, row, index) {
+                if (confirm('Bạn có chắc chắn muốn xóa công trình này?')) {
+                    $.ajax({
+                        url: '/BaoCaoDapDang/Xoa',
+                        type: 'POST',
+                        data: { id: row.Id },
+                        success: function (result) {
+                            if (result) {
+                                $('#table').bootstrapTable('refresh');
+                                alert('Xóa thành công!');
+                            } else {
+                                alert('Xóa thất bại!');
+                            }
+                        },
+                        error: function () {
+                            alert('Có lỗi xảy ra khi xóa!');
+                        }
+                    });
+                }
+            }
+        };
+
+        function exportBaoCao() {
+            var url = '/BaoCaoDapDang/Export?t=' + Date.now();
+            window.location.href = url;
+        }
+    </script>

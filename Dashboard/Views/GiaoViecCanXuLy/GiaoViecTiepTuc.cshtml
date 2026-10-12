@@ -1,0 +1,130 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    ViewBag.Title = "Giao việc tiếp tục";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model Dashboard.Models.ViewModel.ParamControllerToView
+<style>
+    .hanXuLy label {
+        font-weight: bold !important;
+        color: red;
+    }
+
+    .hanXuLy input,
+    .hanXuLy textarea {
+        color: red; 
+        font-weight: bold;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="GiaoViecId" type="hidden" value="@Model.GiaoViecId" />
+                            <input id="GiaoViecThanhVienId" type="hidden" value="@Model.GiaoViecThanhVienId" />
+                            @Html.CustomTextBox(id: "TenCongViec", label: "Tên công việc", col: 12, isReadonly: true, length: 10000, moreClass: "col-sm-12 col-xs-12")
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, moreClass: "col-sm-12 col-xs-12", row: 3, isReadonly: true)
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "NoiDungThanhVienCanXuLy", label: "Nội dung cần xử lý", col: 6, moreClass: "col-sm-6 col-xs-12 hanXuLy", row: 3, isReadonly: true)
+                            @Html.CustomTextBox(id: "HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
+                            @Html.CustomTextBox(id: "TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
+                        </div>
+
+                        @Html.Partial("~/Views/GiaoViecCanXuLy/NguoiNhanViecTiepTuc.cshtml")
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/GiaoViecCanXuLy"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="chuyenGiaoViec()" class="btn btn-success"><i class="fa fa-save"></i> Chuyển giao</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/GiaoViecCanXuLy/GetById?id=" + $("#GiaoViecId").val(), function funcCallback(res) {
+            if (res.Item) {
+                $("#TenCongViec").val(res.Item.TenCongViec);
+                $("#GhiChu").val(res.Item.GhiChu);
+                $("#NoiDungThanhVienCanXuLy").val(res.Item.NoiDungThanhVienCanXuLy || "");
+                $("#HanXuLyThanhVienCanXuLyStr").val(res.Item.HanXuLyThanhVienCanXuLyStr || "");
+                $("#TenVaiTroXuLyThanhVienCanXuLy").val(res.Item.TenVaiTroXuLyThanhVienCanXuLy || "");
+                hideLoadingModal();
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getFormData() {
+        var fd = new FormData();
+        fd.append("GiaoViecId", $("#GiaoViecId").val());
+        fd.append("GiaoViecThanhVienId", $("#GiaoViecThanhVienId").val());
+
+        var thanhViens = [];
+        if (typeof window.getThongTinNhanViecArrayTiepTuc === 'function') {
+            thanhViens = window.getThongTinNhanViecArrayTiepTuc();
+        }
+
+        fd.append("ThanhVienStr", JSON.stringify(thanhViens));
+
+        return fd;
+    }
+
+    function chuyenGiaoViec() {
+        showLoadingModal();
+        ajaxPostFormData("/GiaoViecCanXuLy/ChuyenGiaoViecTiepTuc", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+
+            if (data.Errors && data.Errors.length > 0) {
+                var allErrors = [];
+                data.Errors.forEach(function (error) {
+                    var errorMessage = error.Description;
+                    if (errorMessage.includes('<br/>')) {
+                        var errors = errorMessage.split('<br/>');
+                        allErrors = allErrors.concat(errors);
+                    } else {
+                        allErrors.push(errorMessage);
+                    }
+                });
+                toastr.error(allErrors.join('<br/>'));
+            } else {
+                toastr.success("Chuyển giao công việc thành công.");
+                setTimeout(function () {
+                    window.location.href = "/GiaoViecCanXuLy";
+                }, 1000);
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    $(document).ready(function () {
+        loadData();
+    });
+</script>
+

@@ -1,0 +1,146 @@
+﻿# MODULE PLAN: QUẢN LÝ ĐIỂM DANH & NGHỈ PHÉP (ADD-ON)
+
+## 1. Context
+- **New Goal:** Thêm module **Điểm Danh** để theo dõi ngày nghỉ của nhân viên.
+- **Logic:**
+  - Nghỉ 1 buổi (Sáng/Chiều) = 0.5 ngày.
+  - Nghỉ cả ngày = 1.0 ngày.
+  - Tổng hợp: 2 buổi lẻ = 1 ngày chẵn.
+- **Constraint:**
+  - Database columns: **PascalCase ** (e.g., `NgayNghi`, `LoaiNghi`).
+  - **NO Foreign Keys**, **NO Indexes**.
+  - Soft Delete (`isDeleted = 1`).
+  - Tham khảo các code của quản lý người dùng user đẻ tạo các entity tương tự.
+
+## 2. Database Schema (SQL Script)
+*Chỉ chạy script này để tạo bảng mới.*
+
+```sql
+-- Table: Quản lý nghỉ phép/điểm danh
+CREATE TABLE DiemDanh (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT,          -- Logic link to Users table
+    NgayNghi DATETIME,   -- Ngày xin nghỉ
+    LoaiNghi INT,        -- 1: Sáng, 2: Chiều, 3: Cả ngày
+    LyDo NVARCHAR(MAX),  -- Lý do nghỉ
+    isDeleted BIT DEFAULT 0
+);
+
+với LoaiNghi dùng kiểu enum int khai báo  1: Sáng, 2: Chiều, 3: Cả ngày
+3. Data Models (C# Class Mapping)
+Class DiemDanh:
+
+Id (int)
+
+UserId (int) -> map column userId
+
+NgayNghi (DateTime) -> map column ngayNghi
+
+LoaiNghi (int) -> map column loaiNghi
+
+LyDo (string) -> map column lyDo
+
+IsDeleted (bool) -> map column isDeleted
+
+Enum LoaiNghiEnum (Helper):
+
+Sang = 1
+
+Chieu = 2
+
+CaNgay = 3
+
+4. Backend Logic Implementation
+A. CRUD Operations
+Get List (Xem lịch sử):
+
+Input: Month, Year (Optional).
+
+Query DiemDanh where isDeleted == 0.
+
+Join với bảng Users (giả định đã có) để lấy UserName.
+
+Order By NgayNghi DESC.
+
+Create (Đăng ký nghỉ):
+
+Input: UserId, NgayNghi, LoaiNghi, LyDo.
+
+Validate: Check xem user đã có record nào trong NgayNghi đó chưa (tránh trùng lặp).
+
+Insert vào DB.
+
+Update/Delete:
+
+Update thông tin hoặc Soft delete (isDeleted = 1).
+
+B. Statistics (Tính tổng công) - CORE LOGIC
+Input: FromDate, ToDate.
+
+Workflow:
+
+Lấy danh sách DiemDanh thoả mãn: NgayNghi >= FromDate AND NgayNghi <= ToDate AND isDeleted == 0.
+
+Group By UserId.
+
+Calculate Total Days (Công thức):
+
+CountFull = Đếm số bản ghi có loaiNghi == 3.
+
+CountHalf = Đếm số bản ghi có loaiNghi == 1 hoặc 2.
+
+Result = CountFull + (CountHalf * 0.5).
+
+Ví dụ: 1 ngày full + 1 sáng + 1 chiều = 1 + 0.5 + 0.5 = 2.0 ngày.
+
+Return Data: List { UserId, UserName, TongNgayNghi (double) }.
+
+5. UI/UX Design Specifications
+Screen: Quản Lý Điểm Danh
+Components:
+
+Filter Bar: Chọn Tháng/Năm | Nút "Thêm mới".
+
+Table:
+
+Col: Ngày.
+
+Col: Nhân viên.
+
+Col: Buổi (Badge: Sáng - Vàng, Chiều - Cam, Cả ngày - Đỏ).
+
+Col: Lý do.
+
+Col: Thao tác.
+
+Modal: Đăng Ký Nghỉ
+Input Fields:
+
+Ngày nghỉ: DatePicker.
+
+Nhân viên: Dropdown Select.
+
+Loại nghỉ: 3 Radio Buttons nằm ngang:
+
+(O) Sáng (0.5)
+
+(O) Chiều (0.5)
+
+(O) Cả ngày (1.0)
+
+Lý do: Text area.
+
+Screen: Thống Kê Tổng Hợp
+Table Columns:
+
+STT
+
+Tên Nhân Viên
+
+Số lần nghỉ lẻ (Sáng/Chiều).
+
+Số lần nghỉ cả ngày.
+
+TỔNG CỘNG (Số ngày - Highlight Bold).
+'
+

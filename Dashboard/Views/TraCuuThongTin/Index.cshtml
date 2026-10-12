@@ -1,0 +1,142 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Tra cứu thông tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @Html.CustomSelect2Empty(id: "DanhMucTraCuuThongTinId", label: "Danh mục tra cứu", col: 6, moreClass: "col-sm-6 col-xs-12")
+                            @Html.CustomSelect2Empty(id: "TrangThai", label: "Trạng thái", col: 2, moreClass: "col-sm-2 col-xs-12")
+                            <div class="col-sm-4 col-xs-12">
+                                <label>
+                                    &nbsp;
+                                </label>
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/TraCuuThongTin/GetListTraCuuThongTin"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="MaTraCuu">Mã tra cứu</th>
+                                            <th data-field="TieuDe">Tiêu đề</th>
+                                            <th data-field="DanhMucTraCuuThongTin">Danh mục</th>
+                                            <th data-field="MoTa">Mô tả</th>
+                                            <th data-field="NgayHieuLucStr">Ngày hiệu lực</th>
+                                            <th data-field="TrangThai" data-formatter="trangThaiFormatter">Trạng thái</th>
+                                            <th data-field="NgayTaoStr">Ngày tạo</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    var selectedId = 0;
+    let phanQuyenData = [];
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function trangThaiFormatter(value, row, index) {
+        if (row.TrangThai == 1) {
+            return `<span class="badge bg-success">Hoạt động</span> `;
+        }
+
+        return `<span class="badge bg-warning">Không hoạt động</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnXem = `<a href="/TraCuuThongTin/ChiTiet?id=${row.Id}" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Xem chi tiết</a>`;
+
+        return btnXem;
+    }
+
+    window.operateEvents = {
+        // Không có sự kiện nào vì chỉ có xem chi tiết
+    };
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = false; // Chỉ hiển thị dữ liệu chưa xóa
+        params.DanhMucTraCuuThongTinId = $('#DanhMucTraCuuThongTinId').val();
+        params.TrangThai = $('#TrangThai').val();
+        return params;
+    }
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#DanhMucTraCuuThongTinId, #TrangThai").change(function () {
+            search();
+        });
+
+        ajaxGet("/TraCuuThongTin/LookupDataForSearch", function funcCallback(res) {
+            $("#DanhMucTraCuuThongTinId").select2({
+                data: res.DanhMucTraCuuThongTin,
+                language: "vi"
+            });
+            $("#TrangThai").select2({
+                data: res.TrangThai,
+                language: "vi"
+            });
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    });
+</script>
+
+

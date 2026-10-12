@@ -1,0 +1,584 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Sáng kiến";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = ViewBag.IsAdmin != null && (bool)ViewBag.IsAdmin;
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <a href="/SangKien/Form?id=0" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </a>
+                            </div>
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                @Html.CustomCheckBox(id: "DaXoaSearch", label: "Đã xoá", col: 12, moreClass: "p-t-5")
+                            </div>
+                            <div class="col-sm-6 col-xs-12 mb-2">
+                                @*<label for="txt-search">Tìm kiếm</label>*@
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Nhập từ khóa">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                        <button id="btn-clear" class="btn btn-light" type="button">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <label for="FilterDotXetDuyetId">Đợt xét duyệt</label>
+                                <select id="FilterDotXetDuyetId" class="form-control"></select>
+                            </div>
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <label for="FilterLinhVuc">Lĩnh vực</label>
+                                <select id="FilterLinhVuc" class="form-control"></select>
+                            </div>
+                            <div class="col-sm-3 col-xs-12 mb-2">
+                                <label for="FilterNamXetDuyet">Năm xét duyệt</label>
+                                <input type="text" id="FilterNamXetDuyet" class="form-control" placeholder="Nhập năm">
+                            </div>
+                            <div class="col-sm-2 col-xs-12 mb-2">
+                                <label for="FilterTrangThai">Trạng thái</label>
+                                <select id="FilterTrangThai" class="form-control">
+                                    <option value="">--- Tất cả ---</option>
+                                    <option value="ChoDuyet">Chờ Duyệt</option>
+                                    <option value="DaDuyet">Đã Duyệt</option>
+                                    <option value="TraDuyet">Trả Duyệt</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-1 col-xs-12 mb-2">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" onclick="xuatBaoCao()">
+                                    <i class="fa fa-file-excel-o"></i> Xuất Báo Cáo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-toolbar="#get"
+                                       data-url="/SangKien/GetListSangKien"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="TenDotXetDuyet">Đợt xét duyệt</th>
+                                            <th data-field="NamXetDuyet">Năm xét duyệt</th>
+                                            <th data-field="TenLinhVuc">Lĩnh vực</th>
+                                            <th data-field="TenNguoiNop">Người nộp</th>
+                                            <th data-field="MoTaChiTiet">Mô tả chi tiết</th>
+                                            <th data-field="DanhSachFile" data-formatter="fileSangKienFormatter">File Sáng Kiến</th>
+                                            <th data-field="DanhSachGiamKhao" data-formatter="giamKhaoPhanCongFormatter">Giám khảo được phân công chấm</th>
+                                            <th data-field="DiemTrungBinhTong" data-formatter="diemTrungBinhFormatter">Điểm trung bình</th>
+                                            <th data-field="TrangThaiChamDiem" data-formatter="trangThaiChamDiemFormatter">Trạng Thái Chấm Điểm</th>
+                                            <th data-field="TrangThai" data-formatter="trangThaiSangKienFormatter">Trạng thái sáng kiến</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@if (isAdmin)
+{
+    <div class="modal fade" id="phanCongModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Phân công giám khảo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="PhanCongUsers">Chọn giám khảo</label>
+                        <select id="PhanCongUsers" class="form-control" multiple></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="PhanCongGhiChu">Ghi chú</label>
+                        <textarea id="PhanCongGhiChu" class="form-control" rows="2" placeholder="Ghi chú (nếu có)"></textarea>
+                    </div>
+                    <button class="btn btn-primary mb-3" onclick="assignNguoiCham()"><i class="fa fa-plus"></i> Thêm</button>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Giám khảo</th>
+                                    <th>Ngày phân công</th>
+                                    <th>Ghi chú</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="phanCongTableBody">
+                                <tr><td colspan="4" class="text-center text-muted">Chưa có dữ liệu</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script>
+    var selectedId = 0;
+    const isAdmin = @isAdmin.ToString().ToLower();
+    const currentUserId = @(ViewBag.CurrentUserId ?? 0);
+    var nguoiChamOptionsLoaded = false;
+    var currentSangKienPhanCongId = 0;
+
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        }
+    }
+
+    function fileSangKienFormatter(value, row, index) {
+        if (!row.DanhSachFile || row.DanhSachFile.length === 0) {
+            return '<span class="text-muted">Không có file</span>';
+        }
+        var fileLinks = [];
+        for (var i = 0; i < row.DanhSachFile.length; i++) {
+            var file = row.DanhSachFile[i];
+            var fileName = (file.TenFile || 'File').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            var filePath = (file.DuongDan || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            fileLinks.push(`<a href="javascript:void(0);" onclick="downloadFromLink('${filePath}', '${fileName}')" title="${fileName}" class="m-r-5"><i class="fa fa-file"></i> ${fileName}</a>`);
+        }
+        return fileLinks.join('<br>');
+    }
+
+    function giamKhaoPhanCongFormatter(value, row, index) {
+        if (!row.DanhSachGiamKhao || row.DanhSachGiamKhao.length === 0) {
+            return '<span class="text-muted">Chưa phân công</span>';
+        }
+        var items = [];
+        for (var i = 0; i < row.DanhSachGiamKhao.length; i++) {
+            var gk = row.DanhSachGiamKhao[i];
+            var tenNguoiCham = (gk.TenNguoiCham || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            var icon = gk.DaCham 
+                ? '<i class="fa fa-check-circle text-success" title="Đã chấm"></i>' 
+                : '<i class="fa fa-times-circle text-danger" title="Chưa chấm"></i>';
+            var trangThaiText = gk.DaCham ? '<span class="text-success">(Đã chấm)</span>' : '<span class="text-danger">(Chưa chấm)</span>';
+            items.push(`<div>${icon} ${tenNguoiCham} ${trangThaiText}</div>`);
+        }
+        return items.join('');
+    }
+
+    function trangThaiChamDiemFormatter(value, row, index) {
+        if (!row.TrangThaiChamDiem) {
+            return '<span class="badge badge-secondary">Chưa xác định</span>';
+        }
+        var trangThai = row.TrangThaiChamDiem;
+        var text = '';
+        var badgeClass = '';
+        if (trangThai === 'ChuaCham') {
+            text = 'Chưa chấm';
+            badgeClass = 'badge-danger';
+        } else if (trangThai === 'DangCham') {
+            text = 'Đang chấm';
+            badgeClass = 'badge-warning';
+        } else if (trangThai === 'DaCham') {
+            text = 'Đã chấm';
+            badgeClass = 'badge-success';
+        } else {
+            text = row.TrangThai || 'Chưa xác định';
+            badgeClass = 'badge-secondary';
+        }
+        return `<span class="badge ${badgeClass}">${text}</span>`;
+    }
+
+    function diemTrungBinhFormatter(value, row, index) {
+        if (value === null || value === undefined) {
+            return '<span class="text-muted">--</span>';
+        }
+        var number = parseFloat(value);
+        if (isNaN(number)) {
+            return '<span class="text-muted">--</span>';
+        }
+        return number.toFixed(2);
+    }
+
+    function trangThaiSangKienFormatter(value, row, index) {
+        if (!row.TrangThai) {
+            return '<span class="badge badge-secondary">Chưa xác định</span>';
+        }
+        var trangThai = row.TrangThai.toLowerCase();
+        var text = row.TrangThai;
+        var badgeClass = '';
+        if (trangThai.includes('chờ duyệt') || trangThai.includes('cho duyet')) {
+            text = 'Chờ Duyệt';
+            badgeClass = 'badge-warning';
+        } else if (trangThai.includes('đã duyệt') || trangThai.includes('da duyet')) {
+            text = 'Đã Duyệt';
+            badgeClass = 'badge-success';
+        } else if (trangThai.includes('trả duyệt') || trangThai.includes('tra duyet')) {
+            text = 'Trả Duyệt';
+            badgeClass = 'badge-danger';
+        } else {
+            badgeClass = 'badge-secondary';
+        }
+        return `<span class="badge ${badgeClass}">${text}</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        const btnKhoiPhuc = `<button id='btn-revert-item' class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-refresh'></i> Khôi phục</button>`;
+        const btnPhanCong = isAdmin ? `<button onclick="openPhanCongModal(${row.Id})" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-users'></i> Phân công</button>` : "";
+        const btnDuyet = isAdmin ? `<button onclick="capNhatTrangThai(${row.Id}, 'Đã duyệt')" class='btn btn-success btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-check'></i> Duyệt</button>` : "";
+        const btnTraDuyet = isAdmin ? `<button onclick="traDuyetSangKien(${row.Id})" class='btn btn-outline-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-times'></i> Trả duyệt</button>` : "";
+
+        var canEditDelete = isAdmin || (row.NguoiNopId && row.NguoiNopId === currentUserId);
+        const btnSua = canEditDelete ? `<a href="/SangKien/Form?id=${row.Id}" class='btn btn-primary btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-pencil'></i> Sửa</a>` : "";
+        const btnXoa = canEditDelete ? `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>` : "";
+
+        var canChamDiem = isAdmin;
+        if (!canChamDiem && row.DanhSachGiamKhao && row.DanhSachGiamKhao.length > 0) {
+            for (var i = 0; i < row.DanhSachGiamKhao.length; i++) {
+                if (row.DanhSachGiamKhao[i].UserId === currentUserId) {
+                    canChamDiem = true;
+                    break;
+                }
+            }
+        }
+        const btnChamDiem = canChamDiem ? `<a href="/ChamDiem?id=${row.Id}" class='btn btn-warning btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-star'></i> Chấm điểm</a>` : "";
+
+        if (row.IsDeleted) {
+            var btnKhoiPhucFinal = canEditDelete ? btnKhoiPhuc : "";
+            return [
+                btnChamDiem + btnSua + btnKhoiPhucFinal
+            ].join("");
+        }
+
+        return [
+            btnChamDiem + btnSua + btnXoa + btnPhanCong + btnDuyet + btnTraDuyet
+        ].join("");
+    }
+
+    window.operateEvents = {
+        'click #btn-delete-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn xoá sáng kiến này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/SangKien/Xoa", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data && data.Success === false) {
+                        toastr.error(data.Error || "Bạn không có quyền xóa sáng kiến này.");
+                    } else {
+                        toastr.success("Xoá thành công.");
+                        search();
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        },
+        'click #btn-revert-item': function (e, value, row, index) {
+            if (confirm("Bạn muốn khôi phục sáng kiến này?")) {
+                showLoadingModal();
+
+                var fd = new FormData();
+                fd.append("Id", row.Id);
+
+                ajaxPostFormData("/SangKien/KhoiPhuc", fd, function funcCallback(data) {
+                    hideLoadingModal();
+                    if (data && data.Success === false) {
+                        toastr.error(data.Error || "Bạn không có quyền khôi phục sáng kiến này.");
+                    } else {
+                        toastr.success("Khôi phục thành công.");
+                        search();
+                    }
+                }, function funcError() {
+                    hideLoadingModal();
+                    toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+                })
+            }
+        }
+    }
+
+    function loadDotXetDuyetFilter() {
+        ajaxGet("/DotXetDuyet/DotXetDuyetLookup", function (res) {
+            const select = $("#FilterDotXetDuyetId");
+            select.empty();
+            res.forEach(function (item) {
+                select.append(`<option value="${item.id}">${item.text}</option>`);
+            });
+            select.val("0");
+        }, function () {
+            toastr.error("Không thể tải danh sách đợt xét duyệt.");
+        });
+    }
+
+    function loadLinhVucFilter() {
+        ajaxGet("/SangKien/GetLinhVucSangKienLookup", function (res) {
+            const select = $("#FilterLinhVuc");
+            select.empty();
+            if (res && res.length > 0) {
+                res.forEach(function (item) {
+                    select.append(`<option value="${item.id}">${item.text}</option>`);
+                });
+            }
+            select.val("0");
+        }, function () {
+            toastr.error("Không thể tải danh sách lĩnh vực.");
+        });
+    }
+
+    function clearFilters() {
+        $("#FilterDotXetDuyetId").val("0");
+        $("#FilterLinhVuc").val("0");
+        $("#FilterNamXetDuyet").val("");
+        $("#FilterTrangThai").val("");
+        $("#DaXoaSearch").prop("checked", false);
+        $("#txt-search").val("");
+        search();
+    }
+
+    function xuatBaoCao() {
+        showLoadingModal();
+        var dotXetDuyetId = parseInt($("#FilterDotXetDuyetId").val()) || 0;
+        var linhVucSangKienId = parseInt($("#FilterLinhVuc").val()) || 0;
+        var namXetDuyet = $("#FilterNamXetDuyet").val() || "";
+        var trangThaiDuyet = $("#FilterTrangThai").val() || "";
+        var daXoa = $('#DaXoaSearch').is(":checked");
+        var search = $("#txt-search").val() || "";
+
+        var params = {
+            dotXetDuyetId: dotXetDuyetId > 0 ? dotXetDuyetId : null,
+            linhVucSangKienId: linhVucSangKienId > 0 ? linhVucSangKienId : null,
+            namXetDuyet: namXetDuyet,
+            trangThaiDuyet: trangThaiDuyet,
+            daXoa: daXoa,
+            search: search ? btoa(unescape(encodeURIComponent(search))) : null
+        };
+
+        var queryString = Object.keys(params)
+            .filter(key => params[key] !== null && params[key] !== "")
+            .map(key => `${key}=${encodeURIComponent(params[key])}`)
+            .join("&");
+
+        var url = `/SangKien/XuatBaoCao${queryString ? "?" + queryString : ""}`;
+        
+        window.location.href = url;
+        setTimeout(function() {
+            hideLoadingModal();
+        }, 1000);
+    }
+
+    function queryParams(params) {
+        params.search = btoa(unescape(encodeURIComponent($("#txt-search").val())));
+        params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
+        params.DotXetDuyetIdFilter = parseInt($("#FilterDotXetDuyetId").val()) || 0;
+        params.LinhVucSangKienIdFilter = parseInt($("#FilterLinhVuc").val()) || 0;
+        params.NamXetDuyetFilter = $("#FilterNamXetDuyet").val();
+        params.TrangThaiDuyetFilter = $("#FilterTrangThai").val();
+        return params;
+    };
+
+    function search() {
+        $('#bs-table').bootstrapTable('refresh');
+    };
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $('#bs-table').bootstrapTable('refresh');
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDotXetDuyetFilter();
+        loadLinhVucFilter();
+
+        $("#DaXoaSearch").change(search);
+        $("#FilterDotXetDuyetId, #FilterTrangThai, #FilterLinhVuc").change(search);
+        $("#FilterNamXetDuyet").on("keyup", function (e) {
+            if (e.keyCode === 13) {
+                search();
+            }
+        });
+        $("#btn-clear").click(clearFilters);
+        if (isAdmin) {
+            loadNguoiChamOptions();
+        }
+    });
+
+    function capNhatTrangThai(id, trangThai) {
+        if (!confirm("Xác nhận cập nhật trạng thái sáng kiến này?")) return;
+        var fd = new FormData();
+        fd.append("id", id);
+        fd.append("trangThai", trangThai);
+        ajaxPostFormData("/SangKien/CapNhatTrangThai", fd, function () {
+            toastr.success("Cập nhật trạng thái thành công.");
+            search();
+        }, function () {
+            toastr.error("Không thể cập nhật trạng thái.");
+        });
+    }
+
+    function traDuyetSangKien(id) {
+        var lyDo = prompt("Nhập lý do trả duyệt:");
+        if (lyDo === null) return;
+        if (lyDo.trim() === "") {
+            toastr.warning("Vui lòng nhập lý do.");
+            return;
+        }
+        var fd = new FormData();
+        fd.append("id", id);
+        fd.append("trangThai", "Trả duyệt");
+        fd.append("ghiChu", lyDo);
+        ajaxPostFormData("/SangKien/CapNhatTrangThai", fd, function () {
+            toastr.success("Đã trả duyệt sáng kiến.");
+            search();
+        }, function () {
+            toastr.error("Không thể trả duyệt.");
+        });
+    }
+
+    function loadNguoiChamOptions() {
+        $.get("/SangKien/GetNguoiChamLookup", function (res) {
+            const select = $("#PhanCongUsers");
+            select.empty();
+            if (res && res.length > 0) {
+                res.forEach(function (item) {
+                    select.append(`<option value="${item.id}">${item.text}</option>`);
+                });
+            }
+            if (!nguoiChamOptionsLoaded) {
+                select.select2({
+                    language: "vi",
+                    multiple: true,
+                    placeholder: "Chọn giám khảo"
+                });
+                nguoiChamOptionsLoaded = true;
+            } else {
+                select.trigger('change');
+            }
+        }).fail(function() {
+            toastr.error("Không thể tải danh sách giám khảo.");
+        });
+    }
+
+    function openPhanCongModal(id) {
+        currentSangKienPhanCongId = id;
+        $("#PhanCongUsers").val(null).trigger('change');
+        $("#PhanCongGhiChu").val("");
+        loadNguoiChamOptions();
+        loadPhanCongList();
+        $("#phanCongModal").modal("show");
+    }
+
+    function formatDateTime(value) {
+        if (!value) return "";
+        try {
+            if (window.moment) {
+                return moment(value).format("DD/MM/YYYY HH:mm");
+            }
+            const date = new Date(value);
+            return date.toLocaleString("vi-VN");
+        } catch (e) {
+            return value;
+        }
+    }
+
+    function loadPhanCongList() {
+        if (!currentSangKienPhanCongId) return;
+        $.get("/SangKien/GetPhanCongBySangKien", { sangKienId: currentSangKienPhanCongId }, function (res) {
+            const tbody = $("#phanCongTableBody");
+            tbody.empty();
+            if (!res || res.length === 0) {
+                tbody.append("<tr><td colspan='4' class='text-center text-muted'>Chưa có dữ liệu</td></tr>");
+                return;
+            }
+            res.forEach(function (item) {
+                const ngay = formatDateTime(item.NgayPhanCong);
+                tbody.append(`<tr>
+                                <td>${item.TenNguoiCham || ""}</td>
+                                <td>${ngay}</td>
+                                <td>${item.GhiChu || ""}</td>
+                                <td class='text-center'><button class='btn btn-sm btn-danger' onclick='xoaPhanCong(${item.Id})'><i class='fa fa-trash'></i></button></td>
+                              </tr>`);
+            });
+        });
+    }
+
+    function assignNguoiCham() {
+        var users = $("#PhanCongUsers").val() || [];
+        if (users.length === 0) {
+            toastr.warning("Vui lòng chọn ít nhất một giám khảo.");
+            return;
+        }
+        var ghiChu = $("#PhanCongGhiChu").val();
+        $.ajax({
+            url: "/SangKien/ThemPhanCong",
+            method: "POST",
+            traditional: true,
+            data: {
+                sangKienId: currentSangKienPhanCongId,
+                ghiChu: ghiChu,
+                userIds: users
+            },
+            success: function () {
+                toastr.success("Đã phân công giám khảo.");
+                loadPhanCongList();
+                $("#PhanCongUsers").val(null).trigger('change');
+                $("#PhanCongGhiChu").val("");
+            },
+            error: function () {
+                toastr.error("Không thể phân công.");
+            }
+        });
+    }
+
+    function xoaPhanCong(id) {
+        if (!confirm("Xoá giám khảo này khỏi danh sách?")) return;
+        $.post("/SangKien/XoaPhanCong", { id: id }, function () {
+            toastr.success("Đã xoá giám khảo.");
+            loadPhanCongList();
+        }).fail(function () {
+            toastr.error("Không thể xoá giám khảo.");
+        });
+    }
+</script>
+
+

@@ -1,0 +1,346 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Điểm danh";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+<style>
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        min-height: 100vh;
+    }
+
+    .thong-ke-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .thong-ke-container {
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .card {
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        margin: 0;
+        border: none;
+        overflow: hidden;
+        background: #ffffff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        border-radius: 0;
+        padding: 24px;
+        border: none;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-body {
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .stat-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+        background: #ffffff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        padding: 16px 20px;
+        border: none;
+    }
+
+    .stat-card .card-header h5 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+    }
+
+    .stat-card .card-body {
+        padding: 20px;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-weight: 500;
+        text-align: center;
+        font-size: 120%;
+    }
+
+    .table tbody td {
+        padding: 12px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 120%;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .table-info {
+        background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(40, 167, 69, 0.1) 100%);
+        font-weight: 600;
+    }
+</style>
+
+<div class="thong-ke-wrapper">
+    <div class="thong-ke-container">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" style="text-transform:uppercase">
+                    <i class="fa fa-bar-chart"></i> Thống kê điểm danh
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 col-sm-12 col-xs-12">
+                        <div class="stat-card card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fa fa-pie-chart"></i> Biểu đồ thống kê
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 400px;">
+                                    <canvas id="chartDiemDanh"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12 col-xs-12">
+                        <div class="stat-card card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="fa fa-table"></i> Bảng thống kê
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Trạng thái</th>
+                                            <th>Số lượng</th>
+                                            <th>Tỷ lệ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableThongKe">
+                                        <tr>
+                                            <td colspan="3" class="text-center">Đang tải dữ liệu...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                   </div>
+                    <div style="text-align: center; padding: 15px 0; color: white; font-size: 12px;margin-top: 20px;">
+        Sản phẩm của <img src="https://ebill.vnpt.vn/images/logo-mb.png" style="width: 100px; height: auto;margin-left: 10px;"/>
+    </div>
+</div>
+<script>
+    var chartDiemDanh;
+    var refreshInterval;
+    var refreshIntervalSeconds = 10;
+
+    function loadThongKeDiemDanh(isAutoRefresh) {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js chưa được load!');
+            toastr.error('Chart.js chưa được load!');
+            return;
+        }
+
+        if (!isAutoRefresh) {
+            showLoadingIndicator();
+        }
+
+        $.get("/DiemDanh/GetThongKeDiemDanh")
+            .done(function (data) {
+                if (!data) {
+                    toastr.error("Không có dữ liệu thống kê.");
+                    hideLoadingIndicator();
+                    return;
+                }
+
+                var ctx = document.getElementById('chartDiemDanh');
+                if (!ctx) {
+                    hideLoadingIndicator();
+                    return;
+                }
+
+                if (chartDiemDanh && typeof chartDiemDanh.destroy === 'function') {
+                    chartDiemDanh.destroy();
+                }
+
+                var labels = ['Đã điểm danh', 'Chưa điểm danh'];
+                var values = [data.DaDiemDanh || 0, data.ChuaDiemDanh || 0];
+                var total = data.TongSo || 0;
+
+                chartDiemDanh = new Chart(ctx.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: [
+                                'rgba(40, 167, 69, 0.8)',
+                                'rgba(220, 53, 69, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(40, 167, 69, 1)',
+                                'rgba(220, 53, 69, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        animation: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        var label = context.label || '';
+                                        var value = context.parsed || 0;
+                                        var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return `${label}: ${value} người (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                updateTableThongKe(data);
+                hideLoadingIndicator();
+            })
+            .fail(function () {
+                toastr.error("Không thể tải dữ liệu thống kê điểm danh.");
+                hideLoadingIndicator();
+            });
+    }
+
+    function updateTableThongKe(data) {
+        var total = data.TongSo || 0;
+        var daDiemDanh = data.DaDiemDanh || 0;
+        var chuaDiemDanh = data.ChuaDiemDanh || 0;
+
+        var tyLeDaDiemDanh = total > 0 ? ((daDiemDanh / total) * 100).toFixed(1) : 0;
+        var tyLeChuaDiemDanh = total > 0 ? ((chuaDiemDanh / total) * 100).toFixed(1) : 0;
+
+        var html = `
+            <tr>
+                <td><strong>Đã điểm danh</strong></td>
+                <td>${daDiemDanh}</td>
+                <td>${tyLeDaDiemDanh}%</td>
+            </tr>
+            <tr>
+                <td><strong>Chưa điểm danh</strong></td>
+                <td>${chuaDiemDanh}</td>
+                <td>${tyLeChuaDiemDanh}%</td>
+            </tr>
+            <tr class="table-info">
+                <td><strong>Tổng số</strong></td>
+                <td><strong>${total}</strong></td>
+                <td><strong>100%</strong></td>
+            </tr>
+        `;
+
+        $('#tableThongKe').html(html);
+    }
+
+    function showLoadingIndicator() {
+        if ($('#loadingIndicator').length === 0) {
+            $('.card-header h3').append(' <i id="loadingIndicator" class="fa fa-spinner fa-spin" style="font-size: 20px;"></i>');
+        } else {
+            $('#loadingIndicator').show();
+        }
+    }
+
+    function hideLoadingIndicator() {
+        $('#loadingIndicator').hide();
+    }
+
+    function startAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+        refreshInterval = setInterval(function () {
+            loadThongKeDiemDanh(true);
+        }, refreshIntervalSeconds * 1000);
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadThongKeDiemDanh(false);
+        startAutoRefresh();
+    });
+</script>

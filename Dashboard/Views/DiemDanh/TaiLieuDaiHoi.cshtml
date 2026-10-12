@@ -1,0 +1,330 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Tài liệu đại hội";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+<style>
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .content {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        padding: 20px;
+        margin: 0;
+    }
+
+    .tai-lieu-wrapper {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .tai-lieu-container {
+        width: 100%;
+        padding: 0;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        margin: 0;
+        width: 100%;
+        border: none;
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .logo img {
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 20px;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .file-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+
+    .file-item:hover {
+        background: #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .file-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .btn-download-file {
+        margin-right: 12px;
+        padding: 6px 10px;
+        font-size: 14px;
+        min-width: 40px;
+        flex-shrink: 0;
+    }
+
+    .file-name {
+        flex: 1;
+        font-size: 15px;
+        color: #333;
+        word-break: break-word;
+        line-height: 1.4;
+    }
+
+    .file-name a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .file-name a:hover {
+        text-decoration: underline;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
+    .loading i {
+        font-size: 32px;
+    }
+
+    .empty-message {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+        font-size: 16px;
+    }
+
+    .empty-message i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        color: #adb5bd;
+    }
+
+    #errorMessage {
+        font-size: 14px;
+        padding: 10px;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 5px;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #007bff 0%, #28a745 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        text-decoration: none;
+        color: white;
+    }
+
+    .fab:hover {
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
+        transform: scale(1.1);
+        color: white;
+    }
+
+    .fab i {
+        font-size: 24px;
+    }
+
+    @@media (max-width: 576px) {
+        .content {
+            padding: 15px;
+            align-items: flex-start;
+            padding-top: 20px;
+        }
+
+        .tai-lieu-wrapper {
+            max-width: 100%;
+        }
+
+        .card-header h3 {
+            font-size: 20px;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .logo img {
+            max-height: 150px;
+        }
+
+        .file-item {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .btn-download-file {
+            margin-right: 10px;
+            padding: 5px 8px;
+            font-size: 13px;
+            min-width: 36px;
+        }
+
+        .file-name {
+            font-size: 14px;
+        }
+
+        .empty-message {
+            padding: 30px 15px;
+            font-size: 15px;
+        }
+
+        .empty-message i {
+            font-size: 40px;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .fab i {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid tai-lieu-wrapper">
+        <div class="tai-lieu-container">
+            <div class="card card-primary">
+                <div class="card-header text-center">
+                    <h3 class="card-title">
+                        <b style="text-transform: uppercase">Tài liệu đại hội</b>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="logo">
+                        <img src="@Url.VersionedContent("~/Content/img/daihoi.png")" />
+                    </div>
+                    <div id="loading" class="loading">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <p>Đang tải danh sách tài liệu...</p>
+                    </div>
+                    <div id="fileListContainer" style="display: none;">
+                        <ul id="fileList" class="file-list"></ul>
+                        <div id="emptyMessage" class="empty-message" style="display: none;">
+                            <i class="fa fa-folder-open"></i>
+                            <p>Chưa có tài liệu nào</p>
+                        </div>
+                    </div>
+                    <div id="errorMessage" class="text-danger text-center"></div>
+                </div>
+            </div>
+           <div style="text-align: center; padding: 15px 0; color: white; font-size: 12px;margin-top: 20px;">
+        Sản phẩm của <img src="https://ebill.vnpt.vn/images/logo-mb.png" style="width: 100px; height: auto;margin-left: 10px;"/>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        loadTaiLieu();
+    });
+
+    function loadTaiLieu() {
+        ajaxGet("/DiemDanh/GetTaiLieuDaiHoi", function (data) {
+            $("#loading").hide();
+            $("#fileListContainer").show();
+
+            if (!data || !data.rows || data.rows.length === 0) {
+                $("#fileList").hide();
+                $("#emptyMessage").show();
+                return;
+            }
+
+            $("#emptyMessage").hide();
+            $("#fileList").show();
+
+            var html = '';
+            data.rows.forEach(function (file) {
+                html += `<li class="file-item">
+                            <a href="/DoanVien_TaiLieu/Download?id=${file.Id}" class="btn btn-info btn-sm btn-download-file" title="Tải file" download>
+                                <i class="fa fa-download"></i>
+                            </a>
+                            <div class="file-name">
+                                <span title="${file.TenFile}">
+                                    ${file.TenFile}
+                                </span>
+                            </div>
+                        </li>`;
+            });
+            $("#fileList").html(html);
+        }, function () {
+            $("#loading").hide();
+            $("#errorMessage").text("Đã có lỗi xảy ra khi tải danh sách tài liệu. Vui lòng thử lại.").show();
+        });
+    }
+
+</script>
+
+<!-- Floating Action Button -->
+<a href="/DiemDanh/ThongKeDaiHoi" class="fab" title="Thống kê đại hội">
+    <i class="fa fa-bar-chart"></i>
+</a>
+

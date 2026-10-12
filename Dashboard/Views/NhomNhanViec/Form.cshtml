@@ -1,0 +1,435 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " nhóm nhân việc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted();
+    var phongBans = Dashboard.Common.CacheManagerHelper.GetPhongBanCacheNotDeleted();
+    var chucDanhs = Dashboard.Common.CacheManagerHelper.GetChucDanhCache();
+    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId((System.Security.Claims.ClaimsIdentity)User.Identity);
+}
+
+@model int
+<style>
+    #nhomNguoiNhan .table-container {
+        margin: 20px auto;
+        max-width: 800px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    #nhomNguoiNhan .table-header {
+        background: linear-gradient(90deg, #4a90e2, #357abd);
+        color: white;
+        font-weight: bold;
+    }
+
+        #nhomNguoiNhan .table-header th {
+            border: none;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+    #nhomNguoiNhan .expandable-row {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+
+        #nhomNguoiNhan .expandable-row:hover {
+            background-color: #e9ecef;
+        }
+
+        #nhomNguoiNhan .expandable-row td {
+            padding: 10px 12px;
+            vertical-align: middle;
+        }
+
+    #nhomNguoiNhan .child-row {
+        background-color: white;
+        display: table-row;
+    }
+
+        #nhomNguoiNhan .child-row td {
+            padding: 8px;
+            border-top: 1px solid #dee2e6;
+        }
+
+    #nhomNguoiNhan .expand-icon {
+        transition: transform 0.3s ease;
+        margin-right: 8px;
+        color: #007bff;
+    }
+
+    #nhomNguoiNhan .checkbox-cell {
+        text-align: center;
+        width: 80px;
+    }
+
+    #nhomNguoiNhan .unit-name {
+        font-weight: bold;
+    }
+
+    .child-unit-name {
+        color: #666;
+        font-size: 0.95em;
+    }
+
+    #nhomNguoiNhan .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    #nhomNguoiNhan .custom-checkbox {
+        transform: scale(1.2);
+    }
+
+    .user-table-scroll-container {
+        max-height: 450px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+
+    .user-table-scroll-container thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background-color: #f8f9fa;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+
+    .user-table-scroll-container thead tr:nth-child(2) th {
+        top: 38px;
+        z-index: 2;
+        background-color: #f8f9fa;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "Ten", label: "Tên", col: 12, required: true, length: 255, moreClass: "col-sm-12 col-xs-12")
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3, moreClass: "col-sm-12 col-xs-12")
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12" id="nhomNguoiNhan">
+                                <b>Người nhận của nhóm:</b> <span class="text-danger mr-2">*</span>
+                                <button type="button" class="btn btn-info btn-sm ml-2 mb-1" id="btnXemDaChon">
+                                    <i class="fa fa-users"></i> Xem người đã chọn (<span id="countSelected">0</span>)
+                                </button>
+                                <span id="UserIdsError" class="text-danger m-b-0"></span>
+                                <div class="user-table-scroll-container mt-2">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th class="unit-name">Họ và tên</th>
+                                                <th>Chức danh</th>
+                                                <th class="checkbox-cell">Chọn</th>
+                                            </tr>
+                                            <tr>
+                                                <th>
+                                                    <input type="text" id="filterHoTen" class="form-control form-control-sm" placeholder="Tìm theo tên..." />
+                                                </th>
+                                                <th>
+                                                    <input type="text" id="filterChucDanh" class="form-control form-control-sm" placeholder="Tìm theo chức danh..." />
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="userBody">
+                                            @foreach (var pb in phongBans)
+                                            {
+                                                <tr class="expandable-row" data-group="group-@pb.Id">
+                                                    <td class="unit-name" colspan="2">
+                                                        <span>
+                                                            <i class="fa fa-caret-down expand-icon expanded"></i>
+                                                            <span>@pb.Ten</span>
+                                                        </span>
+                                                    </td>
+                                                    <td class="checkbox-cell">
+                                                        <input type="checkbox" class="custom-checkbox parent-checkbox" id="group-@pb.Id">
+                                                    </td>
+                                                </tr>
+
+                                                var useCoquans = users.Where(o => o.PhongBanId == pb.Id && o.Id != currentUserId)
+                                                    .OrderBy(us =>
+                                                    {
+                                                        var chucDanhObj = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                                                        return chucDanhObj != null && chucDanhObj.ThuTu.HasValue ? chucDanhObj.ThuTu.Value : int.MaxValue;
+                                                    })
+                                                    .ThenBy(us => us.Name)
+                                                    .ToList();
+                                                foreach (var us in useCoquans)
+                                                {
+                                                    var chucDanhObj = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                                                    var chucDanhTen = chucDanhObj != null ? chucDanhObj.Ten : (us.ChucDanh ?? "");
+                                                    <tr class="child-row" data-parent="group-@pb.Id">
+                                                        <td class="child-unit-name">@us.Name</td>
+                                                        <td>@chucDanhTen</td>
+                                                        <td class="checkbox-cell">
+                                                            <input type="checkbox" id="User_@us.Id" data-id="@us.Id" data-name="@us.Name" data-chucdanh="@chucDanhTen" data-parent="group-@pb.Id" class="custom-checkbox child-checkbox">
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/NhomNhanViec"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/NhomNhanViec/NguoiDaChonModal.cshtml")
+
+<script>
+    const textFields = ["Id", "Ten", "MoTa"];
+    const selectFields = [];
+    const radioFields = [];
+    const checkBoxFields = [];
+    const select2MultiFields = [];
+
+
+    function updateSelectedCount() {
+        var count = $("#userBody input.child-checkbox:checked").length;
+        $("#countSelected").text(count);
+    }
+
+    function syncParentCheckboxes() {
+        $("#nhomNguoiNhan .parent-checkbox").each(function () {
+            var parentId = $(this).attr("id");
+            var $children = $("input.child-checkbox[data-parent='" + parentId + "']");
+            if ($children.length > 0) {
+                var allChecked = $children.length === $children.filter(":checked").length;
+                $(this).prop("checked", allChecked);
+            }
+        });
+    }
+
+    function renderModalNguoiDaChon() {
+        var $body = $("#bodyNguoiDaChon");
+        $body.empty();
+
+        var $checkedInputs = $("#userBody input.child-checkbox:checked");
+        if ($checkedInputs.length === 0) {
+            $body.html('<tr><td colspan="4" class="text-center text-muted">Chưa có người nhận nào được chọn</td></tr>');
+            return;
+        }
+
+        $checkedInputs.each(function (index) {
+            var userId = $(this).data("id");
+            var name = $(this).data("name") || "";
+            var chucDanh = $(this).data("chucdanh") || "";
+
+            var row = `<tr>
+                <td class="text-center">${index + 1}</td>
+                <td>${name}</td>
+                <td>${chucDanh}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm btn-delete-selected" data-id="${userId}">
+                        <i class="fa fa-trash"></i> Xóa
+                    </button>
+                </td>
+            </tr>`;
+            $body.append(row);
+        });
+    }
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/NhomNhanViec/GetById?id=" + @Model, function funcCallback(res) {
+            if (res.Item) {
+                FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+
+                if (res.Item.ThanhViens) {
+                    res.Item.ThanhViens.forEach(function (id) {
+                        $("#userBody input[type='checkbox'][data-id='" + id + "']").prop("checked", true);
+                    });
+                }
+            }
+            syncParentCheckboxes();
+            updateSelectedCount();
+            hideLoadingModal();
+        }, function funcError() {
+            hideLoadingModal();
+        });
+    }
+
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+
+        let selectedUserIds = $("#userBody input[type='checkbox'][data-id]:checked").map(function () {
+            return $(this).data("id");
+        }).get();
+
+        fd.append("UserIds", selectedUserIds.join(','));
+        return fd;
+    }
+
+    function addOrUpdate() {
+        $("#UserIdsError").empty();
+
+        showLoadingModal();
+
+        ajaxPostFormData("/NhomNhanViec/ThemOrCapNhat", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else {
+                window.location.href = "/NhomNhanViec";
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#btnXemDaChon").click(function () {
+            renderModalNguoiDaChon();
+            $("#modalNguoiDaChon").modal("show");
+        });
+
+        $(document).on("click", ".btn-delete-selected", function () {
+            var userId = $(this).data("id");
+            var $checkbox = $("#userBody input.child-checkbox[data-id='" + userId + "']");
+            if ($checkbox.length > 0) {
+                $checkbox.prop("checked", false);
+                var parentId = $checkbox.data("parent");
+                if (parentId) {
+                    var $parent = $("#" + parentId);
+                    var allChecked = $("input.child-checkbox[data-parent='" + parentId + "']").length ===
+                        $("input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+                    $parent.prop("checked", allChecked);
+                }
+            }
+            $(this).closest("tr").remove();
+            updateSelectedCount();
+            if ($("#bodyNguoiDaChon tr").length === 0) {
+                $("#bodyNguoiDaChon").html('<tr><td colspan="4" class="text-center text-muted">Chưa có người nhận nào được chọn</td></tr>');
+            }
+        });
+
+        $('#nhomNguoiNhan .unit-name').click(function (e) {
+            var $row = $(this).closest(".expandable-row");
+            var groupName = $row.data("group");
+            var $icon = $row.find(".expand-icon");
+
+            $("tr.child-row[data-parent='" + groupName + "']").toggle();
+            $icon.toggleClass("fa-caret-right fa-caret-down");
+        });
+
+        $("#nhomNguoiNhan .parent-checkbox").on("change", function () {
+            var isChecked = $(this).prop("checked");
+            var parentId = $(this).attr("id");
+
+            $("input.child-checkbox[data-parent='" + parentId + "']").prop("checked", isChecked);
+            updateSelectedCount();
+        });
+
+        $("#nhomNguoiNhan .child-checkbox").on("change", function () {
+            var parentId = $(this).data("parent");
+            var $parent = $("#" + parentId);
+
+            var allChecked = $("input.child-checkbox[data-parent='" + parentId + "']").length ===
+                $("input.child-checkbox[data-parent='" + parentId + "']:checked").length;
+
+            $parent.prop("checked", allChecked);
+            updateSelectedCount();
+        });
+
+        function filterUserTable() {
+            var filterName = $("#filterHoTen").val().toLowerCase().trim();
+            var filterTitle = $("#filterChucDanh").val().toLowerCase().trim();
+
+            if (!filterName && !filterTitle) {
+                $("#userBody tr.expandable-row").show();
+                $("#userBody tr.child-row").show();
+                $("#userBody .expand-icon").removeClass("fa-caret-right").addClass("fa-caret-down");
+                return;
+            }
+
+            $("#userBody tr.expandable-row").each(function () {
+                var $parentRow = $(this);
+                var groupName = $parentRow.data("group");
+                var $childRows = $("#userBody tr.child-row[data-parent='" + groupName + "']");
+                var hasChildMatch = false;
+
+                $childRows.each(function () {
+                    var $child = $(this);
+                    var nameText = $child.find(".child-unit-name").text().toLowerCase();
+                    var titleText = $child.find("td:nth-child(2)").text().toLowerCase();
+
+                    var matchName = !filterName || nameText.indexOf(filterName) >= 0;
+                    var matchTitle = !filterTitle || titleText.indexOf(filterTitle) >= 0;
+
+                    if (matchName && matchTitle) {
+                        $child.show();
+                        hasChildMatch = true;
+                    } else {
+                        $child.hide();
+                    }
+                });
+
+                var parentNameText = $parentRow.find(".unit-name span:last").text().toLowerCase();
+                var parentMatches = (!filterTitle && filterName && parentNameText.indexOf(filterName) >= 0);
+
+                if (hasChildMatch || parentMatches) {
+                    $parentRow.show();
+                    $parentRow.find(".expand-icon").removeClass("fa-caret-right").addClass("fa-caret-down");
+                    if (parentMatches && !hasChildMatch) {
+                        $childRows.show();
+                    }
+                } else {
+                    $parentRow.hide();
+                }
+            });
+        }
+
+        $("#filterHoTen, #filterChucDanh").on("input keyup", function () {
+            filterUserTable();
+        });
+    });
+</script>
+

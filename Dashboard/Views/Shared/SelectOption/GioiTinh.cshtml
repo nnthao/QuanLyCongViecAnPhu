@@ -1,0 +1,19 @@
+﻿@model Dashboard.Models.HtmlHelpers.Select2.Select2ViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger">*</span>
+            }
+        </label>
+        <select class="form-control" id="@Model.Id">
+            <option value="">--- Chọn ---</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+        </select>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>

@@ -1,0 +1,107 @@
+@using Dashboard.Models.Entities
+@using Dashboard.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê công việc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var phongBans = ViewBag.PhongBans as List<PhongBanGridVo> ?? new List<PhongBanGridVo>();
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thống kê số lượng công việc theo nhân viên</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        @Html.CustomDatePicker(id: "TuNgayStr", label: "Từ ngày", value: Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy"), required: false)
+                    </div>
+                    <div class="col-md-3">
+                        @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", value: Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy"), required: false)
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Phòng ban</label>
+                            <select id="phongBanId" class="form-control select2">
+                                <option value="0">-- Tất cả phòng ban --</option>
+                                @foreach (var item in phongBans)
+                                {
+                                    <option value="@item.Id">@item.Ten</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                         <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary btn-block" onclick="loadData()">
+                                <i class="fa fa-search"></i> Xem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-striped custom-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 50px;">STT</th>
+                            <th>Tên thành viên</th>
+                            <th class="text-center" style="width: 150px;">Số lượng công việc</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbl-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function () {
+        $('.select2').select2({
+            width: '100%'
+        });
+
+        loadData();
+
+        $('#phongBanId').change(function() {
+            loadData();
+        });
+    });
+
+    function loadData() {
+        var phongBanId = $('#phongBanId').val();
+         var tuNgay = $('#TuNgayStr').val();
+        var denNgay = $('#DenNgayStr').val();
+        
+        var data = {
+            phongBanId: phongBanId,
+            tuNgayStr: tuNgay,
+            denNgayStr: denNgay
+        };
+        
+        $.get('/CongViecChung/GetThongKeData', data, function (res) {
+            if (res && res.length > 0) {
+                // Sắp xếp tăng dần (nhỏ đến lớn)
+                res.sort(function(a, b) {
+                    return a.SoLuongCongViec - b.SoLuongCongViec;
+                });
+
+                var html = '';
+                $.each(res, function (index, item) {
+                    var badgeClass = item.SoLuongCongViec === 0 ? 'bg-danger' : 'bg-primary';
+                    html += '<tr>';
+                    html += '<td class="text-center">' + (index + 1) + '</td>';
+                    html += '<td>' + (item.TenUser || '') + '</td>';
+                    html += '<td class="text-center"><span class="badge ' + badgeClass + '" style="font-size: 14px;">' + item.SoLuongCongViec + '</span></td>';
+                    html += '</tr>';
+                });
+                $('#tbl-body').html(html);
+            } else {
+                 $('#tbl-body').html('<tr><td colspan="3" class="text-center">Không có dữ liệu</td></tr>');
+            }
+        });
+    }
+</script>

@@ -1,0 +1,446 @@
+@{
+    ViewBag.Title = "Thống kê, Báo cáo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+    
+    .chart-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .chart-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 20px;
+    }
+    
+    .chart-card .card-body {
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title"><b>@ViewBag.Title</b></h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Biểu đồ cột: Tổng số sáng kiến -->
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">1. Tổng số sáng kiến theo năm</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartTongSoSangKien"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Biểu đồ hình tròn: Tỉ lệ xếp loại -->
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">2. Tỉ lệ xếp loại sáng kiến</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartXepLoai"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Biểu đồ cột: Quỹ tiền thưởng -->
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">3. Quỹ tiền thưởng nhận về qua các năm</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartQuyTienThuong"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Biểu đồ cột: Tổng tiền thưởng thành viên -->
+                            <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="card chart-card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">4. Tổng tiền thưởng thành viên</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chartTongTienThuongThanhVien"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    var chartTongSoSangKien, chartXepLoai, chartQuyTienThuong, chartTongTienThuongThanhVien;
+
+    // Plugin vẽ phần trăm lên biểu đồ
+    function createPercentageLabelsPlugin(total, color, fontSize, pluginId) {
+        const totalValue = total || 0;
+        const labelColor = color || '#fff';
+        const labelFontSize = fontSize || 12;
+        const uniqueId = pluginId || 'percentageLabelsPlugin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        return {
+            id: uniqueId,
+            afterDatasetsDraw(chart, args) {
+                try {
+                    const { ctx, data, chartArea } = chart;
+                    if (!data || !data.datasets || !chartArea) return;
+
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const type = chart.config.type;
+
+                    if (type === 'bar' && totalValue > 0) {
+                        data.datasets.forEach((dataset, datasetIndex) => {
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            if (!meta || !meta.data || meta.hidden) return;
+
+                            ctx.fillStyle = labelColor;
+                            ctx.font = `bold ${labelFontSize}px Arial`;
+
+                            // Tính total cho dataset này (nếu có nhiều datasets, tính theo từng dataset)
+                            let datasetTotal = totalValue;
+                            if (data.datasets.length > 1 && dataset.data) {
+                                datasetTotal = dataset.data.reduce(function(a, b) { return a + (b || 0); }, 0);
+                            }
+
+                            meta.data.forEach((element, index) => {
+                                if (!element || typeof element.x === 'undefined' || typeof element.y === 'undefined') return;
+                                
+                                const value = dataset.data[index];
+                                if (value == null || value === 0) return;
+                                
+                                const height = Math.abs(element.height);
+                                if (height <= 10) return;
+                                
+                                const percentage = datasetTotal > 0 ? ((value / datasetTotal) * 100).toFixed(1) : '0.0';
+                                const x = element.x;
+                                // Với bar chart vertical: element.y là bottom, element.base là top
+                                // Giữa thanh = element.y - (height / 2) hoặc (element.y + element.base) / 2
+                                let y;
+                                if (typeof element.base !== 'undefined') {
+                                    y = (element.y + element.base) / 2;
+                                } else {
+                                    y = element.y - (height / 2);
+                                }
+                                
+                                if (y >= chartArea.top && y <= chartArea.bottom && x >= chartArea.left && x <= chartArea.right) {
+                                    ctx.fillText(percentage + '%', x, y);
+                                }
+                            });
+                        });
+                    } else if (type === 'pie' && totalValue > 0) {
+                        const meta = chart.getDatasetMeta(0);
+                        if (!meta || !meta.data) return;
+
+                        ctx.fillStyle = labelColor;
+                        ctx.font = `bold ${labelFontSize}px Arial`;
+
+                        meta.data.forEach((arc, index) => {
+                            const value = data.datasets[0].data[index];
+                            if (value > 0) {
+                                const percentage = ((value / totalValue) * 100).toFixed(1);
+                                const { x, y } = arc.tooltipPosition();
+                                ctx.fillText(percentage + '%', x, y);
+                            }
+                        });
+                    }
+
+                    ctx.restore();
+                } catch (e) {
+                    console.error('Error in percentageLabelsPlugin:', e);
+                    ctx.restore();
+                }
+            }
+        };
+    }
+
+    function initCharts() {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js chưa được load!');
+            toastr.error('Chart.js chưa được load!');
+            return;
+        }
+
+        loadChartTongSoSangKien();
+        loadChartXepLoai();
+        loadChartQuyTienThuong();
+        loadChartTongTienThuongThanhVien();
+    }
+
+    function loadChartTongSoSangKien() {
+        $.get("/ThongKeBaoCao/GetThongKeTongSoSangKien")
+            .done(function(data) {
+                var ctx = document.getElementById('chartTongSoSangKien');
+                if (!ctx) return;
+
+                if (chartTongSoSangKien && typeof chartTongSoSangKien.destroy === 'function') {
+                    chartTongSoSangKien.destroy();
+                }
+
+                var total = 0;
+                if (data.datasets && data.datasets.length > 0 && data.datasets[0].data) {
+                    total = data.datasets[0].data.reduce(function(a, b) { return a + b; }, 0);
+                }
+
+                chartTongSoSangKien = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: data.datasets || []
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Số lượng: ' + context.parsed.y;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    },
+                    plugins: [createPercentageLabelsPlugin(total, '#fff', 12, 'pluginTongSoSangKien')]
+                });
+            })
+            .fail(function() {
+                toastr.error("Không thể tải dữ liệu thống kê tổng số sáng kiến.");
+            });
+    }
+
+    function loadChartXepLoai() {
+        $.get("/ThongKeBaoCao/GetThongKeXepLoai")
+            .done(function(data) {
+                var ctx = document.getElementById('chartXepLoai');
+                if (!ctx) return;
+
+                if (chartXepLoai && typeof chartXepLoai.destroy === 'function') {
+                    chartXepLoai.destroy();
+                }
+
+                var totalXepLoai = 0;
+                if (data.datasets && data.datasets.length > 0 && data.datasets[0].data) {
+                    totalXepLoai = data.datasets[0].data.reduce(function(a, b) { return a + b; }, 0);
+                }
+
+                chartXepLoai = new Chart(ctx.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: data.datasets || []
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'right'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var label = context.label || '';
+                                        var value = context.parsed || 0;
+                                        var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                        var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return label + ': ' + value + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [createPercentageLabelsPlugin(totalXepLoai, '#fff', 13, 'pluginXepLoai')]
+                });
+            })
+            .fail(function() {
+                toastr.error("Không thể tải dữ liệu thống kê xếp loại.");
+            });
+    }
+
+    function loadChartQuyTienThuong() {
+        $.get("/ThongKeBaoCao/GetThongKeQuyTienThuong")
+            .done(function(data) {
+                var ctx = document.getElementById('chartQuyTienThuong');
+                if (!ctx) return;
+
+                if (chartQuyTienThuong && typeof chartQuyTienThuong.destroy === 'function') {
+                    chartQuyTienThuong.destroy();
+                }
+
+                var totalQuyTienThuong = 0;
+                if (data.datasets && data.datasets.length > 0 && data.datasets[0].data) {
+                    totalQuyTienThuong = data.datasets[0].data.reduce(function(a, b) { return a + b; }, 0);
+                }
+
+                chartQuyTienThuong = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: data.datasets || []
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var value = context.parsed.y || 0;
+                                        return 'Tổng tiền: ' + value.toLocaleString('vi-VN') + ' VNĐ';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('vi-VN') + ' VNĐ';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [createPercentageLabelsPlugin(totalQuyTienThuong, '#fff', 12, 'pluginQuyTienThuong')]
+                });
+            })
+            .fail(function() {
+                toastr.error("Không thể tải dữ liệu thống kê quỹ tiền thưởng.");
+            });
+    }
+
+    function loadChartTongTienThuongThanhVien() {
+        $.get("/ThongKeBaoCao/GetThongKeTongTienThuongThanhVien")
+            .done(function(data) {
+                var ctx = document.getElementById('chartTongTienThuongThanhVien');
+                if (!ctx) return;
+
+                if (chartTongTienThuongThanhVien && typeof chartTongTienThuongThanhVien.destroy === 'function') {
+                    chartTongTienThuongThanhVien.destroy();
+                }
+
+                var totalTienThuongThanhVien = 0;
+                if (data.datasets && data.datasets.length > 0) {
+                    for (var i = 0; i < data.datasets.length; i++) {
+                        if (data.datasets[i].data) {
+                            var datasetTotal = data.datasets[i].data.reduce(function(a, b) { return a + b; }, 0);
+                            totalTienThuongThanhVien += datasetTotal;
+                        }
+                    }
+                }
+
+                chartTongTienThuongThanhVien = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: data.datasets || []
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        var value = context.parsed.y || 0;
+                                        return context.dataset.label + ': ' + value.toLocaleString('vi-VN') + ' VNĐ';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                categoryPercentage: 0.8,
+                                barPercentage: 0.9
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('vi-VN') + ' VNĐ';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [createPercentageLabelsPlugin(totalTienThuongThanhVien, '#6c757d', 10, 'pluginTongTienThuongThanhVien')]
+                });
+            })
+            .fail(function() {
+                toastr.error("Không thể tải dữ liệu thống kê tổng tiền thưởng thành viên.");
+            });
+    }
+
+    $(document).ready(function() {
+        initCharts();
+    });
+</script>
+
+

@@ -1,0 +1,146 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+@{
+    Layout = null;
+}
+
+<div data-backdrop="static" data-keyboard="false" class="modal fade" id="cuocHopImportExcelModal" tabindex="-1" role="dialog" aria-labelledby="cuocHopImportExcelModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="cuocHopImportExcelModalTitle"><b>Import lịch từ Excel</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    @Html.CustomSingleFileInput(id: "FileImportLich", label: "File import", col: 12, moreClass: "col-sm-12 col-xs-12", required: true)
+                    <div class="col-sm-12 text-center m-t-10">
+                        <a href="javascript:void(0);" onclick="taiFileMauLichHop();" class="text-primary font-weight-bold">
+                            <i class="fa fa-cloud-download"></i> Tải file mẫu
+                        </a>
+                    </div>
+                    <div class="col-sm-12">
+                        <p id="customFileImportLichError" class="text-danger m-t-5 mb-0"></p>
+                    </div>
+                    <div id="importLichErrorDetails" class="col-sm-12 m-t-15 d-none">
+                        <div class="alert alert-danger mb-2 p-2 font-weight-bold">
+                            <i class="fa fa-exclamation-triangle"></i> Chi tiết các dòng import không thành công:
+                        </div>
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            <table class="table table-bordered table-sm table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 50px;" class="text-center">STT</th>
+                                        <th style="width: 100px;">Ngày</th>
+                                        <th>Nội dung</th>
+                                        <th>Lỗi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="importLichErrorTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-import-lich-loading" type="button" class="btn btn-default invisible" disabled>
+                    <img src="~/Content/img/loading.gif" height="25" />
+                </button>
+                <button type="button" class="btn btn-success" id="btn-submit-import-lich">
+                    <i class="fa fa-save"></i> Import
+                </button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openImportLichModal() {
+        $("#customFileImportLichError").text("");
+        $("#FileImportLich").val("");
+        if ($("#FileImportLich").next(".custom-file-label").length) {
+            $("#FileImportLich").next(".custom-file-label").html("Chọn file...");
+        }
+        $("#importLichErrorDetails").addClass("d-none");
+        $("#importLichErrorTableBody").empty();
+        $("#cuocHopImportExcelModal .modal-footer button").prop("disabled", false);
+        $("#btn-submit-import-lich").prop("disabled", false);
+        $("#btn-import-lich-loading").addClass("invisible");
+        $("#cuocHopImportExcelModal").modal("show");
+    }
+
+    function taiFileMauLichHop() {
+        window.open("/CuocHopDangKy/TaiFileMau", "_blank");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $("#btn-submit-import-lich").click(function () {
+            var fileInput = $("#FileImportLich")[0];
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                $("#customFileImportLichError").text("Vui lòng chọn file để import.");
+                return;
+            }
+
+            $("#customFileImportLichError").text("");
+            $("#importLichErrorDetails").addClass("d-none");
+            $("#importLichErrorTableBody").empty();
+            $("#btn-submit-import-lich").prop("disabled", true);
+            $("#btn-import-lich-loading").removeClass("invisible");
+
+            var fd = new FormData();
+            fd.append("file", fileInput.files[0]);
+
+            ajaxPostFormData("/CuocHopDangKy/ImportLichTuExcel", fd, function (response) {
+                $("#btn-submit-import-lich").prop("disabled", false);
+                $("#btn-import-lich-loading").addClass("invisible");
+
+                if (response.Errors && response.Errors.length > 0) {
+                    var errorMessages = response.Errors.map(function (error) {
+                        return error.Description;
+                    }).join('\n');
+                    $("#customFileImportLichError").text(errorMessages);
+                    toastr.error(errorMessages);
+                } else if (response.Data) {
+                    var failedItems = response.Data.filter(function (item) {
+                        return item.IsThanhCong === false || (item.Loi && item.Loi.indexOf("Thành công") < 0);
+                    });
+                    var successItems = response.Data.filter(function (item) {
+                        return item.IsThanhCong === true && (!item.Loi || item.Loi.indexOf("Thành công") >= 0);
+                    });
+
+                    if (response.Success === false || failedItems.length > 0) {
+                        var thongBaoLoi = response.Message || `Import thất bại. Đã huỷ bỏ toàn bộ vì có ${failedItems.length} dòng bị lỗi.`;
+                        toastr.error(thongBaoLoi);
+                        var rowsHtml = "";
+                        failedItems.forEach(function (item, idx) {
+                            rowsHtml += `<tr>
+                                <td class="text-center">${idx + 1}</td>
+                                <td>${item.NgayStr || ''}</td>
+                                <td>${item.NoiDung || ''}</td>
+                                <td class="text-danger">${item.Loi || 'Lỗi không xác định'}</td>
+                            </tr>`;
+                        });
+                        $("#importLichErrorTableBody").html(rowsHtml);
+                        $("#importLichErrorDetails").removeClass("d-none");
+                    } else {
+                        var thongBaoThanhCong = response.Message || `Import thành công ${successItems.length} lịch họp.`;
+                        toastr.success(thongBaoThanhCong);
+                        $("#cuocHopImportExcelModal").modal("hide");
+                        $("#FileImportLich").val("");
+                        if (typeof search === 'function') {
+                            search();
+                        }
+                    }
+                }
+            }, function () {
+                $("#btn-submit-import-lich").prop("disabled", false);
+                $("#btn-import-lich-loading").addClass("invisible");
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+        });
+    });
+</script>

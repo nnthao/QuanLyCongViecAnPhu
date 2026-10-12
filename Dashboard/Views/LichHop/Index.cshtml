@@ -1,0 +1,146 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@using System.Linq;
+@{
+    ViewBag.Title = "Lịch họp";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var hasChonOption = Model.CoQuanLookups.Data.Any(x => x.id == 0);
+}
+
+@model ParamControllerToView
+<style>
+    .box-modify {
+        float: left;
+        height: 20px;
+        width: 20px;
+        margin-bottom: 15px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 1px solid black;
+        clear: both;
+    }
+
+    .red {
+        background-color: red;
+    }
+
+    .yellow {
+        background-color: yellow;
+    }
+
+    #DateDemo .bootstrap-datetimepicker-widget .datepicker-days table tbody tr:hover {
+        background-color: #007bff;
+    }
+
+    #calendarToggle button {
+        color: #000;
+    }
+
+        #calendarToggle button:hover {
+            color: #fff;
+        }
+
+        #calendarToggle button.active {
+            color: #fff;
+        }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="card card-primary" style="width:100%">
+                <div class="card-header">
+                    <div class="card-title">
+                        <b>Lịch họp</b>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="btn-group" id="calendarToggle">
+                                <button type="button" class="btn btn-outline-primary active" data-target="#lichTuan">Lịch tuần</button>
+                                <button type="button" class="btn btn-outline-primary" data-target="#lichThang">Lịch tháng</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="form-group d-flex align-items-center justify-content-sm-end">
+                                <label class="mr-2 mb-0" style="width: 100px; font-weight: bold !important;">
+                                    Phòng ban:
+                                </label>
+                                <select id="CoQuanCurrentId">
+                                    @foreach (var item in Model.CoQuanLookups.Data)
+                                    {
+                                        var isSelected = hasChonOption ? item.id == 0 : item.id == Model.CoQuanCurrentId;
+                                        <option value="@item.id" @(isSelected ? "selected" : "")>@item.text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="lichTuan" class="lich-view mt-3">
+                        @Html.Partial("~/Views/LichHop/LichTheoTuan.cshtml")
+                    </div>
+
+                    <div id="lichThang" class="lich-view mt-3 d-none">
+                        @Html.Partial("~/Views/LichHop/LichTheoThang.cshtml")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function xuatFile(loaiLich, loaiFile) {
+        showLoadingModal();
+        const exportParams = {
+            LoaiLich: loaiLich,
+            LoaiFile: loaiFile,
+            TuanHienTai: $("#tuanNow").val(),
+            TuanTimKiem: $("#weeklyDatePicker").val(),
+            IsLichCaNhan: $("#IsLichCaNhan").prop("checked"),
+            ThangHienTai: $("#thangPicker-Input").val(),
+            CoQuanCurrentId: $("#CoQuanCurrentId").val()
+        };
+        const searchParams = new URLSearchParams(exportParams).toString();
+        ajaxGet(`/LichHop/XuatFile?${searchParams}`, function (res) {
+            hideLoadingModal();
+            if (res.Url) {
+                downloadFromLink(res.Url, res.Name);
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $('#calendarToggle button').click(function () {
+            $('#calendarToggle button').removeClass('active');
+            $(this).addClass('active');
+            $('.lich-view').addClass('d-none');
+            const target = $(this).data('target');
+            $(target).removeClass('d-none');
+
+            if (target === '#lichThang' && typeof handleDraw === 'function') {
+                handleDraw();
+            } else if (target === '#lichTuan' && typeof getDanhSanhTuan === 'function') {
+                getDanhSanhTuan();
+            }
+        });
+
+        $("#CoQuanCurrentId").select2();
+
+        $("#IsLichCaNhan, #CoQuanCurrentId").change(function () {
+            if (typeof getDanhSanhTuan === 'function') {
+                getDanhSanhTuan();
+            }
+            if (typeof handleDraw === 'function') {
+                handleDraw();
+            }
+        });
+    });
+</script>

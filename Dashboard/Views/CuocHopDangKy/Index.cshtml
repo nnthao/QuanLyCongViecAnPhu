@@ -1,0 +1,51 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@using Dashboard.Models.Entities;
+@using Dashboard.Common;
+
+@{
+    ViewBag.Title = "Quản lý lịch đăng ký";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-6 col-xs-12">
+                                <button type="button" class="btn btn-success" onclick="openCuocHopFormModal(0);">
+                                    <i class="fa fa-plus"></i> Thêm mới
+                                </button>
+                                <button type="button" class="btn btn-success ml-2" onclick="openImportLichModal();">
+                                    <i class="fa fa-file-excel-o"></i> Import lịch từ Excel
+                                </button>
+                            </div>
+                            <div class="col-sm-6 col-xs-12">
+                                <div class="input-group">
+                                    <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                    <div class="input-group-append">
+                                        <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @Html.Partial("~/Views/CuocHopDangKy/Grid.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/CuocHopDangKy/FormModal.cshtml")
+@Html.Partial("~/Views/CuocHopDangKy/ImportExcelModal.cshtml")

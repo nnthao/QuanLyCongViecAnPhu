@@ -1,0 +1,100 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@using Dashboard.Models.ViewModel;
+@{
+    ViewBag.Title = "CacheManager";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userCaches = CacheManagerHelper.GetUserCache();
+    var users = Newtonsoft.Json.JsonConvert.SerializeObject(userCaches);
+
+    var vaiTroCaches = CacheManagerHelper.GetVaiTroCache();
+    var vaiTros = Newtonsoft.Json.JsonConvert.SerializeObject(vaiTroCaches);
+
+    var phongBanCache = CacheManagerHelper.GetPhongBanCache();
+    var phongBans = Newtonsoft.Json.JsonConvert.SerializeObject(phongBanCache);
+
+    var chucDanhCache = CacheManagerHelper.GetChucDanhCache();
+    var chucDanhs = Newtonsoft.Json.JsonConvert.SerializeObject(chucDanhCache);
+
+    var menuCache = CacheManagerHelper.GetDanhSachMenuCache();
+    var menus = Newtonsoft.Json.JsonConvert.SerializeObject(menuCache);
+
+    var hinhThucVbCache = CacheManagerHelper.GetHinhThucVanBanCache();
+    var hinhThucVbs = Newtonsoft.Json.JsonConvert.SerializeObject(hinhThucVbCache);
+}
+<style>
+    #cacheTb td:last-child {
+        white-space: normal; 
+        word-break: break-word; 
+        overflow-wrap: break-word;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="card card-primary" style="width:100%">
+                <div class="card-header">
+                    <div class="card-title">
+                        <b>@ViewBag.Title</b>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 mb-2">
+                            <button class="btn btn-success" onclick="taoLaiCache();">
+                                Tạo lại cache
+                            </button>
+                        </div>
+                        <div class="col-sm-12">
+                            <table class="table table-bordered" id="cacheTb">
+                                <tr>
+                                    <td>UserCacheKey</td>
+                                    <td>@users</td>
+                                </tr>
+                                <tr>
+                                    <td>VaiTroCacheKey</td>
+                                    <td>@vaiTros</td>
+                                </tr>
+                                <tr>
+                                    <td>PhongBanCacheKey</td>
+                                    <td>@phongBans</td>
+                                </tr>
+                                <tr>
+                                    <td>ChucDanhCacheKey</td>
+                                    <td>@chucDanhs</td>
+                                </tr>
+                                <tr>
+                                    <td>DanhSachMenu</td>
+                                    <td>@menus</td>
+                                </tr>
+                                <tr>
+                                    <td>HinhThucVanBanCache</td>
+                                    <td>@hinhThucVbs</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function taoLaiCache() {
+        showLoadingModal();
+        ajaxGet("/CacheManager/TaoLaiCache", function calFunction(res) {
+            hideLoadingModal();
+            toastr.success("xử lý thành công.");
+        }, function errFunct(err) {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+
+    }
+</script>
+
+
+
+

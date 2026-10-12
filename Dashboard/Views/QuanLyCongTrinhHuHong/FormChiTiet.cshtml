@@ -1,0 +1,133 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " chi tiết công trình hư hỏng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<style>
+    .tbVaiTroGrid th, .tbVaiTroGrid td {
+        padding: 5px 10px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title </b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            <input id="CongTrinhHuHongId" value="@ViewBag.CongTrinhHuHongId" type="hidden" />
+                            @Html.CustomTextBox(id: "TenCongTrinh", label: "Tên công trình", col: 6, required: true, length: 500)
+                            @Html.CustomTextBox(id: "Diadiem", label: "Địa điểm", col: 6, required: true, length: 500)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomDropDownList(id: "LoaiCongTrinh", label: "Loại công trình", col: 6, required: true,
+                                options: new List<SelectListItem> {
+                                    new SelectListItem { Text = "--- Chọn ---", Value = "0" },
+                                    new SelectListItem { Text = "Cầu", Value = "1" },
+                                    new SelectListItem { Text = "Đường", Value = "2" },
+                                    new SelectListItem { Text = "Cống", Value = "3" },
+                                    new SelectListItem { Text = "Đê", Value = "4" },
+                                    new SelectListItem { Text = "Khác", Value = "5" }
+                                })
+                            @Html.CustomTextBox(id: "NamXayDung", label: "Năm xây dựng", col: 6, length: 50)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextBox(id: "ChuDauTu", label: "Chủ đầu tư", col: 6, length: 500)
+                            @Html.CustomTextBox(id: "QuyMo", label: "Quy mô", col: 6, length: 500)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextBox(id: "DienTich", label: "Diện tích", col: 6, length: 500)
+                            @Html.CustomTextBox(id: "ThongSoKiThuat", label: "Thông số kỹ thuật", col: 6, length: 500)
+                        </div>
+
+                        <div class="row">
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, row: 3)
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/QuanLyCongTrinhHuHong/ChiTiet?congTrinhHuHongId=@ViewBag.CongTrinhHuHongId"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<script>
+    function loadData() {
+        showLoadingModal();
+        $.get("/QuanLyCongTrinhHuHong/GetChiTietById?id=" + @Model, function (res) {
+            if (res.Item) {
+                $("#TenCongTrinh").val(res.Item.TenCongTrinh);
+                $("#Diadiem").val(res.Item.Diadiem);
+                $("#LoaiCongTrinh").val(res.Item.LoaiCongTrinh);
+                $("#NamXayDung").val(res.Item.NamXayDung);
+                $("#ChuDauTu").val(res.Item.ChuDauTu);
+                $("#QuyMo").val(res.Item.QuyMo);
+                $("#DienTich").val(res.Item.DienTich);
+                $("#ThongSoKiThuat").val(res.Item.ThongSoKiThuat);
+                $("#GhiChu").val(res.Item.GhiChu);
+            }
+            hideLoadingModal();
+        })
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+        $.post("/QuanLyCongTrinhHuHong/ThemOrCapNhatChiTiet", {
+            Id: $("#Id").val(),
+            CongTrinhHuHongId: $("#CongTrinhHuHongId").val(),
+            TenCongTrinh: $("#TenCongTrinh").val(),
+            Diadiem: $("#Diadiem").val(),
+            LoaiCongTrinh: $("#LoaiCongTrinh").val(),
+            NamXayDung: $("#NamXayDung").val(),
+            ChuDauTu: $("#ChuDauTu").val(),
+            QuyMo: $("#QuyMo").val(),
+            DienTich: $("#DienTich").val(),
+            ThongSoKiThuat: $("#ThongSoKiThuat").val(),
+            GhiChu: $("#GhiChu").val(),
+        }, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+
+                    return "";
+                });
+            }
+            else {
+                window.location.href="/QuanLyCongTrinhHuHong/ChiTiet?congTrinhHuHongId=" + $("#CongTrinhHuHongId").val();
+            }
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

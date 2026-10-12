@@ -1,0 +1,31 @@
+-- Create SangKienCNTT table with same structure as SangKienCNTT
+CREATE TABLE SangKienCNTT (
+    Id INT IDENTITY(1,1) NOT NULL,
+    NguoiNopId INT NULL,
+    TenSangKien NVARCHAR(500) NULL,
+    MoTaChiTiet NVARCHAR(MAX) NULL,
+    GhiChu NVARCHAR(MAX) NULL,
+    TrangThai NVARCHAR(100) NULL,
+    NguoiXoaId INT NULL,
+    NgayTao DATETIME NULL,
+    NgayXoa DATETIME NULL,
+    IsDeleted BIT NULL DEFAULT 0,
+    PRIMARY KEY (Id)
+);
+CREATE TABLE SangKienCNTTFile (
+    Id INT IDENTITY(1,1) NOT NULL,
+    SangKienCNTTId INT NOT NULL,
+    TenFile NVARCHAR(500) NULL,
+    DuongDan NVARCHAR(1000) NULL,
+    NgayTao DATETIME NULL,
+    NguoiXoaId INT NULL,
+    NgayXoa DATETIME NULL,
+    IsDeleted BIT NULL DEFAULT 0,
+    PRIMARY KEY (Id)
+);
+ALTER TABLE dbo.SangKienCNTT ADD TiLeDongGop DECIMAL(5,2) NULL;
+ALTER TABLE dbo.SangKienCNTT ADD TongTienThuong INT NULL;
+ALTER TABLE dbo.SangKienCNTT ADD GiaiThuongXepLoai NVARCHAR(100) NULL;
+ALTER TABLE dbo.SangKienCNTT ADD NamSangKien NVARCHAR(10) NULL;
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20251201140000');

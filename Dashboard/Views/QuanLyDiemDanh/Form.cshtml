@@ -1,0 +1,169 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    var isUpdate = ViewBag.Id != null && ViewBag.Id != 0;
+    var action = isUpdate ? "Cập nhật" : "Thêm mới";
+    ViewBag.Title = action + " đăng ký nghỉ phép";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ngayHienTai = DateTime.Now.ToString("dd/MM/yyyy");
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="Id" value="@Model" />
+                        <div class="row">
+                            @Html.CustomSelect2Empty(id: "UserId", label: "Nhân viên", col: 4, moreClass: "col-sm-4 col-xs-12", required: true)
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Từ ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: Model == 0 ? ngayHienTai : "")
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: Model == 0 ? ngayHienTai : "")
+                        </div>
+                        @if (isUpdate)
+                        {
+                            <div class="row">
+                                <div class="col-sm-12 col-xs-12">
+                                    <div class="alert alert-info mb-3">
+                                        Khi cập nhật chỉ sửa 1 bản ghi, vì vậy từ ngày và đến ngày phải giống nhau.
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <div class="row">
+                            <div class="col-sm-12 col-xs-12">
+                                <div class="form-group">
+                                    <label>Loại nghỉ <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="LoaiNghi" id="RadioSang" value="1">
+                                            <label class="form-check-label" for="RadioSang">Sáng (0.5 ngày)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="LoaiNghi" id="RadioChieu" value="2">
+                                            <label class="form-check-label" for="RadioChieu">Chiều (0.5 ngày)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="LoaiNghi" id="RadioCaNgay" value="3" checked>
+                                            <label class="form-check-label" for="RadioCaNgay">Cả ngày (1.0 ngày)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="LoaiNghi" id="RadioDiTre" value="4">
+                                            <label class="form-check-label" for="RadioDiTre">Đi trễ (0 ngày)</label>
+                                        </div>
+                                    </div>
+                                    <span class="text-danger" id="LoaiNghiError" style="display:none"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 col-xs-12">
+                                <div class="form-group">
+                                    <label>Lý do</label>
+                                    <textarea class="form-control" id="LyDo" rows="4" placeholder="Nhập lý do nghỉ phép..."></textarea>
+                                    <span class="text-danger" id="LyDoError" style="display:none"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/QuanLyDiemDanh">
+                                        <i class="fa fa-chevron-left"></i> Quay lại
+                                    </a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success">
+                                        <i class="fa fa-save"></i> @action
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const textFields = ["Id", "TuNgayStr", "DenNgayStr", "LyDo"];
+    const selectFields = ["UserId"];
+    const radioFields = ["LoaiNghi"];
+    const checkBoxFields = [];
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/QuanLyDiemDanh/GetDataForForm?id=" + @Model, function funcCallback(res) {
+            $("#UserId").select2({
+                data: res.Users.Data,
+                language: "vi"
+            });
+
+            if (res.Item) {
+                setTimeout(function () {
+                    FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+                    if (res.Item.TuNgayStr) {
+                        $("#TuNgayStr").val(res.Item.TuNgayStr);
+                    }
+                    if (res.Item.DenNgayStr) {
+                        $("#DenNgayStr").val(res.Item.DenNgayStr);
+                    }
+                    hideLoadingModal();
+                }, 300);
+            } else {
+                hideLoadingModal();
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+        fd.append("NgayNghiStr", $("#TuNgayStr").val());
+        return fd;
+    }
+
+    function addOrUpdate() {
+        showLoadingModal();
+
+        FormHelper.clearError(textFields, selectFields, radioFields, checkBoxFields);
+
+        ajaxPostFormData("/QuanLyDiemDanh/ThemOrCapNhat", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+            if (data.status) {
+                toastr.success(data.message || "Lưu thành công!");
+                setTimeout(function() {
+                    window.location.href = "/QuanLyDiemDanh";
+                }, 1000);
+            } else {
+                if (data.Errors && data.Errors.length > 0) {
+                    data.Errors.map((item) => {
+                        var errorField = item.Id || item.Name;
+                        var idError = "#" + errorField + "Error";
+                        $(idError).show();
+                        $(idError).text(item.Description);
+                        return "";
+                    });
+                } else {
+                    toastr.error(data.message || "Đã có lỗi xảy ra.");
+                }
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

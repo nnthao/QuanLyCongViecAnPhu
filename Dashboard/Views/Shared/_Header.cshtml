@@ -1,0 +1,188 @@
+﻿
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+@using System.Web.Hosting;
+@using System.Security.Claims;
+@{
+    Layout = null;
+}
+<style>
+    .navbar-badge {
+        font-size: .8rem;
+        font-weight: 300;
+        padding: 2px 4px;
+        position: absolute;
+        right: 10px;
+        top: 5px;
+    }
+
+    #divBell .icon-col {
+        flex: 0 0 auto;
+    }
+
+    #divBell .text-col {
+        flex: 1;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    #divBell .tieude {
+        text-transform: uppercase;
+    }
+
+    #divBell .message-text {
+        font-size: 95%;
+    }
+
+    #divBell  {
+        max-height:300px;
+        overflow-y:auto;
+    }
+
+    #menuHeader .dropdown-menu-right {
+        left: 0;
+    }
+</style>
+<nav class="main-header navbar navbar-expand navbar-white navbar-light" id="menuHeader">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fa fa-bars"></i></a>
+        </li>
+       
+    </ul>
+    <ul class="navbar-nav ml-auto" id="user-info">
+        <li class="nav-item d-flex align-items-center mr-2">
+            <a class="btn btn-success btn-sm" href="https://chromewebstore.google.com/detail/giao-vi%E1%BB%87c-s%E1%BB%9F-vhttdl-qu%E1%BA%A3ng/dghelemgmhmkacjhphhmbagobfpecplp" target="_blank" rel="noopener noreferrer" style="color:#fff !important">
+                <i class="fa fa-puzzle-piece mr-1"></i> Cài đặt tiện ích giao việc từ iOffice
+            </a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="fa fa-bell-o" style="font-size: 1.8rem;"></i>
+                <span class="badge badge-danger navbar-badge" id="spanBell" style="display:none"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="right: -195% !important; left: auto !important;">
+                <div id="divBell">
+                    
+                </div>
+                <div style=" display: grid; grid-template-columns: 50% 50%; ">
+                    <div> <button onclick="daXemTatCaThongBao();" class="dropdown-item dropdown-footer" style="color: #4f5d73 !important ">Đã xem tất cả</button></div>
+                    <div style=" border-left: 1px solid #e9ecef;"> <a href="/thongbao" class="dropdown-item dropdown-footer">Xem tất cả</a></div>
+                </div>
+               
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false"
+               style="padding-top: 6px !important; line-height: 17px; cursor: default; text-align: right; ">
+                <span style="font-size:1rem;font-weight:bold;display:block">
+                    <span id="hoTenTxt"></span>
+                </span>
+                <span style="font-size:0.7rem">
+                    <span id="chucDanhTxt"></span> - <span id="phongBanTxt"></span>
+                </span>
+            </a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false" style="padding: 0 !important">
+                <img src="/Content/img/avatar-example.png" class="img-circle elevation-2"
+                     alt="User" height="40" width="40" style="background-color: #ccc;">
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right m-t-5" style="left: inherit; right: 0px;">
+                <span class="dropdown-item dropdown-header" style="font-weight: bold; background-color: #ebedef;">
+                    Tài khoản
+                </span>
+                <div class="dropdown-divider"></div>
+                <a href="/ThongTinTaiKhoan" class="dropdown-item">
+                    <i class="fa fa-user mr-2"></i> Thông tin tài khoản
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/ThongTinTaiKhoan/DoiMatKhau" class="dropdown-item">
+                    <i class="fa fa-key mr-2"></i> Đổi mật khẩu
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/DangNhap/LogOut" class="dropdown-item dropdown-footer text-left">
+                    <i class="fa fa-sign-out"></i> Thoát
+                </a>
+            </div>
+        </li>
+
+    </ul>
+</nav>
+
+<script>
+    function daXemTatCaThongBao() {
+        if (confirm("Xác nhận đã xem tất cả thông báo")) {
+            ajaxGet("/ThongBao/DanhDauDaXemTatCa", function calFunction(res) {
+                toastr.success("Thục hiện thành công");
+                getThongBao();
+            }, function errFunct(err) {
+                toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+            });
+
+        }
+    }
+
+    function getThongBao() {
+        ajaxGet("/ThongBao/GetListThongBaoBellIcon", function calFunction(res) {
+            if (res.ChuaXem && res.ChuaXem != 0) {
+                $("#spanBell").show();
+                $("#spanBell").text(res.ChuaXem);
+            }
+            else {
+                $("#spanBell").hide();
+            }
+
+            $("#divBell").empty();
+            if (res.Data && res.Data.rows) {
+                if (res.Data.rows.length != 0) {
+                    for (let i = 0; i < res.Data.rows.length; i++) {
+                        let item = res.Data.rows[i];
+                        $("#divBell").append(`<a href="javascript:void(0)" onclick="thongBaoClickFunc('${item.Id}','${item.Link}' )" class="dropdown-item d-flex align-items-start ${!item.IsDaXem ? "font-weight-bold" : ""}">
+                          <div class="icon-col">
+                            <i class="fa fa-envelope mr-2"></i>
+                          </div>
+                          <div class="text-col">
+                            <div class='tieude'> ${item.TieuDe}</div>
+                            <span class="message-text">
+                               ${item.NoiDung}
+                            </span>
+                            <span class="float-right text-muted text-sm d-block">${item.KhoangThoiGian}</span>
+                          </div>
+                        </a><div class="dropdown-divider"></div>`)
+                    }
+                }
+                else {
+                    $("#divBell").append(`<p class="p-3 text-center">Không có thông báo để hiển thị</p>
+                                <div class="dropdown-divider"></div>`)
+                }
+            }
+        }, function errFunct(err){
+
+        })
+    }
+
+    function thongBaoClickFunc(id, link) {
+        var fd = new FormData();
+        fd.append("Id", id);
+        ajaxPostFormData("/ThongBao/DanhDauDaXem", fd, function funcCallback(data) {
+            getThongBao();
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        })
+
+        if (link != "#") {
+            window.location.href = link;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        $.get("/ThongTinTaiKhoan/GetHeaderInfo", function (res) {
+            $("#hoTenTxt").text(res.Name ? res.Name : "...");
+            $("#phongBanTxt").text(res.PhongBan ? res.PhongBan : "...");
+            $("#chucDanhTxt").text(res.ChucDanh ? res.ChucDanh : "...");
+        })
+
+        getThongBao();
+    });
+</script>

@@ -1,0 +1,205 @@
+[
+  {
+    "type": "header",
+    "title": "Tổng quan",
+    "permissions": [
+      "Dashboard"
+    ]
+  },
+  {
+    "Ten": "Tổng quan điều hành",
+    "Key": "Dashboard",
+    "Icon": "fa fa-tachometer",
+    "Url": "/Dashboard"
+  },
+  {
+    "type": "header",
+    "title": "Lịch đơn vị",
+    "permissions": [
+      "CuocHopDangKy",
+      "LichHop",
+      "LichHopThongKe"
+    ]
+  },
+  {
+    "Ten": " Quản lý lịch",
+    "Key": "CuocHopDangKy",
+    "Icon": "fa fa-book",
+    "Url": "/CuocHopDangKy"
+  },
+  {
+    "Ten": " Lịch đơn vị",
+    "Key": "LichHop",
+    "Icon": "fa fa-calendar",
+    "Url": "/LichHop"
+  },
+  {
+    "type": "header",
+    "title": "Quản lý công việc",
+    "permissions": [
+      "GiaoViec",
+      "GiaoViecCanXuLy",
+      "GiaoViecDaChuyenGiao",
+      "NhomNhanViec",
+      "GiaoViecThongKe",
+      "GiaoViecThongKe2",
+      "ThongKeCongViecTheoCaNhanSoLuong"
+    ]
+  },
+  {
+    "Ten": "Quản lý công việc",
+    "Key": "QuanLyGiaoViecKey",
+    "Icon": "fa fa-bars",
+    "SpanCount": "QuanLyGiaoViecKey",
+    "Datas": [
+      {
+        "Key": "GiaoViec",
+        "Ten": "Công việc đã giao",
+        "Url": "/GiaoViec",
+        "SpanCount": "GiaoViecCount"
+      },
+      {
+        "Key": "GiaoViecCanXuLy",
+        "Ten": "Công việc cần xử lý",
+        "Url": "/GiaoViecCanXuLy",
+        "SpanCount": "GiaoViecCanXuLyCount"
+      },
+      {
+        "Key": "GiaoViecDaChuyenGiao",
+        "Ten": "Công việc đã chuyển giao",
+        "Url": "/GiaoViecDaChuyenGiao",
+        "SpanCount": "GiaoViecDaChuyenGiaoCount"
+      },
+      {
+        "Key": "NhomNhanViec",
+        "Ten": "Nhóm nhận việc",
+        "Url": "/NhomNhanViec"
+      }
+    ]
+  },
+  {
+    "Ten": "TK công việc",
+    "Key": "ThongKeGiaoViecKey",
+    "Icon": "fa fa-bars",
+    "Datas": [
+      {
+        "Key": "GiaoViecThongKe",
+        "Ten": "TK mức độ hoàn thành",
+        "Url": "/GiaoViecThongKe/ThongKeCongViecTheoPhongBanBieuDo"
+      },
+      {
+        "Key": "GiaoViecThongKe2",
+        "Ten": "TK chi tiết theo cá nhân",
+        "Url": "/GiaoViecThongKe/ThongKeCongViecTheoCaNhan"
+      },
+      {
+        "Key": "ThongKeCongViecTheoCaNhanSoLuong",
+        "Ten": "TK cá nhân theo số lượng",
+        "Url": "/ThongKeCongViecTheoCaNhanSoLuong"
+      }
+    ]
+  },
+  {
+    "Ten": "File lưu trữ",
+    "Key": "LuuTruFileKey",
+    "Icon": "fa fa-folder-o",
+    "Datas": [
+      {
+        "Key": "LuuTruFile",
+        "Ten": "Drive của tôi",
+        "Url": "/LuuTruFile/Drive"
+      },
+      {
+        "Key": "LuuTruFileDuocChiaSe",
+        "Ten": "Drive được chia sẻ",
+        "Url": "/LuuTruFileDuocChiaSe"
+      },
+      {
+        "Key": "LuuTruFileThungRac",
+        "Ten": "Thùng rác Drive",
+        "Url": "/LuuTruFileThungRac"
+      }
+    ]
+  },
+  {
+    "type": "header",
+    "title": "Quản trị",
+    "permissions": [
+      "PhongBan",
+      "ChucDanh",
+      "LyDo",
+      "VaiTroXuLy",
+      "User",
+      "VaiTro",
+      "CacheManager",
+      "ViewFileLog",
+      "Zalo"
+    ]
+  },
+  {
+    "Ten": "Danh mục",
+    "Key": "QuanLyDanhMucKey",
+    "Icon": "fa fa-bars",
+    "Datas": [
+      {
+        "Key": "PhongBan",
+        "Ten": "Phòng ban",
+        "Url": "/PhongBan"
+      },
+      {
+        "Key": "ChucDanh",
+        "Ten": "Chức danh",
+        "Url": "/ChucDanh"
+      },
+      {
+        "Key": "LyDo",
+        "Ten": "Lý do",
+        "Url": "/LyDo"
+      },
+      {
+        "Key": "VaiTroXuLy",
+        "Ten": "Vai trò xử lý",
+        "Url": "/VaiTroXuLy"
+      }
+    ]
+  },
+  {
+    "Ten": "Quản trị",
+    "Key": "QuanTri",
+    "Icon": "fa fa-cog",
+    "Datas": [
+      {
+        "Key": "User",
+        "Ten": "Người dùng",
+        "Url": "/User"
+      },
+      {
+        "Key": "VaiTro",
+        "Ten": "Vai trò",
+        "Url": "/VaiTro"
+      }
+    ]
+  },
+  {
+    "Ten": "Admin",
+    "Key": "Admin",
+    "Icon": "fa fa-cog",
+    "Datas": [
+      {
+        "Key": "CacheManager",
+        "Ten": "Cache Manager",
+        "Url": "/CacheManager"
+      },
+      {
+        "Key": "ViewFileLog",
+        "Ten": "Log hệ thống",
+        "Url": "/ViewFileLog"
+      },
+      {
+        "Key": "Zalo",
+        "Ten": "Test Zalo",
+        "Url": "/Zalo"
+      }
+    ]
+  }
+]

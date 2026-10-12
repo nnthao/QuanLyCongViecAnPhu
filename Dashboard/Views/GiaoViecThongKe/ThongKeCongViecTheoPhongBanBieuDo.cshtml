@@ -1,0 +1,441 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@{
+    ViewBag.Title = "Thống kê mức độ hoàn thành theo phòng ban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var dauThang = Dashboard.Common.DateTimeHelper.NgayDauThang(DateTime.Now).ToString("dd/MM/yyyy");
+    var cuoiThang = Dashboard.Common.DateTimeHelper.NgayCuoiThang(DateTime.Now).ToString("dd/MM/yyyy");
+}
+<style>
+    #thongKeTable th {
+        text-align: center;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao Từ ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: dauThang)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 4, required: true, moreClass: "col-sm-4 col-xs-12", value: cuoiThang)
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                                <div class="form-group">
+                                    <label>
+                                        &nbsp;
+                                    </label>
+                                    <div class="input-group">
+                                        <button onclick="thongKe();" class="btn btn-primary"><i class="fa fa-check"></i> Thống kê</button>
+                                        <button onclick="xuatExcelPhuLuc345();" class="btn btn-warning ml-2"><i class="fa fa-file-excel-o"></i> Xuất báo cáo</button>
+                                        <!-- <button onclick="xuatExcelPhuLuc03();" class="btn btn-success ml-2"><i class="fa fa-file-excel-o"></i> Xuất Phụ lục 03</button>
+                                        <button onclick="xuatExcelPhuLuc05();" class="btn btn-info ml-2"><i class="fa fa-file-excel-o"></i> Xuất Phụ lục 05</button> -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6 col-md-12">
+                                <div class="card card-outline card-primary h-100">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Tỷ lệ công việc theo trạng thái</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container" style="position: relative; height: 360px;">
+                                            <canvas id="thongKeTrangThaiPieChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12">
+                                <div class="card card-outline card-success h-100">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Thống kê công việc theo phòng ban</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container" style="position: relative; height: 360px;">
+                                            <canvas id="thongKeCongViecChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Danh sách chi tiết theo phòng ban</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped" id="thongKeTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Phòng ban</th>
+                                                        <th>Hoàn thành sớm hạn</th>
+                                                        <th>Hoàn thành đúng hạn</th>
+                                                        <th>Hoàn thành trễ hạn</th>
+                                                        <th>Chưa hoàn thành còn hạn</th>
+                                                        <th>Chưa hoàn thành trễ hạn</th>
+                                                        <th>Tổng công việc</th>
+                                                        <th>Tỷ lệ hoàn thành (%)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="thongKeTableBody">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@Html.Partial("~/Views/GiaoViecThongKe/ThongKeCongViecTheoPhongBanBieuDoChiTietModal.cshtml")
+
+<script>
+    // Plugin vẽ số lượng lên cột/lát cắt biểu đồ
+    const valueLabelsPlugin = {
+        id: 'valueLabelsPlugin',
+        afterDatasetsDraw(chart, args, pluginOptions) {
+            const { ctx, data, chartArea } = chart;
+            if (!data || !data.datasets || !chartArea) return;
+
+            ctx.save();
+            ctx.font = (pluginOptions && pluginOptions.font) ? pluginOptions.font : '12px sans-serif';
+            ctx.fillStyle = (pluginOptions && pluginOptions.color) ? pluginOptions.color : '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const type = chart.config.type;
+
+            if (type === 'bar') {
+                data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    if (!meta || meta.hidden) return;
+                    meta.data.forEach((element, index) => {
+                        const raw = dataset.data[index];
+                        const value = typeof raw === 'number' ? raw : (raw && raw.y != null ? raw.y : null);
+                        if (value == null || value === 0) return;
+                        
+                        // Tính toán vị trí trong cột
+                        const x = element.x;
+                        const y = element.y;
+                        const height = element.height;
+                        const width = element.width;
+                        
+                        // Vị trí giữa cột theo chiều dọc và ngang
+                        const centerX = x;
+                        const centerY = y - (height / 2);
+                        
+                        // Thêm shadow cho chữ để dễ đọc
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                        ctx.shadowBlur = 2;
+                        ctx.shadowOffsetX = 1;
+                        ctx.shadowOffsetY = 1;
+                        
+                        // Màu chữ trắng để nổi bật trên nền màu
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 12px Arial';
+                        
+                        // Hiển thị số lượng trong cột
+                        ctx.fillText(value, centerX, centerY);
+                        
+                        // Reset shadow
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur = 0;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+                    });
+                });
+            }
+
+            if (type === 'pie' || type === 'doughnut') {
+                const dataset = data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+                if (meta && !meta.hidden) {
+                    const total = (dataset.data || []).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+                    meta.data.forEach((element, index) => {
+                        const raw = dataset.data[index];
+                        const value = typeof raw === 'number' ? raw : null;
+                        if (value == null || value === 0) return;
+                        const pos = element.tooltipPosition();
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '';
+                        // Vẽ 2 dòng: số lượng và %
+                        ctx.fillText(value, pos.x, pos.y - 7);
+                        ctx.fillText(percentage, pos.x, pos.y + 7);
+                    });
+                }
+            }
+
+            ctx.restore();
+        }
+    };
+
+    function thongKe() {
+        loadThongKeData();
+    }
+
+    function loadThongKeData() {
+        $("#TuNgayStrError").empty();
+        $("#DenNgayStrError").empty();
+
+        showLoadingModal();
+
+        var fd = new FormData();
+        fd.append("TuNgayStr", $("#TuNgayStr").val());
+        fd.append("DenNgayStr", $("#DenNgayStr").val());
+
+        ajaxPostFormData("/GiaoViecThongKe/GetThongKeCongViecTheoPhongBan", fd, function funcCallback(response) {
+            hideLoadingModal();
+            if (response.Errors && response.Errors.length > 0) {
+                response.Errors.map((item) => {
+                    var idError = "#" + item.Name;
+                    $(idError).show();
+                    $(idError).text(item.Description);
+                    return "";
+                });
+            } else if (response.success) {
+                renderChart(response.data);
+                renderTable(response.data);
+                renderTrangThaiPieChart(response.data.TrangThaiData);
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        })
+    }
+
+    function renderChart(data) {
+        var ctx = document.getElementById('thongKeCongViecChart').getContext('2d');
+
+        // Xóa chart cũ nếu có
+        if (window.thongKeChart) {
+            window.thongKeChart.destroy();
+        }
+
+        window.thongKeChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.Labels,
+                datasets: [
+                    {
+                        label: 'Công việc hoàn thành',
+                        data: data.HoanThanhData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Công việc chưa hoàn thành',
+                        data: data.ChuaHoanThanhData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: ''
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : null;
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Số lượng công việc'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Thống kê công việc theo phòng ban'
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            afterLabel: function (context) {
+                                var total = context.dataset.data[context.dataIndex] +
+                                    (context.datasetIndex === 0 ?
+                                        window.thongKeChart.data.datasets[1].data[context.dataIndex] :
+                                        window.thongKeChart.data.datasets[0].data[context.dataIndex]);
+                                var percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
+                                return 'Tỷ lệ: ' + percentage + '%';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [valueLabelsPlugin]
+        });
+    }
+
+    function renderTable(data) {
+        var tbody = $('#thongKeTableBody');
+        tbody.empty();
+
+        data.Data.forEach(function (item) {
+            var row = `<tr>
+                <td> ${item.TenPhongBan}</td>
+                <td class="text-center">${taolinkChiTiet(item.SoCongViecHoanThanhSomHonHan, 1, item.PhongBanId, item.TongCongViec)}</td>
+                <td class="text-center">${taolinkChiTiet(item.SoCongViecHoanThanhDungHan, 2, item.PhongBanId, item.TongCongViec)}</td>
+                <td class="text-center">${taolinkChiTiet(item.SoCongViecHoanThanhTreHan, 5, item.PhongBanId, item.TongCongViec)}</td>
+                <td class="text-center">${taolinkChiTiet(item.SoCongViecChuaHoanThanhConHan, 3, item.PhongBanId, item.TongCongViec)}</td>
+                <td class="text-center">${taolinkChiTiet(item.SoCongViecChuaHoanThanhTreHan, 4, item.PhongBanId, item.TongCongViec)}</td>
+                 <td class="text-center">${item.TongCongViec != 0 ? `<span class=" text-danger text-bold"><a href="javascript:void(0)"
+                    onclick="xemThongTinChiTietPhongBan(${item.PhongBanId}, 0)">${item.TongCongViec}</a></span>`: `-`}
+                    </td>
+                <td class="text-center"> ${item.TongCongViec != 0 ? item.TiLeHoanThanh + '%' : '-'}</td>
+                </tr>`;
+            tbody.append(row);
+        });
+    }
+
+    function taolinkChiTiet(sl, loai, phongban, tongso){
+        if (tongso == 0) {
+            return `-`;
+        }
+
+        if (sl == 0) {
+            return `-`
+        }
+
+        var color = loai <= 2 ? "text-success" : (loai == 5 ? "text-warning" : "text-danger");
+        return `<span class=" text-danger text-bold"><a class="${color}" href="javascript:void(0)"
+                    onclick="xemThongTinChiTietPhongBan(${phongban}, ${loai})">${sl}</a></span>`
+    }
+
+
+    function renderTrangThaiPieChart(data) {
+        var ctx = document.getElementById('thongKeTrangThaiPieChart').getContext('2d');
+
+        // Xóa chart cũ nếu có
+        if (window.trangThaiPieChart) {
+            window.trangThaiPieChart.destroy();
+        }
+
+        window.trangThaiPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    'Hoàn thành sớm hạn',
+                    'Hoàn thành đúng hạn',
+                    'Hoàn thành trễ hạn',
+                    'Chưa hoàn thành còn hạn',
+                    'Chưa hoàn thành trễ hạn'
+                ],
+                datasets: [{
+                    data: [
+                        data.HoanThanhSomHonHan,
+                        data.HoanThanhDungHan,
+                        data.HoanThanhTreHan,
+                        data.ChuaHoanThanhConHan,
+                        data.ChuaHoanThanhTreHan
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',   // Xanh lá - Hoàn thành sớm hạn
+                        'rgba(0, 123, 255, 0.8)',   // Xanh dương - Hoàn thành đúng hạn
+                        'rgba(255, 152, 0, 0.8)',   // Cam - Hoàn thành trễ hạn
+                        'rgba(255, 193, 7, 0.8)',   // Vàng - Chưa hoàn thành còn hạn
+                        'rgba(220, 53, 69, 0.8)'    // Đỏ - Chưa hoàn thành trễ hạn
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(0, 123, 255, 1)',
+                        'rgba(255, 152, 0, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Thống kê công việc theo trạng thái',
+                        //font: {
+                        //    size: 16,
+                        //    weight: 'bold'
+                        //}
+                    },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.parsed;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [valueLabelsPlugin]
+        });
+    }
+
+    function xuatExcelPhuLuc345() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        window.location.href = `/GiaoViecThongKe/XuatExcelPhuLuc345?TuNgayStr=${encodeURIComponent(tuNgay)}&DenNgayStr=${encodeURIComponent(denNgay)}`;
+    }
+
+    function xuatExcelPhuLuc03() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        window.location.href = `/GiaoViecThongKe/XuatExcelPhuLuc03?TuNgayStr=${encodeURIComponent(tuNgay)}&DenNgayStr=${encodeURIComponent(denNgay)}`;
+    }
+
+    function xuatExcelPhuLuc05() {
+        var tuNgay = $("#TuNgayStr").val();
+        var denNgay = $("#DenNgayStr").val();
+        window.location.href = `/GiaoViecThongKe/XuatExcelPhuLuc05?TuNgayStr=${encodeURIComponent(tuNgay)}&DenNgayStr=${encodeURIComponent(denNgay)}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadThongKeData();
+    })
+</script>
+

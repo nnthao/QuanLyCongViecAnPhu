@@ -1,0 +1,38 @@
+curl --location 'https://office.quangngai.gov.vn/qlvb_qni/api/login/v3/' \
+--header 'Content-Type: application/json' \
+--data-raw '{"username": "admin","password": "3#3O89nMo2O8i7hT@A5g!"}
+
+
+//== kết quả trả về 
+{
+    "status": {
+        "code": "0",
+        "message": ""
+    },
+    "data": {
+        "username": "admin.qni.soxd",
+        "agent": "QLVB_QNI_SOXD.",
+        "agentInfo": "5252",
+        "fullName": "AQuản trị hệ thống",
+        "unitName": "Sở Xây dựng",
+        "token": "$2a$10$1e1kP1PSMLr.4BzIYz6JKuXe0pl1ttWbwmtNW7QUR6cbSLLJcQYe",
+        "unitId": null,
+        "unitIdDefault": null,
+        "kho": null,
+        "multilPrimary": "false",
+        "userCode": null,
+        "treeUnitDisplay": "0",
+        "user_salt": "gJCsJEGqFPJnbwuB48N4eA==",
+        "timeout": null,
+        "kho2": null,
+        "role": null,
+        "listRoles": null,
+        "userSwitch": null,
+        "typeSign": null,
+        "language": null
+    }
+}
+
+ 
+
+'

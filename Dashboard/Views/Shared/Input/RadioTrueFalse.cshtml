@@ -1,0 +1,23 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass" id="@Model.Id">
+    <div class="form-group p-l-10 p-r-10">
+        <label>
+            @Model.Label:
+            @if (Model.Required)
+            {
+                <span class="text-danger">*</span>
+            }
+        </label>
+        <form class="p-t-5 p-l-20">
+            <label class="radio-inline">
+                <input type="radio" @(Model.IsReadonly ? "readonly" : "") name="@Model.Id" checked value="true"> @Model.Value1Radio
+            </label>
+            &nbsp;&nbsp;
+            <label class="radio-inline">
+                <input type="radio" @(Model.IsReadonly ? "readonly" : "") name="@Model.Id" value="false"> @Model.Value2Radio
+            </label>
+        </form>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>

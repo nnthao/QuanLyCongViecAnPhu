@@ -1,0 +1,56 @@
+<div class="row">
+    <div class="col-sm-12">
+        <div class="txt-middle-line"><span><b>Văn bản liên quan</b></span></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th>Số kí hiệu</th>
+                    <th>Trích yếu</th>
+                    <th>Ngày văn bản</th>
+                    <th>Đơn vị ban hành</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="listVanBan">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function loadDataVanBan() {
+        ajaxGet("/TraCuuThongTin/GetListVanBanPhapLuat?id=" + @Model, function funcCallback(res) {
+            for (let i = 0; i < res.length; i++) {
+                let item = res[i];
+                addVanBanToTable(item);
+            }
+        }, function funcError() {
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    function addVanBanToTable(vanBan) {
+        var row = `
+            <tr data-vanban-id="${vanBan.Id}">
+                <td>${vanBan.SoKiHieu || ''}</td>
+                <td>${vanBan.TrichYeu || ''}</td>
+                <td>${vanBan.NgayBanHanhStr || ''}</td>
+                <td>${vanBan.CoQuanBanHanh || ''}</td>
+                <td>
+                    <button class="btn btn-info btn-sm mr-2 mt-1 mb-1" onclick="xemChiTietVanBan(${vanBan.Id})">
+                        <i class="fa fa-eye"></i> Xem thông tin
+                    </button>
+                </td>
+            </tr>
+        `;
+        $('#listVanBan').append(row);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDataVanBan();
+    });
+</script>

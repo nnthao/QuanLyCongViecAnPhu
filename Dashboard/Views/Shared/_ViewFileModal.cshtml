@@ -1,0 +1,461 @@
+<style>
+    #viewFileModal .modal-dialog {
+        max-width: 95% !important;
+        height: 90vh !important;
+        margin: 5vh auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #viewFileModal .modal-content {
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #viewFileModal .modal-header {
+        flex-shrink: 0 !important;
+        min-height: 57px !important;
+    }
+
+    #viewFileModal .modal-body {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #viewFileModal .modal-footer {
+        flex-shrink: 0 !important;
+        min-height: 57px !important;
+    }
+
+    #fileViewerContainer {
+        height: 100% !important;
+        width: 100% !important;
+        position: relative !important;
+        min-height: 0 !important;
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #fileViewerIframe {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        border: none !important;
+        display: none;
+        flex: 1 1 auto !important;
+    }
+
+    #fileViewerImage {
+        width: 100% !important;
+        height: 100% !important;
+        text-align: center;
+        padding: 20px;
+        display: none;
+        overflow: auto;
+        flex: 1 1 auto !important;
+    }
+
+    #fileViewerWord {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        padding: 20px;
+        overflow: auto !important;
+        display: none;
+        flex: 1 1 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    #fileViewerExcel {
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        display: none !important;
+        flex: 1 1 auto !important;
+        position: relative !important;
+        flex-direction: column !important;
+        background-color: #f5f5f5;
+    }
+
+    #fileViewerExcel:not([style*="display: none"]) {
+        display: flex !important;
+    }
+
+    .excel-viewer-container {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .excel-table-wrapper {
+        overflow: auto !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        width: 100%;
+        flex: 1 1 auto;
+        position: relative;
+        min-height: 0;
+        padding: 10px;
+    }
+
+    .excel-table-wrapper::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+
+    .excel-table-wrapper::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 6px;
+    }
+
+    .excel-table-wrapper::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 6px;
+    }
+
+    .excel-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .excel-table {
+        border-collapse: collapse;
+        width: max-content;
+        min-width: 100%;
+        font-size: 12px;
+        background-color: #fff;
+        table-layout: auto;
+    }
+
+    .excel-table th,
+    .excel-table td {
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        text-align: left;
+        min-width: 80px;
+        white-space: nowrap;
+    }
+
+    .excel-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .excel-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .excel-table tr:hover {
+        background-color: #f0f0f0;
+    }
+
+    .excel-sheet-content {
+        display: none;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .excel-sheet-content.active {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .excel-sheet-tabs {
+        display: flex;
+        background-color: #e0e0e0;
+        border-top: 1px solid #ccc;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-shrink: 0;
+        height: 35px;
+        align-items: flex-end;
+    }
+
+    .excel-sheet-tabs::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .excel-sheet-tabs::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .excel-sheet-tabs::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .excel-sheet-tabs::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .excel-sheet-tab {
+        padding: 6px 15px;
+        background-color: #d0d0d0;
+        border-right: 1px solid #aaa;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+        font-size: 12px;
+        width: auto;
+        min-width: auto;
+        text-align: center;
+        position: relative;
+        margin-right: 2px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .excel-sheet-tab.active {
+        background-color: #fff;
+        border-top: 2px solid #007bff;
+        border-left: 1px solid #aaa;
+        border-right: 1px solid #aaa;
+        height: 30px;
+        z-index: 5;
+        font-weight: bold;
+    }
+
+    .excel-sheet-tab:hover {
+        background-color: #e8e8e8;
+    }
+
+    .excel-sheet-tab.active:hover {
+        background-color: #fff;
+    }
+
+    #fileViewerLoading {
+        height: 100% !important;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+    }
+</style>
+
+<div class="modal fade" id="viewFileModal" tabindex="-1" role="dialog" aria-labelledby="viewFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewFileModalLabel">Xem file</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="fileViewerContainer">
+                    <div id="fileViewerLoading" style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Đang tải...</span>
+                        </div>
+                    </div>
+                    <iframe id="fileViewerIframe"></iframe>
+                    <div id="fileViewerImage">
+                        <img id="fileViewerImg" style="max-width: 100%; max-height: 100%;" />
+                    </div>
+                    <div id="fileViewerWord"></div>
+                    <div id="fileViewerExcel"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function openViewFileModal(fileUrl, fileName) {
+        $('#viewFileModalLabel').text(fileName || 'Xem file');
+        $('#viewFileModal').modal('show');
+
+        // Ẩn tất cả các viewer
+        $('#fileViewerIframe').hide();
+        $('#fileViewerImage').hide();
+        $('#fileViewerWord').hide();
+        $('#fileViewerExcel').hide();
+        $('#fileViewerLoading').show();
+
+        // Lấy extension để xác định loại file
+        var extension = fileUrl.split('.').pop().toLowerCase();
+        var viewFileUrl = '/ViewFile/ViewFile?url=' + encodeURIComponent(fileUrl);
+
+        // Xử lý theo loại file
+        if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension)) {
+            // Image files
+            $('#fileViewerImg').attr('src', viewFileUrl);
+            $('#fileViewerLoading').hide();
+            $('#fileViewerImage').show();
+        } else if (extension === 'pdf') {
+            // PDF files - dùng iframe
+            $('#fileViewerIframe').attr('src', viewFileUrl);
+            $('#fileViewerLoading').hide();
+            $('#fileViewerIframe').show();
+            
+            // Đảm bảo iframe chiếm đủ chiều cao
+            setTimeout(function() {
+                var modalBodyHeight = $('#viewFileModal .modal-body').height();
+                $('#fileViewerIframe').css('height', modalBodyHeight + 'px');
+            }, 100);
+        } else if (['doc', 'docx'].includes(extension)) {
+            // Word files - dùng mammoth.js
+            loadWordFile(viewFileUrl);
+        } else if (['xls', 'xlsx'].includes(extension)) {
+            // Excel files - dùng SheetJS
+            loadExcelFile(viewFileUrl);
+        } else {
+            // Các file khác - dùng iframe
+            $('#fileViewerIframe').attr('src', viewFileUrl);
+            $('#fileViewerLoading').hide();
+            $('#fileViewerIframe').show();
+            
+            // Đảm bảo iframe chiếm đủ chiều cao
+            setTimeout(function() {
+                var modalBodyHeight = $('#viewFileModal .modal-body').height();
+                $('#fileViewerIframe').css('height', modalBodyHeight + 'px');
+            }, 100);
+        }
+    }
+
+    function loadWordFile(url) {
+        if (typeof mammoth === 'undefined') {
+            $('#fileViewerLoading').html('<div class="alert alert-warning">Thư viện xem file Word chưa được tải. Vui lòng tải lại trang.</div>');
+            return;
+        }
+
+        fetch(url)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => mammoth.convertToHtml({ arrayBuffer: arrayBuffer }))
+            .then(result => {
+                $('#fileViewerWord').html(result.value);
+                if (result.messages.length > 0) {
+                    console.warn('Word conversion messages:', result.messages);
+                }
+                $('#fileViewerLoading').hide();
+                $('#fileViewerWord').show();
+            })
+            .catch(error => {
+                console.error('Error loading Word file:', error);
+                $('#fileViewerLoading').html('<div class="alert alert-danger">Không thể tải file Word. Vui lòng thử lại.</div>');
+            });
+    }
+
+    function loadExcelFile(url) {
+        if (typeof XLSX === 'undefined') {
+            $('#fileViewerLoading').html('<div class="alert alert-warning">Thư viện xem file Excel chưa được tải. Vui lòng tải lại trang.</div>');
+            return;
+        }
+
+        fetch(url)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => {
+                var workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // Tạo container cho Excel viewer
+                var html = '<div class="excel-viewer-container">';
+                
+                // Tạo nội dung cho từng sheet
+                workbook.SheetNames.forEach(function(sheetName, sheetIndex) {
+                    var worksheet = workbook.Sheets[sheetName];
+                    var sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                    
+                    html += `<div class="excel-sheet-content ${sheetIndex === 0 ? 'active' : ''}" data-sheet-index="${sheetIndex}">`;
+                    html += '<div class="excel-table-wrapper">';
+                    html += '<table class="excel-table">';
+                    
+                    // Tính số cột tối đa
+                    var maxCols = sheetData.length > 0 ? Math.max.apply(null, sheetData.map(function(row) { return row.length; })) : 0;
+                    
+                    // Tạo header row với số thứ tự cột (A, B, C...)
+                    html += '<thead><tr><th style="background-color: #e0e0e0; min-width: 50px; text-align: center; position: sticky; left: 0; z-index: 20;">#</th>';
+                    for (var col = 0; col < maxCols; col++) {
+                        var colLetter = '';
+                        var tempCol = col;
+                        do {
+                            colLetter = String.fromCharCode(65 + (tempCol % 26)) + colLetter;
+                            tempCol = Math.floor(tempCol / 26) - 1;
+                        } while (tempCol >= 0);
+                        html += '<th>' + colLetter + '</th>';
+                    }
+                    html += '</tr></thead>';
+                    
+                    // Tạo data rows
+                    html += '<tbody>';
+                    sheetData.forEach(function(row, rowIndex) {
+                        html += '<tr>';
+                        html += '<td style="background-color: #f0f0f0; text-align: center; font-weight: bold; position: sticky; left: 0; z-index: 10;">' + (rowIndex + 1) + '</td>';
+                        for (var col = 0; col < maxCols; col++) {
+                            var cellValue = row[col] !== undefined && row[col] !== null ? String(row[col]) : '';
+                            html += '<td>' + cellValue + '</td>';
+                        }
+                        html += '</tr>';
+                    });
+                    html += '</tbody>';
+                    html += '</table>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                // Tạo tabs ở phía dưới (giống Excel)
+                html += '<div class="excel-sheet-tabs">';
+                workbook.SheetNames.forEach(function(sheetName, index) {
+                    html += `<div class="excel-sheet-tab ${index === 0 ? 'active' : ''}" data-sheet-index="${index}">${sheetName}</div>`;
+                });
+                html += '</div>';
+                
+                html += '</div>';
+                
+                $('#fileViewerExcel').html(html);
+                $('#fileViewerLoading').hide();
+                $('#fileViewerExcel').show();
+                
+                // Xử lý click vào tabs
+                $('.excel-sheet-tab').on('click', function() {
+                    var sheetIndex = $(this).data('sheet-index');
+                    $('.excel-sheet-tab').removeClass('active');
+                    $(this).addClass('active');
+                    $('.excel-sheet-content').removeClass('active');
+                    $(`.excel-sheet-content[data-sheet-index="${sheetIndex}"]`).addClass('active');
+                });
+            })
+            .catch(error => {
+                console.error('Error loading Excel file:', error);
+                $('#fileViewerLoading').html('<div class="alert alert-danger">Không thể tải file Excel. Vui lòng thử lại.</div>');
+            });
+    }
+
+    // Đảm bảo iframe resize khi modal hiển thị
+    $('#viewFileModal').on('shown.bs.modal', function () {
+        var modalBodyHeight = $('#viewFileModal .modal-body').height();
+        if ($('#fileViewerIframe').is(':visible')) {
+            $('#fileViewerIframe').css('height', modalBodyHeight + 'px');
+        }
+    });
+
+    // Đóng modal khi click outside
+    $('#viewFileModal').on('hidden.bs.modal', function () {
+        $('#fileViewerIframe').attr('src', '');
+        $('#fileViewerImg').attr('src', '');
+        $('#fileViewerWord').empty();
+        $('#fileViewerExcel').empty();
+    });
+</script>
+

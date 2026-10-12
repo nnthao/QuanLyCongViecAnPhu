@@ -1,0 +1,91 @@
+@using System.Linq
+@{
+    var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
+    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId(identity);
+    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted().Where(x => x.Id != currentUserId).ToList();
+    var chucDanhs = Dashboard.Common.CacheManagerHelper.GetChucDanhCache();
+    var currentPhongBanId = Dashboard.Common.UserClaimHelper.GetPhongBanId(identity);
+    var isSystemUser = Dashboard.Common.UserClaimHelper.GetIsSystemUser(identity);
+    var isQuyenGiaoViecTatCaPhongBan = Dashboard.Common.UserClaimHelper.IsQuyenAllow(identity, Dashboard.Common.QuyenMoRong.QuyenGiaoViecTatCaPhongBan.ToString());
+    var phongBanIdForTree = (isSystemUser || isQuyenGiaoViecTatCaPhongBan) ? 0 : currentPhongBanId;
+
+    var phongBans = Dashboard.Common.UltiHelper.GetPhongBanTreeSorted(phongBanIdForTree, true);
+}
+
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="txt-middle-line"><span><b>Chọn người để chuyển giao công việc</b></span></div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="form-group">
+            <label for="TiepTuc_NguoiNhanId">Người nhận <span class="text-danger">*</span></label>
+            <select id="TiepTuc_NguoiNhanId" class="form-control select2" style="width: 100%;">
+                <option value="">-- Chọn người nhận --</option>
+                @foreach (var pb in phongBans)
+                {
+                    var useCoquans = users.Where(o => o.PhongBanId == pb.Id)
+                        .OrderBy(us =>
+                        {
+                            var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                            return chucDanh != null && chucDanh.ThuTu.HasValue ? chucDanh.ThuTu.Value : int.MaxValue;
+                        })
+                        .ThenBy(us => us.Name)
+                        .ToList();
+
+                    if (useCoquans.Any())
+                    {
+                        <optgroup label="@pb.Ten">
+                            @foreach (var us in useCoquans)
+                            {
+                                var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
+                                var chucDanhTen = chucDanh != null ? chucDanh.Ten : "";
+                                var emailDisplay = !string.IsNullOrEmpty(us.Email) ? $" ({us.Email})" : "";
+                                var textDisplay = string.IsNullOrEmpty(chucDanhTen) ? $"{us.Name}{emailDisplay}" : $"{us.Name} - {chucDanhTen}{emailDisplay}";
+                                <option value="@us.Id" data-name="@us.Name">@textDisplay</option>
+                            }
+                        </optgroup>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if ($("#TiepTuc_NguoiNhanId").length) {
+            var modalParent = $("#giaoViecTiepTucModal");
+            $("#TiepTuc_NguoiNhanId").select2({
+                placeholder: "-- Chọn người nhận --",
+                allowClear: true,
+                dropdownParent: modalParent.length ? modalParent : $(document.body),
+                width: '100%'
+            });
+        }
+
+        window.getThongTinNhanViecArrayTiepTuc = function () {
+            var userId = $("#TiepTuc_NguoiNhanId").val();
+            if (!userId) {
+                return [];
+            }
+            var selectedOption = $("#TiepTuc_NguoiNhanId option:selected");
+            var userName = selectedOption.data("name") || selectedOption.text();
+            var noiDung = $("#TiepTuc_NoiDungThanhVienCanXuLy").val() || $("#NoiDungThanhVienCanXuLy").val() || '';
+            var hanXuLy = $("#TiepTuc_HanXuLyThanhVienCanXuLyStr").val() || $("#HanXuLyThanhVienCanXuLyStr").val() || '';
+
+            return [{
+                ThanhVienId: parseInt(userId, 10),
+                ThanhVien: userName,
+                NoiDungNhiemVu: noiDung,
+                HanXuLyStr: hanXuLy
+            }];
+        };
+
+        window.clearNhanViecTiepTuc = function () {
+            $("#TiepTuc_NguoiNhanId").val('').trigger('change');
+        };
+    });
+</script>

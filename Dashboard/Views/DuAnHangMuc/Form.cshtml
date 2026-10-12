@@ -1,0 +1,88 @@
+@using Dashboard.HtmlHelpers
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " hạng mục công việc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title"><b>@ViewBag.Title</b></div>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="Id" value="@Model" />
+                        <div class="row">
+                            @Html.CustomTextBox(id: "TenHangMuc", label: "Tên hạng mục", col: 8, required: true)
+                            @Html.CustomNumber(id: "ThuTu", label: "Thứ tự", col: 4)
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3)
+                        </div>
+                        <div class="row text-center mt-3">
+                            <div class="col-12">
+                                <a href="/DuAnHangMuc" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
+                                <button class="btn btn-success" onclick="save()"><i class="fa fa-save"></i> Lưu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function () {
+        loadData();
+    });
+
+    function loadData() {
+        var id = $('#Id').val();
+        if (!id || id === '0') {
+            return;
+        }
+
+        $.get('/DuAnHangMuc/GetById?id=' + id, function (res) {
+            if (!res || !res.Item) {
+                return;
+            }
+
+            $('#TenHangMuc').val(res.Item.TenHangMuc);
+            $('#MoTa').val(res.Item.MoTa);
+            $('#ThuTu').val(res.Item.ThuTu);
+        });
+    }
+
+    function save() {
+        var data = {
+            Id: $('#Id').val(),
+            TenHangMuc: $('#TenHangMuc').val(),
+            MoTa: $('#MoTa').val(),
+            ThuTu: $('#ThuTu').val()
+        };
+
+        if (!data.TenHangMuc) {
+            toastr.error('Vui lòng nhập tên hạng mục');
+            return;
+        }
+
+        $.post('/DuAnHangMuc/ThemOrCapNhat', data, function (res) {
+            if (res && res.Errors && res.Errors.length > 0) {
+                toastr.error(res.Errors.map(function (item) { return item.Description; }).join('<br/>'));
+                return;
+            }
+
+            if (res && res.Id > 0) {
+                toastr.success('Lưu thành công');
+                window.location.href = '/DuAnHangMuc';
+            } else {
+                toastr.error('Có lỗi xảy ra');
+            }
+        });
+    }
+</script>

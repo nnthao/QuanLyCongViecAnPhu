@@ -1,0 +1,100 @@
+@using Dashboard.HtmlHelpers
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " công việc chung";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="Id" value="@Model" />
+                        <div class="row">
+                            @Html.CustomTextBox(id: "Ten", label: "Tên công việc", col: 6, required: true)
+                            @Html.CustomDatePicker(id: "NgayTaoStr", label: "Ngày tạo", col: 6, isReadonly: false, moreClass: "col-sm-6 col-xs-12", value: DateTime.Now.ToString("dd/MM/yyyy"))
+                            </div>
+                        <div class="row">
+                             <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Thành viên</label>
+                                    <select id="SelectedUserIds" class="form-control select2" multiple="multiple" style="width: 100%;"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row text-center mt-3">
+                            <div class="col-12">
+                                <a href="/CongViecChung" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Quay lại</a>
+                                <button class="btn btn-success" onclick="save()"><i class="fa fa-save"></i> Lưu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function () {
+        $('.select2').select2();
+        loadData();
+    });
+
+    function loadData() {
+        var id = $('#Id').val();
+
+        $.get('/CongViecChung/GetById?id=' + id, function (res) {
+            
+            // Populate User Select
+            if (res.User && res.User.Data) {
+                var options = '';
+                res.User.Data.forEach(function (u) {
+                    options += `<option value="${u.id}">${u.text}</option>`;
+                });
+                $('#SelectedUserIds').html(options);
+            }
+
+            if (res.Item) {
+                $('#Ten').val(res.Item.Ten);
+                if (res.Item.NgayTao) {
+                     $('#NgayTaoStr').val(moment(res.Item.NgayTao).format('DD/MM/YYYY'));
+                }
+                if (res.Item.SelectedUserIds) {
+                    $('#SelectedUserIds').val(res.Item.SelectedUserIds).trigger('change');
+                }
+            }
+        });
+    }
+
+    function save() {
+        var data = {
+            Id: $('#Id').val(),
+            Ten: $('#Ten').val(),
+            NgayTaoStr: $('#NgayTaoStr').val(),
+            SelectedUserIds: $('#SelectedUserIds').val()
+        };
+
+        if (!data.Ten) {
+            toastr.error('Vui lòng nhập tên công việc');
+            return;
+        }
+
+        $.post('/CongViecChung/Save', data, function (res) {
+            if (res) {
+                toastr.success('Lưu thành công');
+                window.location.href = '/CongViecChung';
+            } else {
+                toastr.error('Có lỗi xảy ra');
+            }
+        });
+    }
+</script>

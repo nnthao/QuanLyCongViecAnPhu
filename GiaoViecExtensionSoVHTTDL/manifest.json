@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Giao Việc Sở VHTTDL Quảng Ngãi",
+  "version": "1.0.5",
+  "description": "Extension hỗ trợ quản lý công việc từ trình duyệt",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://office.quangngai.gov.vn/*",
+    "https://qlcv.vnptquangngai.vn/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://office.quangngai.gov.vn/*"
+      ],
+      "js": [
+        "config.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

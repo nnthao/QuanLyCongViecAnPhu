@@ -1,0 +1,83 @@
+@using Dashboard.HtmlHelpers;
+
+<div class="modal fade" id="hinhThucVanBanFormModal" tabindex="-1" role="dialog" aria-labelledby="hinhThucVanBanFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="hinhThucVanBanFormModalTitle"><b>Thêm hình thức văn bản</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="HinhThucVanBan_Id" value="0" type="hidden" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "HinhThucVanBan_Ten", label: "Tên", col: 12, required: true, length: 500, moreClass: "col-sm-12 col-xs-12")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveHinhThucVanBanForm()" class="btn btn-success" id="btnHinhThucVanBanSave">
+                    <i class="fa fa-save"></i> <span id="btnHinhThucVanBanSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetHinhThucVanBanForm() {
+        $("#HinhThucVanBan_Id").val(0);
+        $("#HinhThucVanBan_Ten").val('');
+    }
+
+    function openHinhThucVanBanFormModal(id) {
+        resetHinhThucVanBanForm();
+        showLoadingModal();
+
+        ajaxGet("/HinhThucVanBan/GetById?id=" + id, function (res) {
+            hideLoadingModal();
+            if (id > 0) {
+                $("#hinhThucVanBanFormModalTitle").html("<b>Cập nhật hình thức văn bản</b>");
+                $("#btnHinhThucVanBanSaveText").text("Cập nhật");
+                if (res && res.Item) {
+                    $("#HinhThucVanBan_Id").val(res.Item.Id);
+                    $("#HinhThucVanBan_Ten").val(res.Item.Ten || '');
+                }
+            } else {
+                $("#hinhThucVanBanFormModalTitle").html("<b>Thêm mới hình thức văn bản</b>");
+                $("#btnHinhThucVanBanSaveText").text("Thêm mới");
+            }
+            $("#hinhThucVanBanFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function saveHinhThucVanBanForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#HinhThucVanBan_Id").val());
+        fd.append("Ten", $("#HinhThucVanBan_Ten").val());
+
+        ajaxPostFormData("/HinhThucVanBan/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#hinhThucVanBanFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

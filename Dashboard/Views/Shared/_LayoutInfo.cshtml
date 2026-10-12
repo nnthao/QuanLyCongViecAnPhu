@@ -1,0 +1,77 @@
+﻿@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Common;
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="zalo-platform-site-verification" content="ElY1ESJ5CoOsoxujq-ix2opxwpJ0ZJ5ZE3Kn" />
+    <link rel="shortcut icon" type="image/png" href=@Url.VersionedContent("/Content/img/favicon.ico") />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    @Html.Partial("_Meta")
+
+    <link href="~/Content/vendor/AdminLTE-3.1.0/dist/css/adminlte.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/bootstrap-table-1.18.3/dist/bootstrap-table.min.css" rel="stylesheet" />
+    <link href="~/Content/fonts/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/select2/css/select2.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/select2/css/select2-bootstrap4.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/bootstrap-datepicker/css/bootstrap-datepicker3.standalone.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/jquery-toast-plugin/toastr.min.css" rel="stylesheet" />
+    <link href="/Content/vendor/bootstrap-table-1.18.3/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/daterangepicker/daterangepicker.min.css" rel="stylesheet" />
+    @*<link href="~/Content/vendor/datetime-picker-2/bootstrap-datetimepicker.min.css" rel="stylesheet" />*@
+    <link href="~/Content/vendor/bootstrap-datetimepicker-4/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+
+    <link href="~/Content/vendor/AdminLTE-3.1.0/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" rel="stylesheet" />
+    <link href="~/Content/vendor/fullcalendar-5.11.0/main.min.css" rel="stylesheet" />
+    <link href="https://admin-lte-3.vercel.app/plugins/loading-modal/loading-modal.min.css" rel="stylesheet" async />
+
+    <link href="@Url.VersionedContent("~/Content/css/dashboard.css")" rel="stylesheet" />
+    <link href="@Url.VersionedContent("~/Content/css/media-screen.css")" rel="stylesheet" />
+
+
+    <script src="~/Content/vendor/jquery/jquery-3.2.1.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/moment.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/bootstrap-table-1.18.3/dist/bootstrap-table.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/bootstrap-table-1.18.3/dist/locale/bootstrap-table-vi-VN.min.js" type="text/javascript"></script>
+    <script src="/Content/vendor/bootstrap-table-1.18.3/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/select2/js/select2.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/bootstrap-datepicker/js/bootstrap-datepicker.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/select2/js/i18n/vi.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/jquery-toast-plugin/toastr.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/ChartJs/Chart.bundle.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/ChartJs/chartjs-plugin-datalabels.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/daterangepicker/daterangepicker.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/AdminLTE-3.1.0/plugins/bootstrap/js/bootstrap.bundle.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/AdminLTE-3.1.0/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/AdminLTE-3.1.0/dist/js/adminlte.js" type="text/javascript"></script>
+    <script src="~/Content/vendor/fullcalendar-5.11.0/main.min.js"></script>
+    <script src="~/Content/vendor/fullcalendar-5.11.0/locales/vi.js"></script>
+
+    <script src="@Url.VersionedContent("~/Content/js/ultilities/FormHelper.js")" type="text/javascript"></script>
+    <script src="@Url.VersionedContent("~/Content/js/ultilities/Helper.js")" type="text/javascript"></script>
+</head>
+<body >
+    <div class="container-fluid" >
+        <div style="padding:5px;">
+            @RenderBody()
+        </div>
+
+        <script src="~/Content/vendor/bootstrap-datetimepicker-4/js/bootstrap-datetimepicker.min.js"></script>
+        <script src="https://admin-lte-3.vercel.app/plugins/loading-modal/loading-modal.min.js"></script>
+
+        <!-- Thư viện xem file -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    </div>
+    @Html.Partial("_ViewFileModal")
+    <script>
+        moment.locale('en', {
+            week: { dow: 1 } // Monday is the first day of the week
+        });
+    </script>
+</body>
+</html>

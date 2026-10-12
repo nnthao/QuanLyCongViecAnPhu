@@ -1,0 +1,34 @@
+﻿@model Dashboard.Models.HtmlHelpers.Select2.Select2ViewModel
+<style>
+    #select2-@Model.Id-results li {
+        white-space: pre-line;
+    }
+</style>
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        @if (!string.IsNullOrEmpty(Model.Label))
+        {
+            <label>
+                @Model.Label:
+                @if (Model.Required)
+                {
+                    <span class="text-danger">*</span>
+                }
+            </label>
+        }
+        <select id="@Model.Id" @(Model.IsReadonly ? "disabled" : "")></select>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>
+
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        var id = '@Model.Id';
+        var url = '@Model.Url';
+
+        $("#" + id).select2({
+            data: [],
+            language: "vi",
+        });
+    });
+</script>

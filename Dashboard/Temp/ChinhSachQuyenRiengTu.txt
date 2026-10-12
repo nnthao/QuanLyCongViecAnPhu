@@ -1,0 +1,12 @@
+﻿1. Mục đích của Tiện ích (Extension) Tiện ích "Giao Việc Sở VHTTDL Quảng Ngãi" được thiết kế nhằm hỗ trợ người dùng tạo việc nhanh trên Phần mềm theo dõi nhiệm vụ của Sở VHTTDL Quảng Ngãi bằng cách thêm 1 button "Tạo giao việc nhanh" trên giao diện của hệ thống quản lý văn bản điều hành sẽ đọc các trường thôgn tin về văn bản như trích yếu, số kí hiệu để đẩy sang Phần mềm theo dõi nhiệm vụ của Sở VHTTDL Quảng Ngãi. 
+2. Dữ liệu chúng tôi thu thập để tiện ích có thể hoạt động đúng chức năng, chúng tôi thu thập một số thông tin cơ bản sau:
+- Trích yêu văn bản
+- Số kí hiệu văn bản
+- Hạn xử lý văn bản
+3. Cách chúng tôi sử dụng dữ liệu Dữ liệu thu thập chỉ được sử dụng cho các mục đích duy nhất tạo đường dẫn chứa các thông tin để tạo nhanh côgn việc ở Phần mềm theo dõi nhiệm vụ của Sở VHTTDL Quảng Ngãi 
+4. Lưu trữ và Bảo mật dữ liệu
+- Không có lưu trữ dữ liệu gì
+5. Không có chia sẻ dữ liệu gì với bên thứ ba 
+6. Thay đổi chính sách Chúng tôi có thể cập nhật chính sách quyền riêng tư này theo thời gian để phản ánh các thay đổi về tính năng của tiện ích
+8. Liên hệ Nếu bạn có bất kỳ câu hỏi hay thắc mắc nào liên quan đến Chính sách quyền riêng tư này, vui lòng liên hệ với tác giả qua:
+Email: thaonn.qni@gmail.com

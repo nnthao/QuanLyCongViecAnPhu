@@ -1,0 +1,241 @@
+@model Dashboard.Models.HtmlHelpers.Input.MultiSelectViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>@Model.Label</label>
+        <div class="multi-select-container">
+            <div class="multi-select-dropdown" id="@Model.Id">
+                <div class="multi-select-header" onclick="toggleMultiSelectDropdown_@(Model.Id)()">
+                    <span class="multi-select-placeholder" id="@(Model.Id)_placeholder" data-default-text="@Model.PlaceHolderText">@Model.PlaceHolderText</span>
+                    <span class="multi-select-arrow">▼</span>
+                </div>
+                <div class="multi-select-content" id="@(Model.Id)_content">
+                    <div class="multi-select-search">
+                        <input type="text" placeholder="Tìm kiếm" id="@(Model.Id)_search" onkeyup="filterMultiSelectOptions_@(Model.Id)()">
+                        <span class="search-icon">🔍</span>
+                        <span class="clear-search" onclick="clearMultiSelectSearch_@(Model.Id)()">✕</span>
+                    </div>
+                    <div class="multi-select-options" id="@(Model.Id)_options">
+                        <label class="multi-select-option">
+                            <input type="checkbox" value="all" onchange="toggleMultiSelectAll_@(Model.Id)()">
+                            <span><b>@Model.SelectAllText</b></span>
+                        </label>
+                        @foreach (var item in Model.Items)
+                        {
+                            var dataAttr = !string.IsNullOrEmpty(Model.DataAttributeName) && !string.IsNullOrEmpty(item.DataAttributeValue)
+                                ? $"data-{Model.DataAttributeName}=\"{item.DataAttributeValue}\""
+                                : "";
+                            <label class="multi-select-option" @Html.Raw(dataAttr)>
+                                <input type="checkbox" value="@item.Id">
+                                <span>@item.Text</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    (function() {
+        var dropdownId = '@Model.Id';
+        var $dropdown = $(`#${dropdownId}`);
+        var $content = $(`#${dropdownId}_content`);
+        var $searchInput = $(`#${dropdownId}_search`);
+        var $placeholder = $(`#${dropdownId}_placeholder`);
+        var $options = $(`#${dropdownId}_options`);
+        var isOpen = false;
+
+        function toggleDropdown() {
+            isOpen = !isOpen;
+            $dropdown.toggleClass('open', isOpen);
+            $content.toggle(isOpen);
+        }
+
+        function filterOptions() {
+            var searchTerm = $searchInput.val().toLowerCase();
+            $options.find('.multi-select-option').each(function() {
+                var $option = $(this);
+                var text = $option.find('span').text().toLowerCase();
+                $option.toggle(text.includes(searchTerm));
+            });
+        }
+
+        function clearSearch() {
+            $searchInput.val('');
+            filterOptions();
+            // Uncheck tất cả các checkbox đã chọn
+            $options.find('input[type="checkbox"]:not([value="all"])').prop('checked', false);
+            $options.find('input[value="all"]').prop('checked', false);
+            updatePlaceholder();
+            updateSelectAllState();
+        }
+
+        function toggleAll() {
+            var $selectAllCheckbox = $options.find('input[value="all"]');
+            var isChecked = $selectAllCheckbox.is(':checked');
+            $options.find('input[type="checkbox"]:not([value="all"])').each(function() {
+                var $checkbox = $(this);
+                var $option = $checkbox.closest('.multi-select-option');
+                if ($option.is(':visible')) {
+                    $checkbox.prop('checked', isChecked);
+                }
+            });
+            updatePlaceholder();
+        }
+
+        function updatePlaceholder() {
+            var $visibleChecked = $options.find('input[type="checkbox"]:not([value="all"]):checked').filter(function() {
+                return $(this).closest('.multi-select-option').is(':visible');
+            });
+            var count = $visibleChecked.length;
+            var defaultPlaceholderText = $placeholder.data('default-text') || $placeholder.text();
+
+            if (count === 1) {
+                var placeholderText = $visibleChecked.closest('.multi-select-option').find('span').text();
+                $placeholder.text(placeholderText);
+            } else if (count > 1) {
+                $placeholder.text(`Đã chọn ${count} mục`);
+            } else {
+                $placeholder.text(defaultPlaceholderText);
+            }
+        }
+
+        function updateSelectAllState() {
+            var $allCheckboxes = $options.find('input[type="checkbox"]:not([value="all"])');
+            var $checkedCheckboxes = $options.find('input[type="checkbox"]:not([value="all"]):checked');
+            var $selectAllCheckbox = $options.find('input[value="all"]');
+
+            var $visibleAllCheckboxes = $allCheckboxes.filter(function() {
+                return $(this).closest('.multi-select-option').is(':visible');
+            });
+            var $visibleCheckedCheckboxes = $checkedCheckboxes.filter(function() {
+                return $(this).closest('.multi-select-option').is(':visible');
+            });
+
+            if ($visibleCheckedCheckboxes.length === 0) {
+                $selectAllCheckbox.prop('checked', false);
+                $selectAllCheckbox.prop('indeterminate', false);
+            } else if ($visibleCheckedCheckboxes.length === $visibleAllCheckboxes.length) {
+                $selectAllCheckbox.prop('checked', true);
+                $selectAllCheckbox.prop('indeterminate', false);
+            } else {
+                $selectAllCheckbox.prop('checked', false);
+                $selectAllCheckbox.prop('indeterminate', true);
+            }
+        }
+
+        window['toggleMultiSelectDropdown_' + dropdownId] = toggleDropdown;
+        window['filterMultiSelectOptions_' + dropdownId] = filterOptions;
+        window['clearMultiSelectSearch_' + dropdownId] = clearSearch;
+        window['toggleMultiSelectAll_' + dropdownId] = toggleAll;
+        window['updateMultiSelectPlaceholder_' + dropdownId] = updatePlaceholder;
+        window['updateMultiSelectSelectAllState_' + dropdownId] = updateSelectAllState;
+        window['getSelectedMultiSelectIds_' + dropdownId] = function() {
+            return $options.find('input[type="checkbox"]:not([value="all"]):checked')
+                .filter(function() {
+                    return $(this).closest('.multi-select-option').is(':visible');
+                })
+                .map(function() {
+                    return $(this).val();
+                })
+                .get()
+                .join(',');
+        };
+
+        $(document).ready(function() {
+            // Lưu default placeholder text khi khởi tạo
+            if (!$placeholder.data('default-text')) {
+                $placeholder.data('default-text', $placeholder.text());
+            }
+
+            $options.find('input[type="checkbox"]:not([value="all"])').on('change', function() {
+                updatePlaceholder();
+                updateSelectAllState();
+                @if (!string.IsNullOrEmpty(Model.OnChangeCallback))
+                {
+                    <text>
+                    var callbackFunc = @Html.Raw(Model.OnChangeCallback);
+                    if (typeof callbackFunc === 'function') {
+                        callbackFunc();
+                    } else if (typeof window[callbackFunc] === 'function') {
+                        window[callbackFunc]();
+                    }
+                    </text>
+                }
+            });
+
+            $(document).on('click', function(event) {
+                if (isOpen && !$dropdown.is(event.target) && !$dropdown.has(event.target).length) {
+                    toggleDropdown();
+                }
+            });
+        });
+    })();
+</script>
+
+<script type="text/javascript">
+    // Hàm chung để lấy danh sách IDs từ multi-select với fallback value
+    // Chỉ định nghĩa một lần nếu chưa tồn tại
+    if (typeof window.getMultiSelectIdsWithFallback === 'undefined') {
+        window.getMultiSelectIdsWithFallback = function(multiSelectId, fallbackValue) {
+            if (typeof window['getSelectedMultiSelectIds_' + multiSelectId] === 'function') {
+                var selectedIds = window['getSelectedMultiSelectIds_' + multiSelectId]();
+                // Nếu không có giá trị nào được chọn và có fallback, trả về fallback
+                if ((!selectedIds || selectedIds === '') && fallbackValue) {
+                    return fallbackValue;
+                }
+                return selectedIds || '';
+            }
+            return fallbackValue || '';
+        };
+    }
+
+    // Hàm chung để filter options của một multi-select dựa trên giá trị đã chọn của multi-select khác
+    // Chỉ định nghĩa một lần nếu chưa tồn tại
+    if (typeof window.filterMultiSelectOptionsBySource === 'undefined') {
+        window.filterMultiSelectOptionsBySource = function(targetMultiSelectId, sourceMultiSelectId, dataAttributeName) {
+            var $sourceOptions = $(`#${sourceMultiSelectId}_options`);
+            var $targetOptions = $(`#${targetMultiSelectId}_options`);
+            
+            // Lấy danh sách giá trị đã được check từ source (không dùng getSelectedMultiSelectIds vì có thể trả về tất cả)
+            var selectedValues = [];
+            $sourceOptions.find('input[type="checkbox"]:not([value="all"]):checked').each(function() {
+                selectedValues.push($(this).val());
+            });
+            
+            // Filter options của target dựa trên data attribute
+            $targetOptions.find('.multi-select-option').each(function() {
+                var $option = $(this);
+                var dataValue = $option.attr(`data-${dataAttributeName}`);
+                
+                if (selectedValues.length === 0) {
+                    // Nếu không có giá trị nào được check, hiển thị tất cả
+                    $option.show().removeClass('d-none');
+                } else {
+                    // Chỉ hiển thị option có data attribute value nằm trong danh sách đã chọn
+                    if (dataValue && selectedValues.includes(dataValue)) {
+                        $option.show().removeClass('d-none');
+                    } else {
+                        $option.hide().addClass('d-none');
+                        // Uncheck hidden options
+                        var $checkbox = $option.find('input[type="checkbox"]');
+                        if ($checkbox.length > 0) {
+                            $checkbox.prop('checked', false);
+                        }
+                    }
+                }
+            });
+            
+            // Update placeholder and select all state của target
+            if (typeof window['updateMultiSelectPlaceholder_' + targetMultiSelectId] === 'function') {
+                window['updateMultiSelectPlaceholder_' + targetMultiSelectId]();
+            }
+            if (typeof window['updateMultiSelectSelectAllState_' + targetMultiSelectId] === 'function') {
+                window['updateMultiSelectSelectAllState_' + targetMultiSelectId]();
+            }
+        };
+    }
+</script>
+

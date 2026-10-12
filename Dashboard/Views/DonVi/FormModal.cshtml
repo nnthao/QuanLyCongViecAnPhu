@@ -1,0 +1,83 @@
+@using Dashboard.HtmlHelpers;
+
+<div class="modal fade" id="donViFormModal" tabindex="-1" role="dialog" aria-labelledby="donViFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="donViFormModalTitle"><b>Thêm đơn vị</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="DonVi_Id" value="0" type="hidden" />
+                <div class="row">
+                    @Html.CustomTextBox(id: "DonVi_Ten", label: "Tên đơn vị", col: 12, required: true, length: 200, moreClass: "col-sm-12 col-xs-12")
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveDonViForm()" class="btn btn-success" id="btnDonViSave">
+                    <i class="fa fa-save"></i> <span id="btnDonViSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetDonViForm() {
+        $("#DonVi_Id").val(0);
+        $("#DonVi_Ten").val('');
+    }
+
+    function openDonViFormModal(id) {
+        resetDonViForm();
+        showLoadingModal();
+
+        ajaxGet("/DonVi/GetById?id=" + id, function (res) {
+            hideLoadingModal();
+            if (id > 0) {
+                $("#donViFormModalTitle").html("<b>Cập nhật đơn vị</b>");
+                $("#btnDonViSaveText").text("Cập nhật");
+                if (res && res.Item) {
+                    $("#DonVi_Id").val(res.Item.Id);
+                    $("#DonVi_Ten").val(res.Item.Ten || '');
+                }
+            } else {
+                $("#donViFormModalTitle").html("<b>Thêm mới đơn vị</b>");
+                $("#btnDonViSaveText").text("Thêm mới");
+            }
+            $("#donViFormModal").modal("show");
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    function saveDonViForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#DonVi_Id").val());
+        fd.append("Ten", $("#DonVi_Ten").val());
+
+        ajaxPostFormData("/DonVi/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#donViFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+</script>

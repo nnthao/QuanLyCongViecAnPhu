@@ -1,0 +1,229 @@
+@using Dashboard.Models.HtmlHelpers
+@{
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+    ViewBag.Title = "Đăng nhập hệ thống - Sở VHTTDL tỉnh Quảng Ngãi";
+}
+<div class="login-page-wrapper">
+    <canvas id="loginCanvas" class="login-bg-canvas"></canvas>
+    <div class="login-main">
+        <div class="login-container">
+            <div class="login-brand">
+                <div class="brand-sphere brand-sphere--md"></div>
+                <div class="brand-sphere brand-sphere--lg"></div>
+                <div class="brand-content">
+                    <div class="brand-logo-row">
+                        <img src="/Content/img/quochuy.png" alt="Quốc Huy" class="brand-logo-icon" />
+                        <span class="brand-company-name">SỞ VHTTDL TỈNH QUẢNG NGÃI</span>
+                    </div>
+                    <div class="brand-welcome">
+                        <h1 class="brand-title">SỞ VĂN HÓA, THỂ THAO<br>VÀ DU LỊCH QUẢNG NGÃI</h1>
+                        <p class="brand-desc">Hệ thống quản lý công việc dành cho cán bộ, công chức, viên chức Sở Văn hóa, Thể thao và Du lịch tỉnh Quảng Ngãi.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="login-form-panel">
+                <div class="form-header">
+                    <div class="mobile-brand">
+                        <img src="/Content/img/quochuy.png" alt="Quốc Huy" class="mobile-brand-logo" />
+                        <div class="mobile-brand-text">
+                            <div class="mobile-brand-company">Sở Văn hóa, Thể thao và Du lịch Tỉnh Quảng Ngãi</div>
+                            <div class="mobile-brand-app">Hệ thống quản lý công việc</div>
+                        </div>
+                    </div>
+                    <h2 style="text-transform: uppercase;">Đăng nhập</h2>
+                    <p class="form-subtitle">Nhập thông tin tài khoản để tiếp tục</p>
+                </div>
+                <form>
+                    <input type="hidden" name="CurentCode" id="CurentCode">
+                    <div class="form-group field-group">
+                        <i class="fa fa-user field-icon"></i>
+                        <input type="text" class="form-control" name="Email" placeholder="Tên truy cập" id="Email">
+                    </div>
+                    <div class="form-group field-group">
+                        <i class="fa fa-lock field-icon"></i>
+                        <input type="password" class="form-control" name="Password" placeholder="Mật khẩu" id="Password" onkeypress="enterSearch(event);">
+                        <button type="button" class="toggle-password" id="btnTogglePassword" tabindex="-1">
+                            <i class="fa fa-eye" id="iconTogglePassword"></i>
+                        </button>
+                    </div>
+                    <button id="btnDangNhap" type="button" class="btn-login mt-4">
+                        <i class="fa fa-sign-in" id="iconDangNhap"></i>
+                        Đăng nhập
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <footer class="login-footer">
+        &copy; 2026 Bản quyền thuộc về <strong>VNPT Quảng Ngãi</strong>
+    </footer>
+</div>
+<script>
+    var currentHost = window.location.hostname;
+    var currentPath = window.location.pathname;
+    // Chỉ redirect khi domain đúng và đường dẫn là gốc (root path)
+    if (currentHost === 'daihoi.vnptquangngai.vn' && (currentPath === '/' || currentPath === '')) {
+        window.location.href = '/DiemDanh';
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            $("#btnDangNhap").click();
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Hiệu ứng Canvas Low-Poly Geometric Background
+        (function initLowPolyCanvas() {
+            var canvas = document.getElementById('loginCanvas');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var width, height;
+            var points = [];
+            var triangles = [];
+            var tileSize = 110;
+
+            function getRandomPolyColor() {
+                var r = Math.floor(90 + Math.random() * 55);
+                var g = Math.floor(15 + Math.random() * 30);
+                var b = Math.floor(25 + Math.random() * 35);
+                var alpha = (0.04 + Math.random() * 0.12).toFixed(3);
+                return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+            }
+
+            function createMesh() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+                points = [];
+                triangles = [];
+
+                var cols = Math.ceil(width / tileSize) + 2;
+                var rows = Math.ceil(height / tileSize) + 2;
+
+                for (var r = 0; r < rows; r++) {
+                    points[r] = [];
+                    for (var c = 0; c < cols; c++) {
+                        var baseX = (c - 1) * tileSize;
+                        var baseY = (r - 1) * tileSize;
+                        var jitterX = (Math.random() - 0.5) * tileSize * 0.75;
+                        var jitterY = (Math.random() - 0.5) * tileSize * 0.75;
+
+                        if (r === 0 || r === rows - 1 || c === 0 || c === cols - 1) {
+                            jitterX *= 0.2;
+                            jitterY *= 0.2;
+                        }
+
+                        points[r][c] = {
+                            x: baseX + jitterX,
+                            y: baseY + jitterY,
+                            originX: baseX + jitterX,
+                            originY: baseY + jitterY,
+                            phase: Math.random() * Math.PI * 2,
+                            speed: 0.005 + Math.random() * 0.008
+                        };
+                    }
+                }
+
+                for (var r = 0; r < rows - 1; r++) {
+                    for (var c = 0; c < cols - 1; c++) {
+                        var p1 = points[r][c];
+                        var p2 = points[r][c + 1];
+                        var p3 = points[r + 1][c];
+                        var p4 = points[r + 1][c + 1];
+
+                        if ((r + c) % 2 === 0) {
+                            triangles.push({ p1: p1, p2: p2, p3: p3, color: getRandomPolyColor() });
+                            triangles.push({ p1: p2, p2: p4, p3: p3, color: getRandomPolyColor() });
+                        } else {
+                            triangles.push({ p1: p1, p2: p4, p3: p3, color: getRandomPolyColor() });
+                            triangles.push({ p1: p1, p2: p2, p3: p4, color: getRandomPolyColor() });
+                        }
+                    }
+                }
+            }
+
+            var time = 0;
+            function render() {
+                time += 0.015;
+                ctx.clearRect(0, 0, width, height);
+
+                for (var r = 0; r < points.length; r++) {
+                    for (var c = 0; c < points[r].length; c++) {
+                        var p = points[r][c];
+                        p.x = p.originX + Math.sin(time * p.speed * 100 + p.phase) * 14;
+                        p.y = p.originY + Math.cos(time * p.speed * 80 + p.phase) * 14;
+                    }
+                }
+
+                for (var i = 0; i < triangles.length; i++) {
+                    var t = triangles[i];
+                    ctx.beginPath();
+                    ctx.moveTo(t.p1.x, t.p1.y);
+                    ctx.lineTo(t.p2.x, t.p2.y);
+                    ctx.lineTo(t.p3.x, t.p3.y);
+                    ctx.closePath();
+                    ctx.fillStyle = t.color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+
+                requestAnimationFrame(render);
+            }
+
+            createMesh();
+            render();
+
+            var resizeTimeout;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(createMesh, 150);
+            });
+        })();
+
+        document.getElementById('btnTogglePassword').addEventListener('click', function () {
+            var input = document.getElementById('Password');
+            var icon = document.getElementById('iconTogglePassword');
+            var isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.className = isPassword ? 'fa fa-eye-slash' : 'fa fa-eye';
+        });
+
+        // Lấy returnUrl từ query string để tránh bị Razor encode & thành &amp;
+        var urlParams = new URLSearchParams(window.location.search);
+        var returnUrl = urlParams.get('returnUrl') || '';
+
+        // document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+
+        $("#btnDangNhap").click(function () {
+            $("#btnDangNhap").prop("disabled", true)
+            $("#iconDangNhap").removeClass().addClass("fa fa-refresh fa-spin");
+
+            let fd = new FormData();
+            fd.append("Email", $("#Email").val());
+            fd.append("Password", $("#Password").val());
+
+            ajaxPostFormData("/DangNhap/Auth", fd, function callbackFunc(res) {
+                if (res && res.IsError) {
+                    toastr.error(res.Msg, "Lỗi đăng nhập");
+
+                    $("#btnDangNhap").prop("disabled", false)
+                    $("#iconDangNhap").removeClass().addClass("fa fa-sign-in");
+                }
+                else if (res && res.Token) {
+                    //sessionStorage.setItem('token', res.Token);
+                    document.cookie = `token=${res.Token}; path=/`;
+                    // Redirect về returnUrl nếu có và hợp lệ, nếu không thì về trang thông tin tài khoản
+                    if (returnUrl && returnUrl.startsWith('/')) {
+                        window.location.href = returnUrl;
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                }
+            }, function errorFunc(res) {
+                toastr.error("Liên hệ quản trị Website", "Lỗi đăng nhập");
+            })
+        });
+    });
+</script>

@@ -1,0 +1,404 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+<style>
+    #giaoViecFormModal .modal-dialog {
+        max-width: 95%;
+        width: 95%;
+        height: calc(100vh - 3.5rem);
+        margin: 1.75rem auto;
+    }
+
+    #giaoViecFormModal .modal-content {
+        height: 100%;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #giaoViecFormModal .modal-header,
+    #giaoViecFormModal .modal-footer {
+        flex-shrink: 0;
+    }
+
+    #giaoViecFormModal .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+
+    .goi-y-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1060;
+        background: #ffffff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: 220px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 2px;
+    }
+
+    .goi-y-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f1f1;
+        font-size: 13px;
+        line-height: 1.4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .goi-y-item:last-child {
+        border-bottom: none;
+    }
+
+    .goi-y-item:hover,
+    .goi-y-item.active {
+        background-color: #e9ecef;
+        color: #0056b3;
+    }
+
+    .goi-y-text {
+        flex: 1;
+        word-break: break-word;
+    }
+
+    @@media (max-width: 576px) {
+        #giaoViecFormModal .modal-dialog {
+            max-width: 100%;
+            width: 100%;
+            height: calc(100vh - 1rem);
+            margin: 0.5rem;
+        }
+    }
+</style>
+
+<div class="modal fade" id="giaoViecFormModal" tabindex="-1" role="dialog" aria-labelledby="giaoViecFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="giaoViecFormModalTitle"><b>Tạo việc</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input id="GiaoViec_Id" type="hidden" value="0" />
+                <input id="GiaoViec_IofficeNumber" type="hidden" value="" />
+                <input id="GiaoViec_VanBanId" type="hidden" value="" />
+                
+                <div class="row">
+                    <div class="col-sm-7 col-xs-12">
+                        <div class="row">
+                            @Html.CustomTextBox(id: "GiaoViec_TenCongViec", label: "Tên công việc", col: 12, required: true, length: 10000, moreClass: "col-sm-12 col-xs-12")
+                            @Html.CustomTextArea(id: "GiaoViec_NoiDung", label: "Nội dung công việc", col: 12, moreClass: "col-sm-12 col-xs-12", row: 3)
+                            @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 12, moreClass: "col-sm-12 col-xs-12", row: 3)
+                        </div>
+                    </div>
+                    <div class="col-sm-5 col-xs-12">
+                        @Html.Partial("~/Views/GiaoViec/FileDinhKem.cshtml")
+                    </div>
+                </div>
+
+                @Html.Partial("~/Views/GiaoViec/NguoiNhanViec.cshtml")
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveGiaoViecForm()" class="btn btn-success" id="btnGiaoViecSave">
+                    <i class="fa fa-save"></i> <span id="btnGiaoViecSaveText">Lưu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var goiYTimeoutGiaoViec = null;
+    var selectedGoiYIndexGiaoViec = -1;
+
+    function resetGiaoViecForm() {
+        $("#GiaoViec_Id").val(0);
+        $("#GiaoViec_IofficeNumber").val('');
+        $("#GiaoViec_VanBanId").val('');
+        $("#GiaoViec_TenCongViec").val('');
+        $("#GiaoViec_NoiDung").val('');
+        $("#GhiChu").val('');
+        hideGiaoViecNoiDungSuggestions();
+
+        TaiLieuDinhKemDatas = [];
+        if (typeof renderTaiLieuDinhKemTable === 'function') {
+            renderTaiLieuDinhKemTable();
+        }
+
+        if (typeof resetNguoiNhanViecForm === 'function') {
+            resetNguoiNhanViecForm();
+        } else {
+            $("#thongTinNhanViec").empty();
+        }
+    }
+
+    function initGiaoViecNoiDungAutocomplete() {
+        var $textarea = $("#GiaoViec_NoiDung");
+        if ($textarea.length === 0) return;
+
+        var $parent = $textarea.closest(".form-group");
+        $parent.css("position", "relative");
+
+        if ($("#giaoViecNoiDungSuggestions").length === 0) {
+            $textarea.after('<div id="giaoViecNoiDungSuggestions" class="goi-y-dropdown"></div>');
+        }
+
+        var $dropdown = $("#giaoViecNoiDungSuggestions");
+
+        $textarea.off("input.goiy focus.goiy keydown.goiy")
+            .on("input.goiy focus.goiy", function () {
+                var keyword = $(this).val();
+                if (goiYTimeoutGiaoViec) clearTimeout(goiYTimeoutGiaoViec);
+                goiYTimeoutGiaoViec = setTimeout(function () {
+                    loadGiaoViecGoiYNoiDung(keyword);
+                }, 200);
+            })
+            .on("keydown.goiy", function (e) {
+                var $items = $dropdown.find(".goi-y-item");
+                if (!$dropdown.is(":visible") || $items.length === 0) return;
+
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    selectedGoiYIndexGiaoViec = (selectedGoiYIndexGiaoViec + 1) % $items.length;
+                    updateGiaoViecGoiYSelection($items);
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    selectedGoiYIndexGiaoViec = (selectedGoiYIndexGiaoViec - 1 + $items.length) % $items.length;
+                    updateGiaoViecGoiYSelection($items);
+                } else if (e.key === "Enter") {
+                    if (selectedGoiYIndexGiaoViec >= 0 && selectedGoiYIndexGiaoViec < $items.length) {
+                        e.preventDefault();
+                        $items.eq(selectedGoiYIndexGiaoViec).trigger("mousedown");
+                    }
+                } else if (e.key === "Escape") {
+                    hideGiaoViecNoiDungSuggestions();
+                }
+            });
+    }
+
+    function updateGiaoViecGoiYSelection($items) {
+        $items.removeClass("active");
+        if (selectedGoiYIndexGiaoViec >= 0 && selectedGoiYIndexGiaoViec < $items.length) {
+            var $active = $items.eq(selectedGoiYIndexGiaoViec);
+            $active.addClass("active");
+            if ($active[0] && typeof $active[0].scrollIntoView === 'function') {
+                $active[0].scrollIntoView({ block: "nearest" });
+            }
+        }
+    }
+
+    function loadGiaoViecGoiYNoiDung(keyword) {
+        var url = "/GiaoViec/GetGoiYNoiDung?Keyword=" + encodeURIComponent(keyword || '') + "&Limit=10&Loai=1";
+        ajaxGet(url, function (res) {
+            var $dropdown = $("#giaoViecNoiDungSuggestions");
+            selectedGoiYIndexGiaoViec = -1;
+            if (res && res.length > 0) {
+                var html = "";
+                for (var i = 0; i < res.length; i++) {
+                    var item = res[i];
+                    var safeText = $('<div>').text(item.NoiDung).html();
+                    var encodedText = encodeURIComponent(item.NoiDung);
+                    html += `<div class="goi-y-item" data-text="${encodedText}">
+                                <span class="goi-y-text">${safeText}</span>
+                             </div>`;
+                }
+                $dropdown.html(html).show();
+
+                $dropdown.find(".goi-y-item").on("mousedown", function (e) {
+                    e.preventDefault();
+                    var text = decodeURIComponent($(this).data("text"));
+                    $("#GiaoViec_NoiDung").val(text).trigger("change");
+                    hideGiaoViecNoiDungSuggestions();
+                });
+            } else {
+                hideGiaoViecNoiDungSuggestions();
+            }
+        });
+    }
+
+    function hideGiaoViecNoiDungSuggestions() {
+        $("#giaoViecNoiDungSuggestions").hide();
+        selectedGoiYIndexGiaoViec = -1;
+    }
+
+    function openGiaoViecFormModal(id, initialData) {
+        resetGiaoViecForm();
+        initGiaoViecNoiDungAutocomplete();
+        if (id && id > 0) {
+            $("#giaoViecFormModalTitle").html("<b>Cập nhật công việc đã giao</b>");
+            $("#btnGiaoViecSaveText").text("Cập nhật");
+            showLoadingModal();
+            ajaxGet("/GiaoViec/GetById?id=" + id, function (res) {
+                hideLoadingModal();
+                if (res && res.Item) {
+                    var item = res.Item;
+                    $("#GiaoViec_Id").val(item.Id);
+                    $("#GiaoViec_IofficeNumber").val(item.IofficeNumber || '');
+                    $("#GiaoViec_VanBanId").val(item.VanBanId || '');
+                    $("#GiaoViec_TenCongViec").val(item.TenCongViec || '');
+                    $("#GiaoViec_NoiDung").val(item.NoiDung || '');
+                    $("#GhiChu").val(item.GhiChu || '');
+
+                    if (item.GiaoViecFiles && item.GiaoViecFiles.length > 0) {
+                        TaiLieuDinhKemDatas = item.GiaoViecFiles.map(function (f) {
+                            return {
+                                Id: f.Id,
+                                TenFile: f.TenFile,
+                                DuongDan: f.DuongDan,
+                                IsUpload: true
+                            };
+                        });
+                        renderTaiLieuDinhKemTable();
+                    }
+
+                    if (typeof setVanBanLienQuan === 'function' && item.GiaoViecVanBanLienQuans) {
+                        setVanBanLienQuan(item.GiaoViecVanBanLienQuans);
+                    }
+                    if (typeof setThanhVienNhanViec === 'function' && item.GiaoViecThanhViens) {
+                        setThanhVienNhanViec(item.GiaoViecThanhViens);
+                    }
+
+                    $("#giaoViecFormModal").modal("show");
+                }
+            }, function () {
+                hideLoadingModal();
+                toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+            });
+        } else {
+            $("#giaoViecFormModalTitle").html("<b>Tạo việc</b>");
+            $("#btnGiaoViecSaveText").text("Tạo việc");
+            if (initialData) {
+                $("#GiaoViec_IofficeNumber").val(initialData.IofficeNumber || '');
+                $("#GiaoViec_VanBanId").val(initialData.VanBanId || '');
+                $("#GiaoViec_TenCongViec").val(initialData.TenCongViec || '');
+                $("#GiaoViec_NoiDung").val(initialData.NoiDung || '');
+                $("#GhiChu").val(initialData.GhiChu || '');
+
+                if (initialData.VanBanId && initialData.VanBanId.toString().trim() !== '') {
+                    loadIofficeFiles(initialData.VanBanId.toString().trim());
+                }
+            }
+            $("#giaoViecFormModal").modal("show");
+        }
+    }
+
+    function loadIofficeFiles(vanBanId) {
+        if (!vanBanId) return;
+        showLoadingModal();
+        ajaxGet("/GiaoViec/GetFileAttachFromIoffice?vanBanId=" + encodeURIComponent(vanBanId), function (res) {
+            hideLoadingModal();
+            if (res && res.data && res.data.length > 0) {
+                if (typeof addIofficeFilesToTaiLieuDinhKem === 'function') {
+                    addIofficeFilesToTaiLieuDinhKem(res.data);
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Không thể lấy danh sách file đính kèm từ iOffice.");
+        });
+    }
+
+    function saveGiaoViecForm() {
+        showLoadingModal();
+        var fd = new FormData();
+        fd.append("Id", $("#GiaoViec_Id").val());
+        fd.append("TenCongViec", $("#GiaoViec_TenCongViec").val());
+        fd.append("NoiDung", $("#GiaoViec_NoiDung").val());
+        fd.append("GhiChu", $("#GhiChu").val());
+        fd.append("IofficeNumber", $("#GiaoViec_IofficeNumber").val());
+        fd.append("VanBanId", $("#GiaoViec_VanBanId").val());
+
+        if (typeof getSelectedVanBanFromDOM !== 'undefined') {
+            var selectedVanBanList = getSelectedVanBanFromDOM();
+            var vanBanIds = selectedVanBanList.map(function(vb) { return vb.Id; });
+            fd.append("VanBanLienQuanIds", vanBanIds.join(","));
+        }
+
+        if (typeof TaiLieuDinhKemDatas !== 'undefined') {
+            let listIds = TaiLieuDinhKemDatas.map(function(x) { return x.Id; });
+            fd.append("TaiLieuDinhKemIds", listIds.join(','));
+            let iofficeFiles = [];
+            for (let i = 0; i < TaiLieuDinhKemDatas.length; i++) {
+                let item = TaiLieuDinhKemDatas[i];
+                if (item.IsIofficeFile && item.IofficeFileId) {
+                    iofficeFiles.push({
+                        FileId: item.IofficeFileId.toString(),
+                        FileName: item.TenFile
+                    });
+                } else if (item.IsUpload == false && item.File) {
+                    fd.append("FileDinhKems", item.File, item.TenFile || item.File.name);
+                }
+            }
+            if (iofficeFiles.length > 0) {
+                fd.append("IofficeFileStr", JSON.stringify(iofficeFiles));
+            }
+        }
+
+        if (typeof getThongTinNhanViecArray === 'function') {
+            fd.append("ThanhVienStr", JSON.stringify(getThongTinNhanViecArray()));
+        } else {
+            var arr = [];
+            $('#thongTinNhanViec tr[data-user-id]').each(function () {
+                var userId = $(this).data('user-id');
+                var tenNhanVien = $(this).find('td:first').text().trim();
+                var noiDungNhiemVu = $(this).find('.noi-dung-nhiem-vu').val() || '';
+                var hanXuLy = $(this).find('.han-xu-ly').val() || '';
+                var vaiTroXuLyId = $(this).find('.vai-tro-xu-ly').val() || '';
+                var vaiTroXuLyIdValue = vaiTroXuLyId ? parseInt(vaiTroXuLyId) : null;
+                arr.push({
+                    ThanhVienId: userId,
+                    ThanhVien: tenNhanVien,
+                    NoiDungNhiemVu: noiDungNhiemVu,
+                    HanXuLyStr: hanXuLy,
+                    VaiTroXuLyId: vaiTroXuLyIdValue
+                });
+            });
+            fd.append("ThanhVienStr", JSON.stringify(arr));
+        }
+
+        ajaxPostFormData("/GiaoViec/ThemOrCapNhat", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function(item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu thành công.");
+                $("#giaoViecFormModal").modal("hide");
+                if (typeof search === 'function') {
+                    search();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        initGiaoViecNoiDungAutocomplete();
+
+        $(document).on("click", function (e) {
+            if (!$(e.target).closest("#GiaoViec_NoiDung, #giaoViecNoiDungSuggestions").length) {
+                hideGiaoViecNoiDungSuggestions();
+            }
+        });
+
+        $('#giaoViecFormModal').on('hidden.bs.modal', function () {
+            hideGiaoViecNoiDungSuggestions();
+            resetGiaoViecForm();
+        });
+    });
+</script>

@@ -1,0 +1,22 @@
+CREATE TABLE DonViDoan (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Ten NVARCHAR(200) NULL,
+    TenTrim NVARCHAR(200) NULL,
+    IsDeleted BIT NULL,
+    PRIMARY KEY (Id)
+);
+
+CREATE TABLE DoanVien (
+    Id INT IDENTITY(1,1) NOT NULL,
+    HoTen NVARCHAR(200) NULL,
+    TenTrim NVARCHAR(200) NULL,
+    ChucVu NVARCHAR(1000) NULL,
+    GhiChu NVARCHAR(2000) NULL,
+    DonViDoanId INT NULL,
+    ThoiGianDiemDanh DATETIME NULL,
+    IsDeleted BIT NULL,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20251210170159');
+

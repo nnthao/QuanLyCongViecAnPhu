@@ -1,0 +1,38 @@
+﻿@media only screen and (max-width: 768px) {
+    .btn-add-mb {
+        margin-bottom: 5px !important;
+    }
+
+    .input-search-mt {
+        margin-top: 5px !important;
+    }
+
+    .dropdown-multicol2 {
+        width: unset;
+    }
+}
+
+@media (min-width:641px) { /* portrait tablets, portrait iPad, landscape e-readers, landscape 800x480 or 854x480 phones */
+
+}
+
+@media (min-width: 576px) {
+    .extend-width {
+        max-width: 700px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .max-width-90-per {
+        width: 100% !important;
+    }
+    .max-width-75-per {
+        width: 100% !important;
+    }
+    .btn {
+        margin: 5px;
+    }
+    .input-group .btn {
+        margin: unset;
+    }
+}

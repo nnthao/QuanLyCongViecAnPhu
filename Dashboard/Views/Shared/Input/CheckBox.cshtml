@@ -1,0 +1,21 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <div class="custom-control custom-checkbox">
+            <input class="custom-control-input" type="checkbox" id="@Model.Id"
+                   @(Model.IsDisabled ? "disabled" : "")
+                   @(Model.IsChecked ? "checked" : "")
+                   value="">
+
+            <label for="@Model.Id" class="custom-control-label">
+                @Model.Label
+                @if (Model.Required)
+                {
+                    <span class="text-danger" id="@Model.Id-Required">*</span>
+                }
+            </label>
+        </div>
+        <p id="@Model.ErrorId" class="text-danger m-b-0"></p>
+    </div>
+</div>

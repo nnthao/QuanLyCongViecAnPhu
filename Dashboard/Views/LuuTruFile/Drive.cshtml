@@ -1,0 +1,696 @@
+﻿@using Dashboard.Common
+@using System.Linq
+@using System.Security.Claims
+@using System.Web.Script.Serialization
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isSharedDrive = ViewBag.IsSharedDrive != null && (bool)ViewBag.IsSharedDrive;
+    var drivePageUrl = ViewBag.DrivePageUrl as string ?? "/LuuTruFile";
+    var driveApiBaseUrl = ViewBag.DriveApiBaseUrl as string ?? "/LuuTruFile";
+
+    var currentUserId = UserClaimHelper.GetCurrentUserId((ClaimsIdentity)User.Identity);
+    var phongBanCache = CacheManagerHelper.GetPhongBanCacheNotDeleted();
+    var shareUsers = CacheManagerHelper.GetListUserFromCacheNotDeleted()
+        .Where(o => o.Id != currentUserId)
+        .OrderBy(o => o.Name)
+        .Select(o => new
+        {
+            o.Id,
+            o.Name,
+            o.Email,
+            PhongBan = o.PhongBanId.HasValue
+                ? phongBanCache.FirstOrDefault(pb => pb.Id == o.PhongBanId.Value)?.Ten ?? ""
+                : ""
+        })
+        .ToList();
+    var shareUsersJson = new JavaScriptSerializer().Serialize(shareUsers);
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-12">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb" id="breadcrumb-nav"></ol>
+                                </nav>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <button id="btn-create-folder" type="button" class="btn btn-success" onclick="showCreateFolder()">
+                                    <i class="fa fa-folder"></i> Thư mục mới
+                                </button>
+                                <label id="upload-button" class="btn btn-primary mb-0 ml-2" style="display:none; cursor:pointer;">
+                                    <i class="fa fa-upload"></i> Tải lên
+                                    <input type="file" id="file-upload" class="d-none" multiple accept="@BienDungChung.FileAllowUploads" onchange="uploadFile()" />
+                                </label>
+                                <small id="upload-allow-text" class="text-muted ml-2 align-middle">Cho phép: @BienDungChung.FileAllowUploads</small>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <input type="text" id="drive-search-keyword" class="form-control" placeholder="Tìm thư mục, file trong thư mục hiện tại" />
+                                    <div class="input-group-append">
+                                        <button id="btn-search-drive" type="button" class="btn btn-primary">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tên</th>
+                                        <th>Chủ sở hữu</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Kích cỡ tệp</th>
+                                        <th>Được chia sẻ với</th>
+                                        <th style="width:280px">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="drive-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="modal-folder" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tên thư mục</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="font-weight-bold mb-2">Tên thư mục</div>
+                </div>
+                <input type="text" class="form-control" id="new-folder-name" maxlength="500" placeholder="Nhập tên thư mục" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-dismiss="modal">
+                    <i class="fa fa-times mr-1"></i> Đóng
+                </button>
+                <button type="button" class="btn btn-success ml-2" onclick="createFolderSubmit()">
+                    <i class="fa fa-plus-circle mr-1"></i> Tạo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .share-user-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .share-user-card {
+        display: block;
+        margin-bottom: 0;
+        cursor: pointer;
+    }
+
+    .share-selected-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .shared-with-cell {
+        min-width: 220px;
+        white-space: normal;
+    }
+
+    @@media (max-width: 1399.98px) {
+        .share-user-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        .share-user-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .share-user-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .share-user-grid {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<div class="modal fade" id="modal-share-folder" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chia sẻ thư mục: <span id="share-folder-name" class="text-primary"></span></h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="share-user-search" class="form-control" placeholder="Tìm người dùng theo tên, email hoặc phòng ban..." />
+                </div>
+                <div class="mb-3">
+                    <div class="font-weight-bold mb-2">Đã chọn</div>
+                    <div id="share-selected-users" class="share-selected-list border rounded p-2"></div>
+                </div>
+                <div id="share-user-list" class="border rounded p-2" style="max-height:420px; overflow-y:auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-dismiss="modal">
+                    <i class="fa fa-times mr-1"></i> Đóng
+                </button>
+                <button type="button" class="btn btn-primary ml-2" onclick="saveFolderShares()">
+                    <i class="fa fa-share-alt mr-1"></i> Lưu chia sẻ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-confirm-delete" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-delete-message" class="mb-0" style="white-space: pre-line;"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var isSharedDrive = @Html.Raw(isSharedDrive.ToString().ToLower());
+    var drivePageUrl = '@drivePageUrl';
+    var driveApiBaseUrl = '@driveApiBaseUrl';
+    var currentFolderId = null;
+    var pendingDelete = { type: null, id: null };
+    var maxUploadBytes = 200 * 1024 * 1024;
+    var currentDriveState = { canCreateFolder: false, canUploadFile: false, canManageCurrentFolder: false };
+    var shareUsers = @Html.Raw(shareUsersJson);
+    var currentShareFolderId = null;
+    var currentShareUserIds = [];
+    var allowedViewExtensions = ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getQueryFolderId() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('folderId') || null;
+    }
+
+    function canViewFile(filePath) {
+        if (!filePath) {
+            return false;
+        }
+
+        var extension = filePath.split('.').pop().toLowerCase();
+        return allowedViewExtensions.includes(extension);
+    }
+
+    function navigateFolder(id) {
+        if (!id) {
+            window.location.href = drivePageUrl;
+            return;
+        }
+
+        window.location.href = drivePageUrl + '?folderId=' + id;
+    }
+
+    function renderBreadcrumb(items) {
+        var $ol = $('#breadcrumb-nav');
+        $ol.empty();
+        items.forEach(function (item, idx) {
+            var $li = $('<li class="breadcrumb-item"></li>');
+            if (idx === items.length - 1) {
+                $li.addClass('active').text(item.Name);
+            } else {
+                var $a = $('<a href="#"></a>').text(item.Name);
+                $a.on('click', function (e) {
+                    e.preventDefault();
+                    navigateFolder(item.Id);
+                });
+                $li.append($a);
+            }
+            $ol.append($li);
+        });
+    }
+
+    function renderTable(folders, files) {
+        var $body = $('#drive-body');
+        $body.empty();
+
+        function createSharedWithCell(sharedWithNames, emptyText) {
+            var $cell = $('<td class="shared-with-cell"></td>');
+            if (!sharedWithNames) {
+                $cell.html(emptyText ? '<span class="text-muted">' + emptyText + '</span>' : '');
+                return $cell;
+            }
+
+            $cell.text(sharedWithNames);
+            return $cell;
+        }
+
+        folders.forEach(function (folder) {
+            var nameHtml = '<i class="fa fa-folder text-warning mr-1"></i>' + escapeHtml(folder.Name);
+            if (folder.IsShared) {
+                nameHtml += ' <span class="badge badge-info ml-1">Được chia sẻ</span>';
+            }
+
+            var $tr = $('<tr></tr>');
+            $tr.append($('<td></td>').append(
+                $('<a href="#"></a>')
+                    .html(nameHtml)
+                    .on('click', function (e) {
+                        e.preventDefault();
+                        navigateFolder(folder.Id);
+                    })
+            ));
+            $tr.append($('<td></td>').text(folder.OwnerName || ''));
+            $tr.append($('<td></td>').text(folder.CreatedAtStr || ''));
+            $tr.append($('<td></td>').text(''));
+            $tr.append(createSharedWithCell(folder.SharedWithNames || '', 'Chưa chia sẻ'));
+
+            var $actions = $('<td></td>');
+            if (folder.CanShare) {
+                $actions.append($('<button type="button" class="btn btn-info btn-sm mr-1"></button>')
+                    .html('<i class="fa fa-share-alt"></i> Chia sẻ')
+                    .attr('data-share-folder-id', folder.Id)
+                    .attr('data-share-folder-name', folder.Name || ''));
+            }
+            if (folder.CanDelete) {
+                $actions.append($('<button type="button" class="btn btn-danger btn-sm"></button>')
+                    .html('<i class="fa fa-trash"></i> Xóa')
+                    .attr('data-folder-id', folder.Id)
+                    .attr('data-folder-name', folder.Name || ''));
+            }
+            if ($actions.children().length === 0) {
+                $actions.html('<span class="text-muted">Chỉ xem</span>');
+            }
+
+            $tr.append($actions);
+            $body.append($tr);
+        });
+
+        files.forEach(function (file) {
+            var $tr = $('<tr></tr>');
+            $tr.append($('<td></td>').text(file.FileName || ''));
+            $tr.append($('<td></td>').text(file.OwnerName || ''));
+            $tr.append($('<td></td>').text(file.UploadDateStr || ''));
+            $tr.append($('<td></td>').text(file.FileSizeStr || ''));
+            $tr.append(createSharedWithCell('', ''));
+
+            var $actions = $('<td></td>');
+            if (canViewFile(file.DuongDan)) {
+                $actions.append($('<button type="button" class="btn btn-info btn-sm mr-1"></button>')
+                    .html('<i class="fa fa-eye"></i> Xem')
+                    .attr('data-view-file-path', file.DuongDan || '')
+                    .attr('data-view-file-name', file.FileName || ''));
+            }
+            if (file.CanCopyLink) {
+                $actions.append($('<button type="button" class="btn btn-secondary btn-sm mr-1"></button>')
+                    .html('<i class="fa fa-link"></i> Sao chép link')
+                    .attr('data-copy-file-id', file.Id));
+            }
+            if (file.CanDownload) {
+                $actions.append($('<a class="btn btn-sm btn-info mr-1"></a>')
+                    .attr('href', driveApiBaseUrl + '/DownloadFile?id=' + file.Id)
+                    .html('<i class="fa fa-download"></i> Tải'));
+            }
+            if (file.CanDelete) {
+                $actions.append($('<button type="button" class="btn btn-danger btn-sm"></button>')
+                    .html('<i class="fa fa-trash"></i> Xóa')
+                    .attr('data-file-id', file.Id)
+                    .attr('data-file-name', file.FileName || ''));
+            }
+            if ($actions.children().length === 0) {
+                $actions.html('<span class="text-muted">Chỉ xem</span>');
+            }
+
+            $tr.append($actions);
+            $body.append($tr);
+        });
+    }
+
+    function toggleDriveControls() {
+        $('#btn-create-folder').toggle(!!currentDriveState.canCreateFolder);
+        $('#upload-button').toggle(!!currentDriveState.canUploadFile);
+        $('#upload-allow-text').toggle(!!currentDriveState.canUploadFile);
+    }
+
+    function getSearchKeyword() {
+        return ($('#drive-search-keyword').val() || '').trim();
+    }
+
+    function loadDrive() {
+        currentFolderId = getQueryFolderId();
+        var searchKeyword = getSearchKeyword();
+        var queryString = '?folderId=' + encodeURIComponent(currentFolderId || '');
+        queryString += '&searchKeyword=' + encodeURIComponent(searchKeyword);
+        ajaxGet(driveApiBaseUrl + '/GetDriveList' + queryString, function (res) {
+            currentDriveState = {
+                canCreateFolder: !!res.CanCreateFolder,
+                canUploadFile: !!res.CanUploadFile,
+                canManageCurrentFolder: !!res.CanManageCurrentFolder
+            };
+
+            toggleDriveControls();
+            renderBreadcrumb(res.Breadcrumbs || []);
+            renderTable(res.Folders || [], res.Files || []);
+        }, function () {
+            toastr.error('Không tải được danh sách Drive.');
+        });
+    }
+
+    function showCreateFolder() {
+        $('#new-folder-name').val('');
+        $('#modal-folder').modal('show');
+    }
+
+    function createFolderSubmit() {
+        $.post('/LuuTruFile/CreateFolder', { parentFolderId: currentFolderId, name: $('#new-folder-name').val() }, function (res) {
+            if (res.ok) {
+                $('#modal-folder').modal('hide');
+                loadDrive();
+                toastr.success('Đã tạo thư mục.');
+            } else {
+                toastr.error(res.message || 'Không tạo được thư mục.');
+            }
+        });
+    }
+
+    function uploadFile() {
+        if (!currentDriveState.canUploadFile) {
+            toastr.error('Bạn không có quyền tải file vào thư mục này.');
+            $('#file-upload').val('');
+            return;
+        }
+
+        var input = document.getElementById('file-upload');
+        if (!input.files || !input.files.length) {
+            return;
+        }
+
+        var files = Array.prototype.slice.call(input.files);
+        var uploadUrl = '/LuuTruFile/UploadFile' + (currentFolderId ? '?folderId=' + currentFolderId : '');
+        var okCount = 0;
+        var failMessages = [];
+        var queue = files.filter(function (file) {
+            if (file.size > maxUploadBytes) {
+                failMessages.push(file.name + ': vượt quá 200MB');
+                return false;
+            }
+            return true;
+        });
+
+        if (queue.length === 0) {
+            input.value = '';
+            toastr.error(failMessages.join('. ') || 'Không có file hợp lệ.');
+            return;
+        }
+
+        showLoadingModal();
+        var idx = 0;
+
+        function uploadNext() {
+            if (idx >= queue.length) {
+                hideLoadingModal();
+                input.value = '';
+                loadDrive();
+                if (failMessages.length === 0) {
+                    toastr.success('Đã tải lên ' + okCount + ' file.');
+                } else if (okCount > 0) {
+                    toastr.warning('Thành công ' + okCount + ' file. ' + failMessages.join(' '));
+                } else {
+                    toastr.error(failMessages.join(' '));
+                }
+                return;
+            }
+
+            var file = queue[idx++];
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: uploadUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    if (res.ok) {
+                        okCount++;
+                    } else {
+                        failMessages.push(file.name + ': ' + (res.message || 'tải lên thất bại'));
+                    }
+                    uploadNext();
+                },
+                error: function () {
+                    failMessages.push(file.name + ': lỗi mạng');
+                    uploadNext();
+                }
+            });
+            html.push('</div>');
+        }
+
+        uploadNext();
+    }
+
+    function openShareFolder(folderId, folderName) {
+        currentShareFolderId = folderId;
+        currentShareUserIds = [];
+        $('#share-folder-name').text(folderName || '');
+        $('#share-user-search').val('');
+
+        $.get('/LuuTruFile/GetFolderShareUsers', { id: folderId }, function (res) {
+            if (!res || !res.ok) {
+                toastr.error(res && res.message ? res.message : 'Không lấy được danh sách chia sẻ.');
+                return;
+            }
+
+            currentShareUserIds = (res.userIds || []).map(function (x) { return Number(x); });
+            renderSelectedShareUsers();
+            renderShareUserList('');
+            $('#modal-share-folder').modal('show');
+        });
+    }
+
+    function renderSelectedShareUsers() {
+        var selectedUsers = shareUsers.filter(function (user) {
+            return currentShareUserIds.indexOf(Number(user.Id)) >= 0;
+        });
+
+        if (selectedUsers.length === 0) {
+            $('#share-selected-users').html('<span class="text-muted">Chưa chọn người dùng nào.</span>');
+            return;
+        }
+
+        var html = selectedUsers.map(function (user) {
+            return '<span class="badge badge-primary px-3 py-2">' +
+                '<span>' + escapeHtml(user.Name || '') + '</span>' +
+                '<button type="button" class="btn btn-link btn-sm text-white p-0 ml-2 align-baseline" data-remove-share-user-id="' + user.Id + '">' +
+                    '<i class="fa fa-times"></i>' +
+                '</button>' +
+            '</span>';
+        });
+
+        $('#share-selected-users').html(html.join(''));
+    }
+
+    function renderShareUserList(keyword) {
+        var normalized = (keyword || '').toLowerCase().trim();
+        var items = shareUsers.filter(function (user) {
+            if (!normalized) {
+                return true;
+            }
+
+            var searchText = (user.Name || '') + ' ' + (user.Email || '') + ' ' + (user.PhongBan || '');
+            return searchText.toLowerCase().indexOf(normalized) >= 0;
+        });
+
+        var html = [];
+        if (items.length === 0) {
+            html.push('<div class="text-muted p-2">Không tìm thấy người dùng phù hợp.</div>');
+        } else {
+            html.push('<div class="share-user-grid">');
+            items.forEach(function (user) {
+                var checked = currentShareUserIds.indexOf(Number(user.Id)) >= 0 ? 'checked' : '';
+                html.push(
+                    '<label class="share-user-card border rounded px-3 py-2" style="cursor:pointer;">' +
+                        '<input type="checkbox" class="share-user-checkbox mt-1 mr-2" value="' + user.Id + '" ' + checked + ' />' +
+                        '<span>' +
+                            '<span class="font-weight-bold d-block">' + escapeHtml(user.Name || '') + '</span>' +
+                            '<small class="text-muted d-block">' + escapeHtml(user.Email || '') + '</small>' +
+                            '<small class="text-info d-block">' + escapeHtml(user.PhongBan || '') + '</small>' +
+                        '</span>' +
+                    '</label>'
+                );
+            });
+        }
+
+        $('#share-user-list').html(html.join(''));
+    }
+
+    function saveFolderShares() {
+        $.post('/LuuTruFile/UpdateFolderShares', { id: currentShareFolderId, userIds: currentShareUserIds }, function (res) {
+            if (res && res.ok) {
+                $('#modal-share-folder').modal('hide');
+                toastr.success(res.message || 'Đã cập nhật chia sẻ thư mục.');
+            } else {
+                toastr.error(res && res.message ? res.message : 'Không cập nhật được chia sẻ thư mục.');
+            }
+        });
+    }
+
+    function openConfirmDeleteFolder(folderId, folderName) {
+        pendingDelete = { type: 'folder', id: folderId };
+        $('#confirm-delete-message').text('Bạn có chắc muốn xóa thư mục "' + (folderName || '') + '"?\n\nThao tác này sẽ xóa toàn bộ file và thư mục con bên trong.');
+        $('#modal-confirm-delete').modal('show');
+    }
+
+    function openConfirmDeleteFile(fileId, fileName) {
+        pendingDelete = { type: 'file', id: fileId };
+        $('#confirm-delete-message').text('Bạn có chắc muốn xóa file "' + (fileName || '') + '"?');
+        $('#modal-confirm-delete').modal('show');
+    }
+
+    $(document).on('click', 'button[data-folder-id]', function () {
+        openConfirmDeleteFolder($(this).attr('data-folder-id'), $(this).attr('data-folder-name'));
+    });
+
+    $(document).on('click', 'button[data-share-folder-id]', function () {
+        openShareFolder($(this).attr('data-share-folder-id'), $(this).attr('data-share-folder-name'));
+    });
+
+    $(document).on('click', 'button[data-file-id]', function () {
+        openConfirmDeleteFile($(this).attr('data-file-id'), $(this).attr('data-file-name'));
+    });
+
+    $(document).on('click', 'button[data-copy-file-id]', function () {
+        $.post('/LuuTruFile/CreatePublicLinkForFile', { id: $(this).data('copy-file-id') }, function (res) {
+            if (!res || !res.ok || !res.publicUrl) {
+                toastr.error('Không tạo được link.');
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(res.publicUrl).then(function () {
+                    toastr.success('Đã sao chép link file.');
+                }).catch(function () {
+                    toastr.error('Không sao chép được link.');
+                });
+            } else {
+                toastr.error('Trình duyệt không hỗ trợ sao chép tự động.');
+            }
+        });
+    });
+
+    $(document).on('click', 'button[data-view-file-path]', function () {
+        openViewFileModal($(this).attr('data-view-file-path'), $(this).attr('data-view-file-name'));
+    });
+
+    $(document).on('change', '.share-user-checkbox', function () {
+        var userId = Number($(this).val());
+        if ($(this).is(':checked')) {
+            if (currentShareUserIds.indexOf(userId) < 0) {
+                currentShareUserIds.push(userId);
+            }
+            renderSelectedShareUsers();
+            return;
+        }
+
+        currentShareUserIds = currentShareUserIds.filter(function (id) {
+            return id !== userId;
+        });
+        renderSelectedShareUsers();
+    });
+
+    $(document).on('click', 'button[data-remove-share-user-id]', function () {
+        var userId = Number($(this).attr('data-remove-share-user-id'));
+        currentShareUserIds = currentShareUserIds.filter(function (id) {
+            return id !== userId;
+        });
+        renderSelectedShareUsers();
+        renderShareUserList($('#share-user-search').val());
+    });
+
+    $('#share-user-search').on('input', function () {
+        renderShareUserList($(this).val());
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDrive();
+        document.getElementById('btn-search-drive').addEventListener('click', function () {
+            loadDrive();
+        });
+        document.getElementById('drive-search-keyword').addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter') {
+                return;
+            }
+
+            event.preventDefault();
+            loadDrive();
+        });
+    });
+
+    $('#btn-confirm-delete').on('click', function () {
+        if (!pendingDelete.type || !pendingDelete.id) {
+            $('#modal-confirm-delete').modal('hide');
+            return;
+        }
+
+        var url = pendingDelete.type === 'folder' ? '/LuuTruFile/DeleteFolder' : '/LuuTruFile/DeleteFile';
+        $.post(url, { id: pendingDelete.id }, function (res) {
+            $('#modal-confirm-delete').modal('hide');
+            pendingDelete = { type: null, id: null };
+            if (res.ok) {
+                toastr.success('Đã xóa thành công.');
+                loadDrive();
+            } else {
+                toastr.error('Không xóa được.');
+            }
+        });
+    });
+
+</script>

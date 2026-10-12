@@ -1,0 +1,12 @@
+﻿@model Dashboard.Models.HtmlHelpers.Input.InputTextViewModel
+
+<div class="col-md-@Model.Col @Model.MoreClass">
+    <div class="form-group">
+        <label>
+            @Model.Label:
+        </label>
+
+        <input @Model.TextboxType class="form-control" id="@Model.Id"
+               readonly disabled="disabled">
+    </div>
+</div>

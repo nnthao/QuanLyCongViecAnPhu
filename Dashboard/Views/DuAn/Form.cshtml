@@ -1,0 +1,579 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers
+@using Dashboard.Models.HtmlHelpers.Input
+@using Dashboard.Common
+@using System.Web.Mvc
+@using System.Web.Mvc.Html
+@{
+    var action = Model != 0 ? "Cập nhật" : "Thêm";
+    ViewBag.Title = action + " dự án";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model int
+<style>
+    .bootstrap-table .no-records-found {
+        display: none !important;
+    }
+
+    #bsTaiLieuDinhKem .fixed-table-body {
+        max-height: none !important;
+        height: auto !important;
+        min-height: unset !important;
+    }
+
+    #bsTaiLieuDinhKem .fixed-table-container {
+        height: auto !important;
+    }
+
+    .clipboard-upload-zone {
+        margin-top: 10px;
+        padding: 16px;
+        border: 2px dashed #17a2b8;
+        border-radius: 6px;
+        background-color: #f4fbfd;
+        color: #0c5460;
+        text-align: center;
+        cursor: text;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .clipboard-upload-zone:focus,
+    .clipboard-upload-zone.is-active {
+        outline: none;
+        background-color: #e8f7fb;
+        border-color: #138496;
+    }
+
+    .clipboard-upload-zone.is-dragover {
+        background-color: #dff3f8;
+        border-color: #0f6f7e;
+    }
+
+    .clipboard-upload-zone .hint {
+        margin: 0;
+    }
+
+    .hang-muc-card {
+        border: 1px solid #d9e2ef;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #fafcff;
+    }
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b>@ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input id="Id" value="@Model" type="hidden" />
+                            @Html.CustomTextBox(id: "Ten", label: "Tên dự án", col: 9, required: true, length: 500, moreClass: "col-sm-12 col-xs-12")
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 col-xs-12">
+                                @Html.CustomCheckBox(id: "IsThuNghiem", label: "Thử nghiệm", col: 12, moreClass: "col-sm-12 col-xs-12 p-t-15")
+                            </div>
+                        </div>
+                        <div class="row">
+                            @Html.CustomTextArea(id: "MoTa", label: "Mô tả", col: 12, row: 3, moreClass: "col-sm-12 col-xs-12")
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12" id="nhomThanhVien">
+                                <div class="form-group">
+                                    <label>
+                                        Thành viên tham gia: <span class="text-danger">*</span>
+                                    </label>
+                                    <table class="table table-bordered table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40%;">Thành viên</th>
+                                                <th style="width: 30%;">Mức độ hỗ trợ</th>
+                                                <th style="width: 20%;">Là trưởng nhóm</th>
+                                                <th style="width: 10%;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyThanhVien">
+                                        </tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-sm btn-primary mt-2" onclick="themThanhVien()">
+                                        <i class="fa fa-plus"></i> Thêm thành viên
+                                    </button>
+                                    <span id="UserIdsError" class="text-danger m-b-0 d-block"></span>
+                                    <span id="TruongNhomIdsError" class="text-danger m-b-0 d-block"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>Hạng mục công việc cần có</b></span></div>
+                                <div id="hangMucContainer"></div>
+                                <div class="alert alert-info mt-2 mb-0">
+                                    Hạng mục công việc được cấu hình dùng chung cho tất cả dự án.
+                                    <a href="/DuAnHangMuc" class="alert-link">Mở màn hình cấu hình hạng mục</a>.
+                                </div>
+                                <span id="HangMucsError" class="text-danger m-b-0 d-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="txt-middle-line"><span><b>File đính kèm</b></span></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 col-xs-12 text-right">
+                                <label class="btn btn-primary m-b-0" for="TaiLieuDinhKemUpload">
+                                    <input id="TaiLieuDinhKemUpload" type="file" class="d-none" multiple accept="@BienDungChung.AllowedFileExtensions">
+                                    <i class="fa fa-upload"></i> Thêm file đính kèm
+                                </label>
+                                <p id="TaiLieuDinhKemError" class="text-danger m-b-0"></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 col-xs-12">
+                                <div id="ClipboardUploadZone" class="clipboard-upload-zone" contenteditable="true" tabindex="0">
+                                    <p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 p-t-15 tb-height-auto">
+                                <table id="bsTaiLieuDinhKem" data-locale="vi-VN">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th data-field="TenFile" data-formatter="tenFileFormat">File</th>
+                                            <th data-width="200" data-align="center" data-field="operate" data-formatter="actionTaiLieuDinhKem">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="modal-footer text-center d-block">
+                                    <button id="btn-loading" type="button" class="btn btn-default invisible" data-dismiss="modal">
+                                        <img src="~/Content/img/loading.gif" height="25" />
+                                    </button>
+                                    <a class="btn btn-light mr-2" href="/DuAn"><i class="fa fa-chevron-left"></i> Quay lại</a>
+                                    <button onclick="addOrUpdate()" class="btn btn-success"><i class="fa fa-save"></i> @action</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    var currentId = @Model;
+    const textFields = ["Id", "Ten", "MoTa"];
+    const selectFields = [];
+    const radioFields = [];
+    const checkBoxFields = ["IsThuNghiem"];
+    const select2MultiFields = [];
+
+    var allUserData = [];
+    var TaiLieuDinhKemDatas = [];
+    var HangMucDatas = [];
+
+    function renderTaiLieuDinhKemTable() {
+        $("#bsTaiLieuDinhKem").bootstrapTable("destroy");
+        $("#bsTaiLieuDinhKem").bootstrapTable({ data: TaiLieuDinhKemDatas });
+    }
+
+    function renderHangMucList() {
+        var html = "";
+
+        if (HangMucDatas.length === 0) {
+            html = '<div class="text-muted">Chưa có hạng mục nào. Vui lòng thêm ít nhất một hạng mục.</div>';
+        } else {
+            HangMucDatas.forEach(function (item, index) {
+                html += '<div class="hang-muc-card">';
+                html += '    <div class="row">';
+                html += '        <div class="col-sm-2"><label>Thứ tự</label><input type="number" min="1" class="form-control" value="' + (item.ThuTu || (index + 1)) + '" onchange="capNhatHangMuc(' + index + ', \"ThuTu\", this.value)" /></div>';
+                html += '        <div class="col-sm-8"><label>Tên hạng mục <span class="text-danger">*</span></label><input type="text" maxlength="500" class="form-control" value="' + htmlEncode(item.TenHangMuc || '') + '" onchange="capNhatHangMuc(' + index + ', \"TenHangMuc\", this.value)" /></div>';
+                html += '        <div class="col-sm-2 text-right"><label>&nbsp;</label><div><button type="button" class="btn btn-sm btn-danger" onclick="xoaHangMuc(' + index + ')"><i class="fa fa-trash"></i></button></div></div>';
+                html += '    </div>';
+                html += '    <div class="row m-t-10">';
+                html += '        <div class="col-sm-12"><label>Mô tả</label><textarea class="form-control" rows="2" onchange="capNhatHangMuc(' + index + ', \"MoTa\", this.value)">' + htmlEncode(item.MoTa || '') + '</textarea></div>';
+                html += '    </div>';
+                html += '</div>';
+            });
+        }
+
+        $("#hangMucContainer").html(html);
+    }
+
+    function themHangMuc(item) {
+        HangMucDatas.push({
+            Id: item && item.Id ? item.Id : 0,
+            TenHangMuc: item && item.TenHangMuc ? item.TenHangMuc : '',
+            MoTa: item && item.MoTa ? item.MoTa : '',
+            ThuTu: item && item.ThuTu ? item.ThuTu : (HangMucDatas.length + 1)
+        });
+    }
+
+    function xoaHangMuc(index) {
+        HangMucDatas.splice(index, 1);
+        renderHangMucList();
+    }
+
+    function capNhatHangMuc(index, field, value) {
+        if (!HangMucDatas[index]) {
+            return;
+        }
+
+        HangMucDatas[index][field] = field === 'ThuTu'
+            ? (value ? parseInt(value) : null)
+            : value;
+    }
+
+    function htmlEncode(value) {
+        return $("<div />").text(value).html();
+    }
+
+    function addTaiLieuDinhKem(files) {
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        $("#TaiLieuDinhKemError").text("");
+
+        for (var i = 0; i < files.length; i++) {
+            TaiLieuDinhKemDatas.unshift({
+                "Id": (taoChuoiThoiGian() + i) * -1,
+                "TenFile": files[i].name,
+                "File": files[i],
+                "IsUpload": false
+            });
+        }
+
+        renderTaiLieuDinhKemTable();
+    }
+
+    function getClipboardImageExtension(mimeType) {
+        if (!mimeType) {
+            return "png";
+        }
+
+        var mimeParts = mimeType.split("/");
+        if (mimeParts.length < 2) {
+            return "png";
+        }
+
+        return mimeParts[1].replace("jpeg", "jpg");
+    }
+
+    function resetClipboardUploadZone() {
+        $("#ClipboardUploadZone").html('<p class="hint"><i class="fa fa-clipboard"></i> Click vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh hoặc kéo thả file từ Windows vào đây</p>');
+    }
+
+    $(document).ready(function () {
+        renderTaiLieuDinhKemTable();
+
+        $("#TaiLieuDinhKemUpload").change(function () {
+            let input = this;
+            if (input.files && input.files.length > 0) {
+                addTaiLieuDinhKem(input.files);
+            }
+
+            $(this).val('');
+        });
+
+        $("#ClipboardUploadZone")
+            .on("focus", function () {
+                $(this).addClass("is-active");
+            })
+            .on("blur", function () {
+                $(this).removeClass("is-active");
+                resetClipboardUploadZone();
+            })
+            .on("dragenter dragover", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass("is-dragover");
+            })
+            .on("dragleave", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass("is-dragover");
+            })
+            .on("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass("is-dragover");
+
+                let dropEvent = e.originalEvent || e;
+                let files = dropEvent.dataTransfer ? dropEvent.dataTransfer.files : null;
+
+                resetClipboardUploadZone();
+
+                if (!files || files.length === 0) {
+                    $("#TaiLieuDinhKemError").text("Không có file nào được kéo thả.");
+                    return;
+                }
+
+                addTaiLieuDinhKem(files);
+            })
+            .on("paste", function (e) {
+                let clipboardEvent = e.originalEvent || e;
+                let clipboardData = clipboardEvent.clipboardData;
+                let files = [];
+
+                if (!clipboardData || !clipboardData.items) {
+                    $("#TaiLieuDinhKemError").text("Trình duyệt không hỗ trợ dán ảnh từ clipboard.");
+                    return;
+                }
+
+                for (var i = 0; i < clipboardData.items.length; i++) {
+                    let item = clipboardData.items[i];
+                    if (item.kind === "file" && item.type.indexOf("image/") === 0) {
+                        let blob = item.getAsFile();
+                        if (blob) {
+                            let extension = getClipboardImageExtension(blob.type);
+                            let fileName = "clipboard-image-" + taoChuoiThoiGian() + "-" + i + "." + extension;
+                            files.push(new File([blob], fileName, { type: blob.type }));
+                        }
+                    }
+                }
+
+                e.preventDefault();
+                resetClipboardUploadZone();
+
+                if (files.length === 0) {
+                    $("#TaiLieuDinhKemError").text("Clipboard hiện không có ảnh để dán.");
+                    return;
+                }
+
+                addTaiLieuDinhKem(files);
+            });
+    });
+
+    function actionTaiLieuDinhKem(value, row, index) {
+        let deleteBtn = `<button onclick="xoaTaiLieuDinhKem(${row.Id}, ${row.IsUpload})" class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i></button>`;
+        return deleteBtn;
+    }
+
+    function xoaTaiLieuDinhKem(id, isUpload) {
+        if (confirm("Bạn có muốn xóa tài liệu này?") == true) {
+            var index = TaiLieuDinhKemDatas.findIndex(x => x.Id === id);
+
+            if (index >= 0) {
+                TaiLieuDinhKemDatas.splice(index, 1);
+            }
+
+            renderTaiLieuDinhKemTable();
+        }
+    }
+
+    function themThanhVien() {
+        var rowIndex = $("#tbodyThanhVien tr").length;
+        var row = $('<tr data-row-index="' + rowIndex + '">');
+        
+        var selectUserHtml = '<select class="form-control thanhVienSelect" data-row-index="' + rowIndex + '" style="width: 100%;">';
+        selectUserHtml += '<option value="">--- Chọn thành viên ---</option>';
+        allUserData.forEach(function(user) {
+            selectUserHtml += `<option value="${user.id}">${user.text}</option>`;
+        });
+        selectUserHtml += '</select>';
+        
+        var selectMucDoHtml = '<select class="form-control mucDoHoTroSelect" data-row-index="' + rowIndex + '">';
+        selectMucDoHtml += '<option value="0">--- Chọn mức độ ---</option>';
+        for (var i = 1; i <= 5; i++) {
+            selectMucDoHtml += `<option value="${i}">${i}</option>`;
+        }
+        selectMucDoHtml += '</select>';
+        
+        var radioHtml = '<input type="radio" name="truongNhomRadio" class="truongNhomRadio" data-row-index="' + rowIndex + '" value="1">';
+        
+        row.append($('<td>').html(selectUserHtml));
+        row.append($('<td>').html(selectMucDoHtml));
+        row.append($('<td class="text-center">').html(radioHtml));
+        row.append($('<td class="text-center">').html('<button type="button" class="btn btn-sm btn-danger" onclick="xoaThanhVien(this)"><i class="fa fa-trash"></i></button>'));
+        
+        $("#tbodyThanhVien").append(row);
+        
+        $(".thanhVienSelect[data-row-index='" + rowIndex + "']").select2({
+            data: allUserData,
+            language: "vi"
+        });
+    }
+
+    function xoaThanhVien(btn) {
+        $(btn).closest('tr').remove();
+    }
+
+    function loadData() {
+        showLoadingModal();
+        ajaxGet("/DuAn/GetById?id=" + @Model, function funcCallback(res) {
+            hideLoadingModal();
+
+            if (res.User && res.User.Data && res.User.Data.length > 0) {
+                allUserData = res.User.Data;
+            }
+
+            if (res.Item) {
+                setTimeout(function () {
+                    FormHelper.setValueForUpdate(res.Item, textFields, selectFields, radioFields, checkBoxFields);
+
+                    if (res.Item.DuAnFiles && res.Item.DuAnFiles.length > 0) {
+                        TaiLieuDinhKemDatas = res.Item.DuAnFiles.map(function (f) {
+                            return {
+                                Id: f.Id,
+                                TenFile: f.TenFile,
+                                DuongDan: f.DuongDan,
+                                IsUpload: true
+                            };
+                        });
+                        renderTaiLieuDinhKemTable();
+                    }
+
+                    if (res.Item.DanhSachThanhVien && res.Item.DanhSachThanhVien.length > 0 && allUserData.length > 0) {
+                        res.Item.DanhSachThanhVien.forEach(function(thanhVien) {
+                            var rowIndex = $("#tbodyThanhVien tr").length;
+                            var row = $('<tr data-row-index="' + rowIndex + '">');
+                            
+                            var selectUserHtml = '<select class="form-control thanhVienSelect" data-row-index="' + rowIndex + '" style="width: 100%;">';
+                            selectUserHtml += '<option value="">--- Chọn thành viên ---</option>';
+                            allUserData.forEach(function(user) {
+                                var selected = user.id == thanhVien.UserId ? 'selected' : '';
+                                selectUserHtml += `<option value="${user.id}" ${selected}>${user.text}</option>`;
+                            });
+                            selectUserHtml += '</select>';
+                            
+                            var selectMucDoHtml = '<select class="form-control mucDoHoTroSelect" data-row-index="' + rowIndex + '">';
+                            selectMucDoHtml += '<option value="0">--- Chọn mức độ ---</option>';
+                            for (var i = 1; i <= 5; i++) {
+                                var selected = thanhVien.MucDoHoTro == i ? 'selected' : '';
+                                selectMucDoHtml += `<option value="${i}" ${selected}>${i}</option>`;
+                            }
+                            selectMucDoHtml += '</select>';
+                            
+                            var checked = thanhVien.IsTruongNhom ? 'checked' : '';
+                            var radioHtml = `<input type="radio" name="truongNhomRadio" class="truongNhomRadio" data-row-index="${rowIndex}" value="1" ${checked}>`;
+                            
+                            row.append($('<td>').html(selectUserHtml));
+                            row.append($('<td>').html(selectMucDoHtml));
+                            row.append($('<td class="text-center">').html(radioHtml));
+                            row.append($('<td class="text-center">').html('<button type="button" class="btn btn-sm btn-danger" onclick="xoaThanhVien(this)"><i class="fa fa-trash"></i></button>'));
+                            
+                            $("#tbodyThanhVien").append(row);
+                            
+                            $(".thanhVienSelect[data-row-index='" + rowIndex + "']").select2({
+                                data: allUserData,
+                                language: "vi"
+                            });
+                        });
+                    } else if (allUserData.length > 0) {
+                        // Nếu thêm mới hoặc chưa có thành viên, thêm 1 dòng trống
+                        themThanhVien();
+                    }
+
+                    HangMucDatas = res.Item.HangMucs || [];
+                    renderHangMucList();
+                }, 200);
+            } else if (allUserData.length > 0) {
+                // Nếu thêm mới, thêm 1 dòng trống
+                themThanhVien();
+            }
+
+            if (currentId == 0) {
+                HangMucDatas = [];
+                renderHangMucList();
+            }
+        }, function funcError() {
+            hideLoadingModal();
+        });
+    }
+
+    function getFormData() {
+        var fd = FormHelper.getFormData(textFields, selectFields, radioFields, checkBoxFields);
+
+        var selectedUserIds = [];
+        var selectedTruongNhomIds = [];
+        var thanhVienMucDoHoTro = [];
+
+        $("#tbodyThanhVien tr").each(function() {
+            var userId = $(this).find(".thanhVienSelect").val();
+            if (userId) {
+                selectedUserIds.push(userId);
+                
+                var mucDoHoTroValue = $(this).find(".mucDoHoTroSelect").val();
+                var mucDoHoTro = mucDoHoTroValue && mucDoHoTroValue !== '0' ? parseInt(mucDoHoTroValue) : null;
+                thanhVienMucDoHoTro.push({
+                    UserId: parseInt(userId),
+                    MucDoHoTro: mucDoHoTro
+                });
+                
+                var isTruongNhom = $(this).find(".truongNhomRadio").is(':checked');
+                if (isTruongNhom) {
+                    selectedTruongNhomIds.push(userId);
+                }
+            }
+        });
+
+        fd.append("UserIds", selectedUserIds.join(','));
+        fd.append("TruongNhomIds", selectedTruongNhomIds.join(','));
+
+        if (thanhVienMucDoHoTro.length > 0) {
+            fd.append("ThanhVienMucDoHoTroJson", JSON.stringify(thanhVienMucDoHoTro));
+        }
+
+        let listIds = TaiLieuDinhKemDatas.map(x => x.Id);
+        fd.append("TaiLieuDinhKemIds", listIds.join(','));
+
+        for (let i = 0; i < TaiLieuDinhKemDatas.length; i++) {
+            if (TaiLieuDinhKemDatas[i].IsUpload == false) {
+                fd.append("FileDinhKems", TaiLieuDinhKemDatas[i].File, TaiLieuDinhKemDatas[i].TenFile);
+            }
+        }
+
+        fd.append("HangMucsJson", JSON.stringify(HangMucDatas || []));
+
+        return fd;
+    }
+
+    function addOrUpdate() {
+        $("#UserIdsError").empty();
+        $("#TruongNhomIdsError").empty();
+        $("#HangMucsError").empty();
+
+        showLoadingModal();
+
+        ajaxPostFormData("/DuAn/ThemOrCapNhat", getFormData(), function funcCallback(data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                data.Errors.map((item) => {
+                    var errorField = item.Id || item.Name;
+                    var idError = "#" + errorField + "Error";
+                    if ($(idError).length > 0) {
+                        $(idError).text(item.Description);
+                    }
+                    return "";
+                });
+            } else {
+                window.location.href = "/DuAn";
+            }
+        }, function funcError() {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+    });
+</script>

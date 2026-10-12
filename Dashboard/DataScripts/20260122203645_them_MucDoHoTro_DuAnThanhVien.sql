@@ -1,0 +1,4 @@
+ALTER TABLE DuAnThanhVien
+ADD MucDoHoTro INT NULL;
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20260122203645');

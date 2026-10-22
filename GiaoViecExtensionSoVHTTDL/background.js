@@ -17,7 +17,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 // Hàm mở hoặc chuyển đến tab đã có của ứng dụng Giao Việc
 function openOrFocusTab(targetUrl, sendResponse) {
     const domain = GiaoViecExtensionConfig.getGiaoViecDomain();
-    let hostname = 'qlcv.vnptquangngai.vn';
+    let hostname = 'demo5.vnptquangngai.vn';
     try {
         hostname = new URL(domain).hostname;
     } catch (e) {

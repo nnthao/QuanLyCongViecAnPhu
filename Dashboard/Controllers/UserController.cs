@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using Dashboard.Common;
 using Dashboard.Models.Entities;
 using Dashboard.Models.GridVo;
@@ -353,8 +353,8 @@ namespace Dashboard.Controllers
 
                 worksheet.Cell(2, 1).Value = 1;
                 worksheet.Cell(2, 2).Value = "Nguyễn Văn A";
-                worksheet.Cell(2, 3).Value = "Sở Văn hóa Thể thao và Du lịch";
-                worksheet.Cell(2, 4).Value = "nguyenvana@quangngai.gov.vn";
+                worksheet.Cell(2, 3).Value = "VNPT Quảng Ngãi";
+                worksheet.Cell(2, 4).Value = "nguyenvana@vnpt.vn";
                 worksheet.Cell(2, 5).Value = "0912345678";
 
                 var stream = new System.IO.MemoryStream();

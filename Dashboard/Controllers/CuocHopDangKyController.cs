@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using Dashboard.AdoNetHelper;
 using Dashboard.Common;
 using Dashboard.Models.Entities;
@@ -384,7 +384,7 @@ namespace Dashboard.Controllers
             {
                 var worksheet = workbook.Worksheets.Add("LichTuan");
 
-                worksheet.Cell(1, 1).Value = "LỊCH TUẦN - Sở Văn hóa, Thể thao và Du lịch (28/09/2026-04/10/2026)";
+                worksheet.Cell(1, 1).Value = "LỊCH TUẦN - VNPT Quảng Ngãi (28/09/2026-04/10/2026)";
                 worksheet.Range(1, 1, 1, 7).Merge();
                 worksheet.Row(1).Style.Font.Bold = true;
                 worksheet.Row(1).Style.Font.FontSize = 13;
@@ -419,26 +419,26 @@ namespace Dashboard.Controllers
 
                 worksheet.Cell(5, 1).Value = "Sáng";
                 worksheet.Cell(5, 2).Value = "08:00 - 11:00";
-                worksheet.Cell(5, 3).Value = "Đón vận động viên Đinh Văn Tâm tham dự giải tại Đại hội thể thao Châu Á lần thứ 20 ASAID 20 năm 2026";
+                worksheet.Cell(5, 3).Value = "Họp triển khai công tác chuyển đổi số và ứng dụng CNTT tháng 10/2026";
                 worksheet.Cell(5, 4).Value = "";
-                worksheet.Cell(5, 5).Value = "Đ/c Nguyễn Liên Phương - PGĐ; Phòng QLVH,TTHL&TĐTT";
-                worksheet.Cell(5, 6).Value = "Sân bay Chu Lai";
+                worksheet.Cell(5, 5).Value = "Ban Giám đốc và lãnh đạo các phòng ban";
+                worksheet.Cell(5, 6).Value = "Phòng họp số 1 VNPT Quảng Ngãi";
                 worksheet.Cell(5, 7).Value = "";
 
                 worksheet.Cell(6, 1).Value = "";
                 worksheet.Cell(6, 2).Value = "09:00 - 11:00";
-                worksheet.Cell(6, 3).Value = "Dự sinh hoạt chuyên đề tháng 9/2026 chi bộ Thư viện tổng hợp";
+                worksheet.Cell(6, 3).Value = "Giao ban kỹ thuật mạng lưới";
                 worksheet.Cell(6, 4).Value = "";
-                worksheet.Cell(6, 5).Value = "Đ/c Huỳnh Thị Thu Thủy - PGĐ";
-                worksheet.Cell(6, 6).Value = "Phòng họp Thư viện Tổng hợp tỉnh Quảng Ngãi";
+                worksheet.Cell(6, 5).Value = "Phòng Kỹ thuật - Đầu tư";
+                worksheet.Cell(6, 6).Value = "Phòng họp số 2 VNPT Quảng Ngãi";
                 worksheet.Cell(6, 7).Value = "";
 
                 worksheet.Cell(7, 1).Value = "Chiều";
                 worksheet.Cell(7, 2).Value = "14:00 - 17:00";
-                worksheet.Cell(7, 3).Value = "Dự Hội nghị trực tuyến Ban Chỉ đạo Nghị quyết 57 Trung ương về chuyên đề khoa học...";
+                worksheet.Cell(7, 3).Value = "Hội nghị trực tuyến triển khai kế hoạch sản xuất kinh doanh";
                 worksheet.Cell(7, 4).Value = "";
-                worksheet.Cell(7, 5).Value = "Đ/c Phạm Thị Trung - GĐ";
-                worksheet.Cell(7, 6).Value = "Phòng họp A - Ban Thường vụ Tỉnh ủy";
+                worksheet.Cell(7, 5).Value = "Lãnh đạo đơn vị và cán bộ chủ chốt";
+                worksheet.Cell(7, 6).Value = "Phòng họp trực tuyến VNPT Quảng Ngãi";
                 worksheet.Cell(7, 7).Value = "";
 
                 worksheet.Cell(8, 1).Value = "Thứ 3, 29/09/2026";
@@ -448,10 +448,10 @@ namespace Dashboard.Controllers
 
                 worksheet.Cell(9, 1).Value = "Sáng";
                 worksheet.Cell(9, 2).Value = "08:00 - 11:00";
-                worksheet.Cell(9, 3).Value = "Họp Ban chấp hành Đảng ủy Sở, giao ban Quý III, 9 tháng đầu năm, triển khai nhiệm vụ quý IV";
-                worksheet.Cell(9, 4).Value = "Đồng chí Phạm Thị Trung, Bí thư Đảng ủy, Giám đốc Sở";
-                worksheet.Cell(9, 5).Value = "Các đ/c PGĐ; Trưởng phó các phòng, đơn vị";
-                worksheet.Cell(9, 6).Value = "Hội trường tầng 3 Sở";
+                worksheet.Cell(9, 3).Value = "Họp Đảng ủy VNPT Quảng Ngãi, giao ban Quý III, 9 tháng đầu năm, triển khai nhiệm vụ Quý IV";
+                worksheet.Cell(9, 4).Value = "Bí thư Đảng ủy, Giám đốc VNPT Quảng Ngãi";
+                worksheet.Cell(9, 5).Value = "Các đ/c Phó Giám đốc; Trưởng phó các phòng ban, trung tâm";
+                worksheet.Cell(9, 6).Value = "Hội trường tầng 3 VNPT Quảng Ngãi";
                 worksheet.Cell(9, 7).Value = "";
 
                 var allData = worksheet.Range(2, 1, 9, 7);

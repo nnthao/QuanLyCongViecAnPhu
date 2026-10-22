@@ -1,6 +1,6 @@
 (function initializeExtensionConfig(globalScope) {
     const eOfficeDomain = 'https://office.quangngai.gov.vn/';
-    const giaoViecDomain = 'https://qlcv.vnptquangngai.vn';
+    const giaoViecDomain = 'https://demo5.vnptquangngai.vn';
     const storageKeys = Object.freeze({
         authToken: 'authToken',
         autoRefresh: 'autoRefresh',

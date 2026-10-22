@@ -1,7 +1,7 @@
-{
+﻿{
   "manifest_version": 3,
-  "name": "Giao Việc Sở VHTTDL Quảng Ngãi",
-  "version": "1.0.5",
+  "name": "Giao Việc UBND Xã An Phú",
+  "version": "1.0.0",
   "description": "Extension hỗ trợ quản lý công việc từ trình duyệt",
   "permissions": [
     "storage",
@@ -10,7 +10,7 @@
   ],
   "host_permissions": [
     "https://office.quangngai.gov.vn/*",
-    "https://qlcv.vnptquangngai.vn/*"
+    "https://demo5.vnptquangngai.vn/*"
   ],
   "action": {
     "default_popup": "popup.html",

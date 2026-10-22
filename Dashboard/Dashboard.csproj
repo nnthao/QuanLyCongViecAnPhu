@@ -3811,6 +3811,7 @@
     <Content Include="DataScripts\20260927103424_them_PhongBanThamGiaCuocHop.sql" />
     <Content Include="DataScripts\20260929081656_them_NguoiThamGiaKhac.sql" />
     <Content Include="DataScripts\20260929234313_alter_TenCuocHop_nvarchar_max.sql" />
+    <Content Include="DataScripts\20261012120117_dong_bo_email_theo_ten_nguoi_dung.sql" />
     <Content Include="Views\User\ImportSoDienThoaiModal.cshtml" />
   </ItemGroup>
   <PropertyGroup>

@@ -49,6 +49,7 @@ namespace Dashboard.Controllers
                 queryParams.NguoiGiaoId = UserClaimHelper.GetCurrentUserId(identity);
             }
 
+            queryParams.TrangThaiSearch = 2; // Cố định chỉ hiển thị công việc chưa hoàn thành cho màn hình Công việc đã giao
             var data = _service.GetAll(queryParams);
             return Json(data, JsonRequestBehavior.AllowGet);
         }

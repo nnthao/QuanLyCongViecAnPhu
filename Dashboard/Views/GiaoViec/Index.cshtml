@@ -1,4 +1,4 @@
-@using Dashboard.HtmlHelpers;
+﻿@using Dashboard.HtmlHelpers;
 @using Dashboard.Models.Entities
 @using Dashboard.Models.HtmlHelpers
 @using Newtonsoft.Json
@@ -54,19 +54,9 @@
                             @Html.CustomDatePicker(id: "TuNgayStr", label: "Ngày giao từ ", col: 2, required: false)
                             @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 2, required: false)
                             @Html.CustomSelect2Empty(id: "NguoiDuocGiaoId", label: "Người được giao", col: 3, moreClass: "col-sm-3 col-xs-12")
-                            <div class="col-sm-3 col-xs-12">
+                            <div class="col-sm-5 col-xs-12">
                                 <div class="form-group">
-                                    <label for="TrangThaiSearch">Trạng thái</label>
-                                    <select id="TrangThaiSearch" class="form-control">
-                                        <option value="0">-- Chọn --</option>
-                                        <option value="1">Đã hoàn thành</option>
-                                        <option value="2" selected>Chưa hoàn thành</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-2 col-xs-12">
-                                <div class="form-group">
-                                    <label for="TrangThaiSearch" style="width:100%">&nbsp;</label>
+                                    <label for="txt-search" style="width:100%">&nbsp;</label>
                                     <div class="input-group">
                                         <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm">
                                         <div class="input-group-append">
@@ -261,7 +251,7 @@
         params.DaXoaSearch = $('#DaXoaSearch').is(":checked");
         params.TuNgayStr = $("#TuNgayStr").val();
         params.DenNgayStr = $("#DenNgayStr").val();
-        params.TrangThaiSearch = $("#TrangThaiSearch").val();
+        params.TrangThaiSearch = 2;
         params.NguoiDuocGiaoId = $("#NguoiDuocGiaoId").val();
         return params;
     };
@@ -376,7 +366,7 @@
             search();
         });
 
-        $("#TrangThaiSearch, #NguoiDuocGiaoId").change(function () {
+        $("#NguoiDuocGiaoId, #TuNgayStr, #DenNgayStr").change(function () {
             search();
         });
 

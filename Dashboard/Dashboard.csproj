@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.0\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.0\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
   <Import Project="..\packages\Microsoft.Net.Compilers.1.0.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.1.0.0\build\Microsoft.Net.Compilers.props')" />
@@ -3146,6 +3146,7 @@
     <Compile Include="Controllers\TraCuuThongTinController.cs" />
     <Compile Include="Controllers\GiaoViecController.cs" />
     <Compile Include="Controllers\GiaoViecDanhGiaController.cs" />
+    <Compile Include="Controllers\KhoNhiemVuHoanThanhController.cs" />
     <Compile Include="Controllers\GiaoViecTiViController.cs" />
     <Compile Include="AdoNetHelper\GiaoViecTiViAdoNetHelper.cs" />
     <Compile Include="Models\ViewModel\GiaoViecTiViViewModel.cs" />
@@ -3299,6 +3300,7 @@
     <Compile Include="Models\ViewModel\ChuyenGiaoViecTiepTucViewModel.cs" />
     <Compile Include="Models\ViewModel\GiaoViecGoiYNoiDungViewModel.cs" />
     <Compile Include="Models\ViewModel\GuiNhacNhoViewModel.cs" />
+    <Compile Include="Models\ViewModel\KhoNhiemVuHoanThanhViewModel.cs" />
     <Compile Include="Models\ViewModel\HisExecuteQueryPagingRequestViewModel.cs" />
     <Compile Include="Models\ViewModel\HisRequestOptionViewModel.cs" />
     <Compile Include="Models\ViewModel\HisThongTinBenhNhanFilterViewModel.cs" />
@@ -3348,6 +3350,7 @@
     <Compile Include="Repository\QuanLyThongTinTraCuuRepository.cs" />
     <Compile Include="Repository\GiaoViecRepository.cs" />
     <Compile Include="Repository\GiaoViecDanhGiaRepository.cs" />
+    <Compile Include="Repository\KhoNhiemVuHoanThanhRepository.cs" />
     <Compile Include="Repository\NhomNhanViecRepository.cs" />
     <Compile Include="Repository\DuAnRepository.cs" />
     <Compile Include="Repository\DuAnHangMucRepository.cs" />
@@ -3397,6 +3400,7 @@
     <Compile Include="Services\QuanLyThongTinTraCuuService.cs" />
     <Compile Include="Services\GiaoViecService.cs" />
     <Compile Include="Services\GiaoViecDanhGiaService.cs" />
+    <Compile Include="Services\KhoNhiemVuHoanThanhService.cs" />
     <Compile Include="Models\Validates\GiaoViecValidate.cs" />
     <Compile Include="Services\NhomNhanViecService.cs" />
     <Compile Include="Services\DuAnService.cs" />
@@ -3716,6 +3720,8 @@
     <Content Include="Views\GiaoViecCanXuLy\Index.cshtml" />
     <Content Include="Views\GiaoViecDanhGia\Index.cshtml" />
     <Content Include="Views\GiaoViecDanhGia\_ModalDanhGiaNhiemVu.cshtml" />
+    <Content Include="Views\KhoNhiemVuHoanThanh\Index.cshtml" />
+    <Content Include="Views\KhoNhiemVuHoanThanh\_ModalHuyDanhGia.cshtml" />
     <Content Include="Views\GiaoViecTuGiaoCanXuLy\Index.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\CapNhatCongViec.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\VanBanLienQuan.cshtml" />
@@ -3819,6 +3825,7 @@
     <Content Include="DataScripts\20260929234313_alter_TenCuocHop_nvarchar_max.sql" />
     <Content Include="DataScripts\20261012120117_dong_bo_email_theo_ten_nguoi_dung.sql" />
     <Content Include="DataScripts\20261104225258_them_danh_gia_nhiem_vu.sql" />
+    <Content Include="DataScripts\20261107111128_them_menu_kho_nhiem_vu_hoan_thanh.sql" />
     <Content Include="Views\User\ImportSoDienThoaiModal.cshtml" />
   </ItemGroup>
   <PropertyGroup>

@@ -207,6 +207,7 @@ namespace Dashboard.Models.Entities
         public string NgayDanhGiaStr => DateTimeHelper.ConvertDateTimeToDateTime(NgayDanhGia);
         public string TenKetQuaDanhGia => KetQuaDanhGia == (int)EnumKetQuaDanhGia.Dat ? "Đạt" : (KetQuaDanhGia == (int)EnumKetQuaDanhGia.ChuaDat ? "Chưa đạt" : "");
         public bool CanDanhGia { get; set; }
+        public bool CanHuyDanhGia { get; set; }
         public string TenNguoiTheoDoiChiDao { get; set; }
         public string NguoiTheoDoiChiDao { get; set; }
     }

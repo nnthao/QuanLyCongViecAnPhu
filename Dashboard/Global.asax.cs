@@ -145,6 +145,7 @@ namespace Dashboard
             builder.RegisterType<DanhSachCongTrinhRepository>().As<IDanhSachCongTrinhRepository>();
             builder.RegisterType<GiaoViecRepository>().As<IGiaoViecRepository>();
             builder.RegisterType<GiaoViecDanhGiaRepository>().As<IGiaoViecDanhGiaRepository>();
+            builder.RegisterType<KhoNhiemVuHoanThanhRepository>().As<IKhoNhiemVuHoanThanhRepository>();
             builder.RegisterType<GiaoViecThongKeRepository>().As<IGiaoViecThongKeRepository>();
             builder.RegisterType<DashboardRepository>().As<IDashboardRepository>();
             builder.RegisterType<LichHopThongKeRepository>().As<ILichHopThongKeRepository>();
@@ -194,6 +195,7 @@ namespace Dashboard
             builder.RegisterType<DashboardService>().As<IDashboardService>();
             builder.RegisterType<GiaoViecService>().As<IGiaoViecService>();
             builder.RegisterType<GiaoViecDanhGiaService>().As<IGiaoViecDanhGiaService>();
+            builder.RegisterType<KhoNhiemVuHoanThanhService>().As<IKhoNhiemVuHoanThanhService>();
             builder.RegisterType<GiaoViecThongKeService>().As<IGiaoViecThongKeService>();
             builder.RegisterType<CuocHopService>().As<ICuocHopService>();
             builder.RegisterType<DanhSachCongTrinhService>().As<IDanhSachCongTrinhService>();

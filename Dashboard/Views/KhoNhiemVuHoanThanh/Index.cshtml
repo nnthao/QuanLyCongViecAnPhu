@@ -1,0 +1,170 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@{
+    ViewBag.Title = "Kho nhiệm vụ đã hoàn thành";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b><i class="fa fa-archive"></i> @ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Đánh giá từ ngày", col: 2, moreClass: "col-xs-12", required: false)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 2, moreClass: "col-xs-12", required: false)
+                            @Html.CustomSelect2Empty(id: "ThanhVienId", label: "Người thực hiện", col: 3, moreClass: "col-sm-3 col-xs-12")
+                            <div class="col-sm-5 col-xs-12">
+                                <div class="form-group">
+                                    <label for="txt-search" style="width:100%">&nbsp;</label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm tên công việc, nội dung, ý kiến đánh giá...">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table-kho-hoan-thanh"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-url="/KhoNhiemVuHoanThanh/GetList"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayDanhGia"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="ThanhVien" data-formatter="thanhVienFormatter">Người thực hiện</th>
+                                            <th data-field="TenCongViec" data-formatter="tenCongViecFormatter">Tên công việc</th>
+                                            <th data-field="NguoiGiao">Người giao</th>
+                                            <th data-field="HanXuLyStr">Hạn xử lý</th>
+                                            <th data-field="NgayXacNhanHoanThanhStr">Ngày xác nhận HT</th>
+                                            <th data-field="NgayDanhGiaStr">Ngày đánh giá</th>
+                                            <th data-field="NguoiDanhGia">Người đánh giá</th>
+                                            <th data-field="YKienDanhGia" data-formatter="yKienFormatter">Ý kiến đánh giá</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/KhoNhiemVuHoanThanh/_ModalHuyDanhGia.cshtml")
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    var tableDataCache = {};
+
+    function rowAttributes(row, index) {
+        tableDataCache[row.Id] = row;
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function queryParams(params) {
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.ThanhVienId = $("#ThanhVienId").val();
+        var searchVal = $("#txt-search").val();
+        params.search = searchVal ? btoa(unescape(encodeURIComponent(searchVal))) : '';
+        return params;
+    }
+
+    function search() {
+        tableDataCache = {};
+        $("#bs-table-kho-hoan-thanh").bootstrapTable('refresh', {
+            pageNumber: 1
+        });
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            search();
+        }
+    }
+
+    function thanhVienFormatter(value, row, index) {
+        var name = value || 'N/A';
+        var vt = row.TenVaiTroXuLy ? ` <small class="text-muted">(${row.TenVaiTroXuLy})</small>` : '';
+        return `<b>${name}</b>${vt}`;
+    }
+
+    function tenCongViecFormatter(value, row, index) {
+        var ten = value || '';
+        var nd = row.NoiDungNhiemVu || row.NoiDung;
+        if (nd) {
+            return `<b>${ten}</b><br/><small class="text-muted">${nd}</small>`;
+        }
+        return `<b>${ten}</b>`;
+    }
+
+    function yKienFormatter(value, row, index) {
+        var yk = value || '';
+        var badge = `<span class="badge badge-success p-1 mb-1"><i class="fa fa-check-circle"></i> Đạt</span>`;
+        if (yk) {
+            return `${badge}<br/><small>${yk}</small>`;
+        }
+        return badge;
+    }
+
+    function openHuyDanhGiaModalFromRow(id) {
+        var row = tableDataCache[id];
+        if (row) {
+            openModalHuyDanhGia(row.Id, row.TenCongViec, row.ThanhVien, row.NguoiDanhGia, row.NgayDanhGiaStr);
+        }
+    }
+
+    function operateFormatter(value, row, index) {
+        var btnHuy = '';
+        if (row.CanHuyDanhGia) {
+            btnHuy = `<button type="button" onclick="openHuyDanhGiaModalFromRow(${row.Id})" class="btn btn-warning btn-sm m-1" title="Huỷ đánh giá để đánh giá lại"><i class="fa fa-undo"></i> Huỷ đánh giá</button>`;
+        }
+        var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId || 0})" class="btn btn-info btn-sm m-1" title="Xem chi tiết"><i class="fa fa-eye"></i> Xem thông tin</button>`;
+        return btnHuy + btnXemThongTin;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        ajaxGet("/KhoNhiemVuHoanThanh/GetNguoiThucHienLookup", function (res) {
+            var data = [{ id: '', text: '-- Chọn --' }].concat(res || []);
+            $("#ThanhVienId").select2({
+                data: data,
+                language: "vi",
+                placeholder: "-- Chọn --",
+                allowClear: true
+            });
+        }, function () {
+            toastr.error("Đã có lỗi xảy ra khi tải danh sách người thực hiện.");
+        });
+
+        $("#TuNgayStr, #DenNgayStr, #ThanhVienId").on("change", function () {
+            search();
+        });
+    });
+</script>
+

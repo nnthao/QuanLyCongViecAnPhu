@@ -158,11 +158,10 @@
                 $("#DanhGia_NoiDungBaoCao").text(it.NoiDungBaoCaoCuoi || '(Không có nội dung báo cáo)');
 
                 if (it.FilesBaoCaoCuoi && it.FilesBaoCaoCuoi.length > 0) {
-                    var filesHtml = '<ul class="list-unstyled mb-0">';
+                    var filesHtml = '';
                     it.FilesBaoCaoCuoi.forEach(function (f) {
-                        filesHtml += `<li class="mb-1"><i class="fa fa-paperclip text-muted mr-1"></i> <a href="${f.DuongDan}" target="_blank" download>${f.TenFile}</a></li>`;
+                        filesHtml += renderModalFileItem(f.DuongDan, f.TenFile);
                     });
-                    filesHtml += '</ul>';
                     $("#DanhGia_ListFiles").html(filesHtml);
                 } else {
                     $("#DanhGia_ListFiles").html('<span class="text-muted font-italic">Không có file đính kèm</span>');

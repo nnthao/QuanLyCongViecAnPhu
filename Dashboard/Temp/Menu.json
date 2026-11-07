@@ -44,7 +44,8 @@
                             "GiaoViecThongKe",
                             "GiaoViecThongKe2",
                             "ThongKeCongViecTheoCaNhanSoLuong",
-                            "GiaoViecDanhGia"
+                            "GiaoViecDanhGia",
+                            "KhoNhiemVuHoanThanh"
                         ]
     },
     {
@@ -70,6 +71,11 @@
                           "Ten":  "Đánh giá nhiệm vụ",
                           "Url":  "/GiaoViecDanhGia",
                           "SpanCount":  "GiaoViecDanhGiaCount"
+                      },
+                      {
+                          "Key":  "KhoNhiemVuHoanThanh",
+                          "Ten":  "Kho nhiệm vụ đã hoàn thành",
+                          "Url":  "/KhoNhiemVuHoanThanh"
                       },
                       {
                           "Key":  "GiaoViecDaChuyenGiao",

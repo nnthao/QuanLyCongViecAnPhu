@@ -1,0 +1,10 @@
+CREATE TABLE GiaoViecLichSu (
+    Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    GiaoViecId INT NOT NULL,
+    GiaoViecThanhVienId INT NULL,
+    NguoiThucHienId INT NULL,
+    HanhDong NVARCHAR(100) NOT NULL,
+    NoiDung NVARCHAR(MAX) NULL,
+    NgayTao DATETIME NOT NULL
+);
+INSERT INTO DatabaseVersion(Name) VALUES(N'20261107213259');

@@ -1,4 +1,4 @@
-<style>
+﻿<style>
     #xemThongTinThanhVienModal .hanXuLy label {
         font-weight: bold !important;
         color: red;
@@ -26,7 +26,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="xemThongTinThanhVienModalLabel">Thông tin công việc thành viên</h5>
+                <h5 class="modal-title" id="xemThongTinThanhVienModalLabel"><b>Thông tin công việc</b></h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -100,9 +100,27 @@
                         </div>
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="txt-middle-line"><span><b>Lịch sử xử lý công việc</b></span></div>
+                        <div class="table-scroll">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Thao tác</th>
+                                        <th>Người thực hiện</th>
+                                        <th>Nội dung</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal_lichSuCongViec"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
+            <div class="modal-footer justify-content-start">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
                     <i class="fa fa-times"></i> Đóng
                 </button>
             </div>
@@ -111,6 +129,20 @@
 </div>
 
 <script>
+    function tenCongViecChiTietFormatter(value, row) {
+        const giaoViecId = row.GiaoViecId || row.Id;
+        const giaoViecThanhVienId = row.GiaoViecId ? row.Id : 0;
+        const thanhVienId = row.ThanhVienId || 0;
+        const tenCongViec = $('<div>').text(value || '').html();
+        return `<a href="javascript:void(0)" onclick="openXemThongTinModal(${giaoViecThanhVienId}, ${giaoViecId}, ${thanhVienId})"><b>${tenCongViec}</b></a>`;
+    }
+
+    function tenCongViecVaNoiDungFormatter(value, row) {
+        const noiDung = row.NoiDungNhiemVu || row.NoiDung;
+        const noiDungHtml = noiDung ? `<br/><small class="text-muted">${$('<div>').text(noiDung).html()}</small>` : '';
+        return tenCongViecChiTietFormatter(value, row) + noiDungHtml;
+    }
+
     function isPdfOrImageFileModal(filePath) {
         if (!filePath) return false;
         const extension = filePath.split('.').pop().toLowerCase();
@@ -166,6 +198,23 @@
         $("#modal_btnLinkIoffice").addClass("d-none").attr("href", "#");
         $("#modal_listFileDinhKem").html('<span class="text-muted">Không có file đính kèm</span>');
         $("#modal_thongTinXuLy").empty();
+        $("#modal_lichSuCongViec").empty();
+
+        ajaxGet(`/GiaoViecThongTinTraCuu/GetLichSu?GiaoViecId=${giaoViecId}`, function (res) {
+            const lichSu = res.Item || [];
+            const html = lichSu.map(function (item) {
+                return `<tr>
+                    <td>${$('<div>').text(item.NgayTaoStr || '').html()}</td>
+                    <td>${$('<div>').text(item.HanhDong || '').html()}</td>
+                    <td>${$('<div>').text(item.NguoiThucHien || '').html()}</td>
+                    <td>${$('<div>').text(item.NoiDung || '').html()}</td>
+                </tr>`;
+            }).join('');
+            $("#modal_lichSuCongViec").html(html || '<tr><td colspan="4" class="text-center">Chưa có lịch sử xử lý</td></tr>');
+        }, function () {
+            $("#modal_lichSuCongViec").html('<tr><td colspan="4" class="text-center">Không tải được lịch sử xử lý</td></tr>');
+            toastr.error("Không tải được lịch sử xử lý công việc.");
+        });
 
         ajaxGet(`/GiaoViecThongTinTraCuu/XemThongTinGetById?GiaoViecId=${giaoViecId}&ThanhVienId=${thanhVienId}&GiaoViecThanhVienId=${giaoViecThanhVienId}`, function (res) {
             if (res && res.Item) {

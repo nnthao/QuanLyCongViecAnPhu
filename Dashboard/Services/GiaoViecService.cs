@@ -12,6 +12,7 @@ namespace Dashboard.Services
     {
         DataTableResult<GiaoViecGridVo> GetAll(GiaoViecQueryViewModel queryParams);
         GiaoViecGridVo GetById(int id);
+        List<GiaoViecLichSuGridVo> GetLichSu(GiaoViecLichSuQueryViewModel query);
         List<GiaoViecThanhVienTienTrinhGridVo> GetByTienTrinhCapNhatCuaThanhVien(int giaoViecThanhVienId);
         DataTableResult<GiaoViecThanhVienGridVo> GetListCongViecCanXuLy(GiaoViecQueryViewModel queryParams);
         DataTableResult<GiaoViecThanhVienGridVo> GetListCongViecDaChuyenGiao(GiaoViecQueryViewModel queryParams);
@@ -129,6 +130,11 @@ namespace Dashboard.Services
             }
 
             return data;
+        }
+
+        public List<GiaoViecLichSuGridVo> GetLichSu(GiaoViecLichSuQueryViewModel query)
+        {
+            return _repository.GetLichSu(query);
         }
 
         public List<GiaoViecThanhVienTienTrinhGridVo> GetByTienTrinhCapNhatCuaThanhVien(int giaoViecThanhVienId)

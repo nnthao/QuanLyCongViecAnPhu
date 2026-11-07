@@ -1,4 +1,4 @@
-@using Dashboard.HtmlHelpers;
+﻿@using Dashboard.HtmlHelpers;
 @using Dashboard.Models.HtmlHelpers
 @{
     ViewBag.Title = "Công việc đã chuyển giao";
@@ -65,7 +65,7 @@
                                        data-sort-order="desc">
                                     <thead>
                                         <tr>
-                                            <th data-field="TenCongViec">Tên công việc</th>
+                                            <th data-field="TenCongViec" data-formatter="tenCongViecChiTietFormatter">Tên công việc</th>
                                             <th data-field="NguoiGiao">Người giao việc</th>
                                             <th data-field="NoiDung">Nội dung</th>
                                             <th data-field="NgayTaoStr">Ngày giao</th>

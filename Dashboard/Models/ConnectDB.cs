@@ -35,6 +35,7 @@ namespace Dashboard.Models
         IDbSet<GiaoViecFile> GiaoViecFiles { get; set; }
         IDbSet<GiaoViecVanBanLienQuan> GiaoViecVanBanLienQuans { get; set; }
         IDbSet<GiaoViecDanhGia> GiaoViecDanhGias { get; set; }
+        IDbSet<GiaoViecLichSu> GiaoViecLichSus { get; set; }
         IDbSet<CongTrinhHuHong> CongTrinhHuHongs { get; set; }
         IDbSet<CongTrinhHuHongChiTiet> CongTrinhHuHongChiTiets { get; set; }
         IDbSet<CongTrinhHuHongFile> CongTrinhHuHongFiles { get; set; }
@@ -119,6 +120,7 @@ namespace Dashboard.Models
         public IDbSet<GiaoViecFile> GiaoViecFiles { get; set; }
         public IDbSet<GiaoViecVanBanLienQuan> GiaoViecVanBanLienQuans { get; set; }
         public IDbSet<GiaoViecDanhGia> GiaoViecDanhGias { get; set; }
+        public IDbSet<GiaoViecLichSu> GiaoViecLichSus { get; set; }
         public IDbSet<CongTrinhHuHong> CongTrinhHuHongs { get; set; }
         public IDbSet<CongTrinhHuHongChiTiet> CongTrinhHuHongChiTiets { get; set; }
         public IDbSet<CongTrinhHuHongFile> CongTrinhHuHongFiles { get; set; }

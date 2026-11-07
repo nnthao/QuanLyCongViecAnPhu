@@ -53,7 +53,7 @@
                                     <thead>
                                         <tr>
                                             <th data-field="ThanhVien" data-formatter="thanhVienFormatter">Người thực hiện</th>
-                                            <th data-field="TenCongViec" data-formatter="tenCongViecFormatter">Tên công việc</th>
+                                            <th data-field="TenCongViec" data-formatter="tenCongViecVaNoiDungFormatter">Tên công việc</th>
                                             <th data-field="HanXuLyStr" data-formatter="hanXuLyFormatter">Hạn xử lý</th>
                                             <th data-field="NgayXacNhanHoanThanhStr">Ngày xác nhận HT</th>
                                             <th data-field="TrangThai" data-formatter="trangThaiFormatter">Trạng thái</th>
@@ -103,15 +103,6 @@
     function thanhVienFormatter(value, row, index) {
         var name = value || 'N/A';
         return `<b>${name}</b>`;
-    }
-
-    function tenCongViecFormatter(value, row, index) {
-        var ten = value || '';
-        var nd = row.NoiDungNhiemVu || row.NoiDung;
-        if (nd) {
-            return `<b>${ten}</b><br/><small class="text-muted">${nd}</small>`;
-        }
-        return `<b>${ten}</b>`;
     }
 
     function hanXuLyFormatter(value, row, index) {

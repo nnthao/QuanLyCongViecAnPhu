@@ -24,6 +24,7 @@ namespace Dashboard.Repository
         DataTableResult<GiaoViecGridVo> GetAll(GiaoViecQueryViewModel queryParams);
 
         GiaoViecGridVo GetById(int id);
+        List<GiaoViecLichSuGridVo> GetLichSu(GiaoViecLichSuQueryViewModel query);
         List<GiaoViecThanhVienTienTrinhGridVo> GetByTienTrinhCapNhatCuaThanhVien(int giaoViecThanhVienId);
         List<GiaoViecThanhVienTienTrinhTheoGiaoViecThanhVienInfo> GetByListTienTrinhCapNhatCuaThanhVien(List<int> giaoViecThanhVienIds);
         DataTableResult<GiaoViecThanhVienGridVo> GetListCongViecCanXuLy(GiaoViecQueryViewModel queryParams);
@@ -286,6 +287,7 @@ namespace Dashboard.Repository
                     TenCongViec = oldEntity.TenCongViec,
                 };
 
+                _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(oldEntity.Id, "Sửa công việc", "Cập nhật thông tin công việc và người nhận."));
                 _context.SaveChanges();
 
                 // Tải file đính kèm ngầm từ iOffice nếu có
@@ -511,6 +513,7 @@ namespace Dashboard.Repository
                 // Xóa mềm GiaoViec
                 item.IsDeleted = true;
                 item.NgayXoa = DateTime.Now;
+                _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(item.Id, "Xoá công việc", "Xoá công việc và các dữ liệu xử lý liên quan."));
 
                 // Xóa mềm GiaoViecFile
                 foreach (var file in item.GiaoViecFiles.Where(f => f.IsDeleted != true))
@@ -570,6 +573,7 @@ namespace Dashboard.Repository
             {
                 item.IsDeleted = false;
                 item.NgayXoa = null;
+                _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(item.Id, "Khôi phục công việc", "Khôi phục công việc đã xoá."));
 
                 foreach (var tv in item.GiaoViecVanBanLienQuans)
                 {
@@ -580,6 +584,86 @@ namespace Dashboard.Repository
                 return true;
             }
             return false;
+        }
+
+        public List<GiaoViecLichSuGridVo> GetLichSu(GiaoViecLichSuQueryViewModel query)
+        {
+            if (query == null || query.GiaoViecId <= 0 || (query.CurrentUserId <= 0 && !query.CanViewAll))
+            {
+                return new List<GiaoViecLichSuGridVo>();
+            }
+
+            var giaoViec = _context.GiaoViecs.AsNoTracking().FirstOrDefault(o => o.Id == query.GiaoViecId);
+            if (giaoViec == null)
+            {
+                return new List<GiaoViecLichSuGridVo>();
+            }
+
+            var thanhViens = _context.GiaoViecThanhViens.AsNoTracking()
+                .Where(o => o.GiaoViecId == query.GiaoViecId).ToList();
+            var duocXem = query.CanViewAll || giaoViec.NguoiGiaoId == query.CurrentUserId
+                || thanhViens.Any(o => o.ThanhVienId == query.CurrentUserId || o.NguoiTheoDoiChiDaoId == query.CurrentUserId);
+            if (!duocXem)
+            {
+                return new List<GiaoViecLichSuGridVo>();
+            }
+
+            var lichSu = new List<GiaoViecLichSuGridVo>();
+            if (giaoViec.NgayTao.HasValue)
+            {
+                lichSu.Add(new GiaoViecLichSuGridVo
+                {
+                    NgayTao = giaoViec.NgayTao.Value,
+                    HanhDong = "Tạo công việc",
+                    NguoiThucHien = CacheManagerHelper.GetUserByIdFromCache(giaoViec.NguoiGiaoId.GetValueOrDefault())?.Name ?? "",
+                    NoiDung = giaoViec.TenCongViec
+                });
+            }
+
+            var ghiNhans = _context.GiaoViecLichSus.AsNoTracking()
+                .Where(o => o.GiaoViecId == query.GiaoViecId).ToList();
+            lichSu.AddRange(ghiNhans.Select(o => new GiaoViecLichSuGridVo
+            {
+                NgayTao = o.NgayTao,
+                HanhDong = o.HanhDong,
+                NguoiThucHien = CacheManagerHelper.GetUserByIdFromCache(o.NguoiThucHienId.GetValueOrDefault())?.Name ?? "",
+                NoiDung = o.NoiDung
+            }));
+
+            var thanhVienIds = thanhViens.Select(o => o.Id).ToList();
+            if (thanhVienIds.Count > 0)
+            {
+                var tienTrinhs = _context.GiaoViecThanhVienTienTrinhs.AsNoTracking()
+                    .Where(o => o.GiaoViecThanhVienId.HasValue && thanhVienIds.Contains(o.GiaoViecThanhVienId.Value))
+                    .ToList();
+                foreach (var tienTrinh in tienTrinhs.Where(o => o.NgayTao.HasValue))
+                {
+                    var thanhVien = thanhViens.First(o => o.Id == tienTrinh.GiaoViecThanhVienId.Value);
+                    lichSu.Add(new GiaoViecLichSuGridVo
+                    {
+                        NgayTao = tienTrinh.NgayTao.Value,
+                        HanhDong = tienTrinh.PhanTramHoanThanh.GetValueOrDefault() >= 100 ? "Xác nhận hoàn thành" : "Cập nhật xử lý",
+                        NguoiThucHien = CacheManagerHelper.GetUserByIdFromCache(thanhVien.ThanhVienId.GetValueOrDefault())?.Name ?? "",
+                        NoiDung = tienTrinh.NoiDungXuLy
+                    });
+                }
+
+                var danhGias = _context.GiaoViecDanhGias.AsNoTracking()
+                    .Where(o => thanhVienIds.Contains(o.GiaoViecThanhVienId)).ToList();
+                foreach (var danhGia in danhGias)
+                {
+                    lichSu.Add(new GiaoViecLichSuGridVo
+                    {
+                        NgayTao = danhGia.NgayDanhGia,
+                        HanhDong = "Đánh giá công việc",
+                        NguoiThucHien = CacheManagerHelper.GetUserByIdFromCache(danhGia.NguoiDanhGiaId)?.Name ?? "",
+                        NoiDung = (danhGia.KetQuaDanhGia == (int)EnumKetQuaDanhGia.Dat ? "Đạt" : "Chưa đạt")
+                            + (string.IsNullOrWhiteSpace(danhGia.YKienDanhGia) ? "" : ": " + danhGia.YKienDanhGia)
+                    });
+                }
+            }
+
+            return lichSu.OrderByDescending(o => o.NgayTao).ToList();
         }
 
         public GiaoViecGridVo GetById(int id)
@@ -1172,6 +1256,9 @@ namespace Dashboard.Repository
             giaoviecThanhVien.IsHoanThanh = false;
             giaoviecThanhVien.NgayHoanThanh = null;
 
+            _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(
+                giaoviecThanhVien.GiaoViecId.GetValueOrDefault(), "Huỷ xác nhận hoàn thành",
+                "Thành viên huỷ xác nhận hoàn thành để tiếp tục xử lý.", giaoviecThanhVien.Id));
             _context.SaveChanges();
 
             Task.Run(async () =>
@@ -1446,7 +1533,9 @@ namespace Dashboard.Repository
                     if (thanhVienId == giaoViecThanhVienTienTrinhGridVo.CurrentUserId)
                     {
                         item.IsDeleted = true;
-
+                        _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(
+                            item.GiaoViecThanhVien.GiaoViecId.GetValueOrDefault(), "Xoá lần xử lý",
+                            item.NoiDungXuLy, giaoViecThanhVienId));
                         _context.SaveChanges();
                     }
 
@@ -1841,6 +1930,8 @@ namespace Dashboard.Repository
                 giaoViec.HanXuLy = hanXuLy;
             }
 
+            _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(
+                giaoViec.Id, "Chuyển giao công việc", "Chuyển giao nhiệm vụ cho thành viên tiếp tục xử lý."));
             _context.SaveChanges();
 
             var giaoViecInfo = new GiaoViecGridVo
@@ -1950,6 +2041,9 @@ namespace Dashboard.Repository
             nguoiChuyenGiao.NguoiXoaId = null;
             nguoiChuyenGiao.NgayChuyenGiao = null;
 
+            _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(
+                nguoiChuyenGiao.GiaoViecId.GetValueOrDefault(), "Lấy lại công việc",
+                "Huỷ chuyển giao và nhận lại nhiệm vụ.", nguoiChuyenGiao.Id));
             _context.SaveChanges();
 
             return true;

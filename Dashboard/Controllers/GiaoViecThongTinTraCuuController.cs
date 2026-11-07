@@ -3,6 +3,7 @@ using Dashboard.Models.Entities;
 using Dashboard.Models.ViewModel;
 using Dashboard.Services;
 using System.Linq;
+using System.Security.Claims;
 using System.Web.Mvc;
 
 namespace Dashboard.Controllers
@@ -83,6 +84,17 @@ namespace Dashboard.Controllers
             {
                 Item = data
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        [JwtAuthorize("Public")]
+        public JsonResult GetLichSu(GiaoViecLichSuQueryViewModel query)
+        {
+            query = query ?? new GiaoViecLichSuQueryViewModel();
+            var identity = User.Identity as ClaimsIdentity;
+            query.CurrentUserId = identity == null ? 0 : UserClaimHelper.GetCurrentUserId(identity);
+            query.CanViewAll = identity != null && (UserClaimHelper.GetIsSystemUser(identity)
+                || UserClaimHelper.IsQuyenAllow(identity, QuyenMoRong.QuyenCRUDTatCaPhongBan.ToString()));
+            return Json(new { Item = _service.GetLichSu(query) }, JsonRequestBehavior.AllowGet);
         }
     }
 }

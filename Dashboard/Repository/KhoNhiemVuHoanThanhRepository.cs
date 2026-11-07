@@ -1,4 +1,4 @@
-using Dashboard.AdoNetHelper;
+﻿using Dashboard.AdoNetHelper;
 using Dashboard.Common;
 using Dashboard.Models;
 using Dashboard.Models.CommonModel;
@@ -199,6 +199,9 @@ namespace Dashboard.Repository
                 dg.IsDeleted = true;
             }
 
+            _context.GiaoViecLichSus.Add(GiaoViecLichSuHelper.Tao(
+                thanhVien.GiaoViecId.GetValueOrDefault(), "Huỷ đánh giá",
+                viewModel.LyDoHuy, thanhVien.Id));
             _context.SaveChanges();
 
             int giaoViecId = thanhVien.GiaoViecId.GetValueOrDefault();

@@ -3224,6 +3224,8 @@
     <Compile Include="Models\Entities\GiaoViec.cs" />
     <Compile Include="Models\Entities\GiaoViecGoiYNoiDung.cs" />
     <Compile Include="Models\Entities\GiaoViecDanhGia.cs" />
+    <Compile Include="Models\Entities\GiaoViecLichSu.cs" />
+    <Compile Include="Common\GiaoViecLichSuHelper.cs" />
     <Compile Include="Models\Entities\QuanLyCongTrinhHuHong.cs" />
     <Compile Include="Models\Entities\DanhSachCongTrinh.cs" />
     <Compile Include="Models\Entities\DotXetDuyet.cs" />
@@ -3826,6 +3828,7 @@
     <Content Include="DataScripts\20261012120117_dong_bo_email_theo_ten_nguoi_dung.sql" />
     <Content Include="DataScripts\20261104225258_them_danh_gia_nhiem_vu.sql" />
     <Content Include="DataScripts\20261107111128_them_menu_kho_nhiem_vu_hoan_thanh.sql" />
+    <Content Include="DataScripts\20261107213259_them_lich_su_giao_viec.sql" />
     <Content Include="Views\User\ImportSoDienThoaiModal.cshtml" />
   </ItemGroup>
   <PropertyGroup>

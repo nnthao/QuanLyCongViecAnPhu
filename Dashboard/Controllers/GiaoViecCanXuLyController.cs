@@ -1,4 +1,4 @@
-using Dashboard.Common;
+﻿using Dashboard.Common;
 using Dashboard.Models.Entities;
 using Dashboard.Models.Validates;
 using Dashboard.Models.ViewModel;
@@ -25,7 +25,6 @@ namespace Dashboard.Controllers
             return View();
         }
 
-
         [JwtAuthorize("GiaoViecCanXuLy")]
         public ActionResult Form(int id = 0, int giaoViecId = 0)
         {
@@ -35,7 +34,6 @@ namespace Dashboard.Controllers
                 GiaoViecId = giaoViecId
             });
         }
-
 
         [JwtAuthorize("GiaoViecCanXuLy")]
         public ActionResult XemThongTin(int id = 0, int giaoViecId = 0)
@@ -155,6 +153,9 @@ namespace Dashboard.Controllers
                 }
             }
             data.IsHoanThanhThanhVienCanXuLy = thanhVien.IsHoanThanh;
+            data.TrangThaiThanhVienCanXuLy = thanhVien.TrangThai;
+            data.KetQuaDanhGiaThanhVienCanXuLy = thanhVien.KetQuaDanhGia;
+            data.YKienDanhGiaThanhVienCanXuLy = thanhVien.YKienDanhGia;
 
             return data;
         }

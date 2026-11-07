@@ -3145,6 +3145,7 @@
     <Compile Include="Controllers\QuanLyThongTinTraCuuController.cs" />
     <Compile Include="Controllers\TraCuuThongTinController.cs" />
     <Compile Include="Controllers\GiaoViecController.cs" />
+    <Compile Include="Controllers\GiaoViecDanhGiaController.cs" />
     <Compile Include="Controllers\GiaoViecTiViController.cs" />
     <Compile Include="AdoNetHelper\GiaoViecTiViAdoNetHelper.cs" />
     <Compile Include="Models\ViewModel\GiaoViecTiViViewModel.cs" />
@@ -3221,6 +3222,7 @@
     <Compile Include="Models\Entities\DuAnThanhVien.cs" />
     <Compile Include="Models\Entities\GiaoViec.cs" />
     <Compile Include="Models\Entities\GiaoViecGoiYNoiDung.cs" />
+    <Compile Include="Models\Entities\GiaoViecDanhGia.cs" />
     <Compile Include="Models\Entities\QuanLyCongTrinhHuHong.cs" />
     <Compile Include="Models\Entities\DanhSachCongTrinh.cs" />
     <Compile Include="Models\Entities\DotXetDuyet.cs" />
@@ -3345,6 +3347,7 @@
     <Compile Include="Repository\VanBanPhapLuatRepository.cs" />
     <Compile Include="Repository\QuanLyThongTinTraCuuRepository.cs" />
     <Compile Include="Repository\GiaoViecRepository.cs" />
+    <Compile Include="Repository\GiaoViecDanhGiaRepository.cs" />
     <Compile Include="Repository\NhomNhanViecRepository.cs" />
     <Compile Include="Repository\DuAnRepository.cs" />
     <Compile Include="Repository\DuAnHangMucRepository.cs" />
@@ -3393,6 +3396,7 @@
     <Compile Include="Services\VanBanPhapLuatService.cs" />
     <Compile Include="Services\QuanLyThongTinTraCuuService.cs" />
     <Compile Include="Services\GiaoViecService.cs" />
+    <Compile Include="Services\GiaoViecDanhGiaService.cs" />
     <Compile Include="Models\Validates\GiaoViecValidate.cs" />
     <Compile Include="Services\NhomNhanViecService.cs" />
     <Compile Include="Services\DuAnService.cs" />
@@ -3710,6 +3714,8 @@
     <Content Include="Views\GiaoViecCanXuLy\FormModal.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\GiaoViecTiepTucModal.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\Index.cshtml" />
+    <Content Include="Views\GiaoViecDanhGia\Index.cshtml" />
+    <Content Include="Views\GiaoViecDanhGia\_ModalDanhGiaNhiemVu.cshtml" />
     <Content Include="Views\GiaoViecTuGiaoCanXuLy\Index.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\CapNhatCongViec.cshtml" />
     <Content Include="Views\GiaoViecCanXuLy\VanBanLienQuan.cshtml" />
@@ -3812,6 +3818,7 @@
     <Content Include="DataScripts\20260929081656_them_NguoiThamGiaKhac.sql" />
     <Content Include="DataScripts\20260929234313_alter_TenCuocHop_nvarchar_max.sql" />
     <Content Include="DataScripts\20261012120117_dong_bo_email_theo_ten_nguoi_dung.sql" />
+    <Content Include="DataScripts\20261104225258_them_danh_gia_nhiem_vu.sql" />
     <Content Include="Views\User\ImportSoDienThoaiModal.cshtml" />
   </ItemGroup>
   <PropertyGroup>

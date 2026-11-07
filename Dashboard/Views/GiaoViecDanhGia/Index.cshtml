@@ -1,0 +1,169 @@
+@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+@{
+    ViewBag.Title = "Đánh giá nhiệm vụ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <b><i class="fa fa-check-square-o"></i> @ViewBag.Title</b>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            @Html.CustomDatePicker(id: "TuNgayStr", label: "Từ ngày", col: 2, moreClass: "col-xs-12", required: false)
+                            @Html.CustomDatePicker(id: "DenNgayStr", label: "Đến ngày", col: 2, moreClass: "col-xs-12", required: false)
+                            <div class="col-sm-3 col-xs-12">
+                                <div class="form-group">
+                                    <label for="TrangThaiSearch">Trạng thái đánh giá</label>
+                                    <select id="TrangThaiSearch" class="form-control" onchange="search();">
+                                        <option value="1" selected>Chờ đánh giá</option>
+                                        <option value="2">Đã hoàn thành (Đạt)</option>
+                                        <option value="3">Chưa đạt (Yêu cầu làm lại)</option>
+                                        <option value="0">-- Tất cả --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-5 col-xs-12">
+                                <div class="form-group">
+                                    <label for="txt-search" style="width:100%">&nbsp;</label>
+                                    <div class="input-group">
+                                        <input onkeypress="enterSearch(event);" id="txt-search" type="text" class="form-control" placeholder="Tìm kiếm tên việc, nội dung, người thực hiện...">
+                                        <div class="input-group-append">
+                                            <button id="btn-search" onclick="search();" class="btn btn-primary" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="bs-table-danh-gia"
+                                       data-mobile-responsive="true"
+                                       data-check-on-init="true"
+                                       data-toggle="table"
+                                       data-url="/GiaoViecDanhGia/GetListDanhGia"
+                                       data-pagination="true"
+                                       data-side-pagination="server"
+                                       data-page-size="30"
+                                       data-page-list="[30, 50, 100, 200]"
+                                       data-locale="vi-VN"
+                                       data-query-params="queryParams"
+                                       data-row-attributes="rowAttributes"
+                                       data-sort-name="NgayTao"
+                                       data-sort-order="desc">
+                                    <thead>
+                                        <tr>
+                                            <th data-field="ThanhVien" data-formatter="thanhVienFormatter">Người thực hiện</th>
+                                            <th data-field="TenCongViec" data-formatter="tenCongViecFormatter">Tên công việc</th>
+                                            <th data-field="HanXuLyStr" data-formatter="hanXuLyFormatter">Hạn xử lý</th>
+                                            <th data-field="NgayXacNhanHoanThanhStr">Ngày xác nhận HT</th>
+                                            <th data-field="TrangThai" data-formatter="trangThaiFormatter">Trạng thái</th>
+                                            <th class="width-20-per" data-field="operate" data-formatter="operateFormatter">&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("~/Views/GiaoViecDanhGia/_ModalDanhGiaNhiemVu.cshtml")
+@Html.Partial("~/Views/GiaoViec/XemThongTinModal.cshtml")
+
+<script>
+    function rowAttributes(row, index) {
+        return {
+            'data-id': row.Id
+        };
+    }
+
+    function queryParams(params) {
+        params.TuNgayStr = $("#TuNgayStr").val();
+        params.DenNgayStr = $("#DenNgayStr").val();
+        params.TrangThaiSearch = $("#TrangThaiSearch").val();
+        var searchVal = $("#txt-search").val();
+        params.search = searchVal ? btoa(unescape(encodeURIComponent(searchVal))) : '';
+        return params;
+    }
+
+    function search() {
+        $("#bs-table-danh-gia").bootstrapTable('refresh', {
+            pageNumber: 1
+        });
+    }
+
+    function enterSearch(e) {
+        if (e.keyCode === 13) {
+            search();
+        }
+    }
+
+    function thanhVienFormatter(value, row, index) {
+        var name = value || 'N/A';
+        var vt = row.TenVaiTroXuLy ? ` <small class="text-muted">(${row.TenVaiTroXuLy})</small>` : '';
+        return `<b>${name}</b>${vt}`;
+    }
+
+    function tenCongViecFormatter(value, row, index) {
+        var ten = value || '';
+        var nd = row.NoiDungNhiemVu || row.NoiDung;
+        if (nd) {
+            return `<b>${ten}</b><br/><small class="text-muted">${nd}</small>`;
+        }
+        return `<b>${ten}</b>`;
+    }
+
+    function hanXuLyFormatter(value, row, index) {
+        var hanStr = row.HanXuLyStr || '';
+        if (row.TrangThai === 2 || row.IsHoanThanh) {
+            return `<span class="text-success font-weight-bold">✅ ${hanStr}</span>`;
+        }
+        if (row.SoNgayConLai >= 0) {
+            return `<span class="text-warning font-weight-bold">⏳ ${hanStr} (Còn ${row.SoNgayConLai} ngày)</span>`;
+        }
+        return `<span class="text-danger font-weight-bold">❌ ${hanStr} (Trễ ${Math.abs(row.SoNgayConLai)} ngày)</span>`;
+    }
+
+    function trangThaiFormatter(value, row, index) {
+        if (row.TrangThai === 2 || (row.IsHoanThanh && !row.TrangThai)) {
+            var ngDanhGia = row.NguoiDanhGia ? `<br/><small class="text-muted">Người ĐG: ${row.NguoiDanhGia}</small>` : '';
+            return `<span class="badge badge-success p-1"><i class="fa fa-check-circle"></i> Đã hoàn thành (Đạt)</span>${ngDanhGia}`;
+        }
+        if (row.TrangThai === 1) {
+            return `<span class="badge badge-info p-1"><i class="fa fa-clock-o"></i> Chờ đánh giá</span>`;
+        }
+        if (row.TrangThai === 3) {
+            var tooltip = row.YKienDanhGia ? `title="Lý do: ${row.YKienDanhGia}"` : '';
+            var reason = row.YKienDanhGia ? `<br/><small class="text-danger">Lý do: ${row.YKienDanhGia}</small>` : '';
+            return `<span class="badge badge-danger p-1" ${tooltip}><i class="fa fa-times-circle"></i> Chưa đạt</span>${reason}`;
+        }
+        return `<span class="badge badge-warning p-1">Chưa hoàn thành</span>`;
+    }
+
+    function operateFormatter(value, row, index) {
+        var btnDanhGia = `<button type="button" onclick="openModalDanhGia(${row.Id})" class="btn btn-primary btn-sm m-1"><i class="fa fa-pencil-square-o"></i> Đánh giá</button>`;
+        var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId || 0})" class="btn btn-info btn-sm m-1"><i class="fa fa-eye"></i> Xem thông tin</button>`;
+        return btnDanhGia + btnXemThongTin;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#TuNgayStr, #DenNgayStr").on("change", function () {
+            search();
+        });
+    });
+</script>
+

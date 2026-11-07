@@ -1,4 +1,4 @@
-using Dashboard.Common;
+﻿using Dashboard.Common;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -177,6 +177,9 @@ namespace Dashboard.Models.Entities
 
         public bool? IsHoanThanh { get; set; }
         public bool? IsHoanThanhThanhVienCanXuLy { get; set; }
+        public int? TrangThaiThanhVienCanXuLy { get; set; }
+        public int? KetQuaDanhGiaThanhVienCanXuLy { get; set; }
+        public string YKienDanhGiaThanhVienCanXuLy { get; set; }
         public bool? IsTuGiao { get; set; }
         public string IofficeNumber { get; set; }
         public string VanBanId { get; set; }

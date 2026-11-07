@@ -214,16 +214,16 @@
             var hanXuLy = `- Hạn xử lý: <b>${item.HanXuLyStr || ''}</b>`;
             var statusHtml = '';
 
-            if (item.IsHoanThanh) {
-                // Đã hoàn thành
-                statusHtml = `<span class="text-success text-bold">✅ Đã hoàn thành</span> ${hanXuLy}`;
+            if (item.TrangThai === 2 || (item.IsHoanThanh && !item.TrangThai)) {
+                statusHtml = `<span class="text-success text-bold">✅ Đã hoàn thành (Đạt)</span> ${hanXuLy}`;
+            } else if (item.TrangThai === 1) {
+                statusHtml = `<span class="text-info text-bold">⏳ Chờ đánh giá</span> ${hanXuLy}`;
+            } else if (item.TrangThai === 3) {
+                statusHtml = `<span class="text-danger text-bold">❌ Chưa đạt (Yêu cầu làm lại)</span> ${hanXuLy}`;
             } else {
-                // Chưa hoàn thành
                 if (item.SoNgayConLai >= 0) {
-                    // Còn thời gian
                     statusHtml = `<span class="text-warning text-bold">⏳ Chưa hoàn thành</span> ${hanXuLy} (Còn lại ${item.SoNgayConLai} ngày)`;
                 } else {
-                    // Trễ hạn
                     statusHtml = `<span class="text-danger text-bold">❌ Trễ hạn</span> ${hanXuLy} (Trễ ${Math.abs(item.SoNgayConLai)} ngày)`;
                 }
             }

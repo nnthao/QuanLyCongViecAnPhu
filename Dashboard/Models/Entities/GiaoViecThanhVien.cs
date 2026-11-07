@@ -29,6 +29,12 @@ namespace Dashboard.Models.Entities
         public DateTime? NgayNhacHan { get; set; }
         public int? VaiTroXuLyId { get; set; }
         public int? NguoiTheoDoiChiDaoId { get; set; }
+        public int? TrangThai { get; set; }
+        public DateTime? NgayXacNhanHoanThanh { get; set; }
+        public int? NguoiDanhGiaId { get; set; }
+        public DateTime? NgayDanhGia { get; set; }
+        public int? KetQuaDanhGia { get; set; }
+        public string YKienDanhGia { get; set; }
 
         public virtual VaiTroXuLy VaiTroXuLy { get; set; }
 
@@ -171,6 +177,36 @@ namespace Dashboard.Models.Entities
         public List<GiaoViecThanhVienGridVo> GiaoViecThanhViens { get; set; }
         public bool? IsTuGiao { get; set; }
         public int? NguoiTheoDoiChiDaoId { get; set; }
+        public int? TrangThai { get; set; }
+        public DateTime? NgayXacNhanHoanThanh { get; set; }
+        public int? NguoiDanhGiaId { get; set; }
+        public DateTime? NgayDanhGia { get; set; }
+        public int? KetQuaDanhGia { get; set; }
+        public string YKienDanhGia { get; set; }
+        public string TenTrangThai
+        {
+            get
+            {
+                if (TrangThai == (int)EnumTrangThaiGiaoViec.HoanThanh || (IsHoanThanh == true && !TrangThai.HasValue))
+                {
+                    return "Đã hoàn thành";
+                }
+                if (TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia)
+                {
+                    return "Chờ đánh giá";
+                }
+                if (TrangThai == (int)EnumTrangThaiGiaoViec.ChuaDat)
+                {
+                    return "Chưa đạt";
+                }
+                return "Chưa hoàn thành";
+            }
+        }
+        public string NgayXacNhanHoanThanhStr => DateTimeHelper.ConvertDateTimeToDateTime(NgayXacNhanHoanThanh);
+        public string NguoiDanhGia { get; set; }
+        public string NgayDanhGiaStr => DateTimeHelper.ConvertDateTimeToDateTime(NgayDanhGia);
+        public string TenKetQuaDanhGia => KetQuaDanhGia == (int)EnumKetQuaDanhGia.Dat ? "Đạt" : (KetQuaDanhGia == (int)EnumKetQuaDanhGia.ChuaDat ? "Chưa đạt" : "");
+        public bool CanDanhGia { get; set; }
         public string TenNguoiTheoDoiChiDao { get; set; }
         public string NguoiTheoDoiChiDao { get; set; }
     }
@@ -226,5 +262,11 @@ namespace Dashboard.Models.Entities
         public int? SoGioUocTinh { get; set; }
         public int? VaiTroXuLyId { get; set; }
         public int? NguoiTheoDoiChiDaoId { get; set; }
+        public int? TrangThai { get; set; }
+        public DateTime? NgayXacNhanHoanThanh { get; set; }
+        public int? NguoiDanhGiaId { get; set; }
+        public DateTime? NgayDanhGia { get; set; }
+        public int? KetQuaDanhGia { get; set; }
+        public string YKienDanhGia { get; set; }
     }
 }

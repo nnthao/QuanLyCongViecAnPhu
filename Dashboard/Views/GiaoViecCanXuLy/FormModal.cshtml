@@ -1,4 +1,4 @@
-@using Dashboard.HtmlHelpers;
+﻿@using Dashboard.HtmlHelpers;
 @using Dashboard.Models.HtmlHelpers;
 
 <style>
@@ -21,6 +21,17 @@
                 <input id="CanXuLy_Id" type="hidden" value="0" />
                 <input id="CanXuLy_GiaoViecId" type="hidden" value="0" />
                 <input id="CanXuLy_GiaoViecThanhVienId" type="hidden" value="0" />
+
+                <div id="alertChuaDat" class="alert alert-danger d-none">
+                    <b><i class="fa fa-exclamation-triangle"></i> Đánh giá Chưa đạt:</b> <span id="textLyDoChuaDat"></span>
+                    <br/><small class="font-italic">Vui lòng cập nhật bổ sung tiến trình thực hiện và bấm "Xác nhận hoàn thành" để gửi đánh giá lại.</small>
+                </div>
+                <div id="alertChoDanhGia" class="alert alert-info d-none">
+                    <b><i class="fa fa-clock-o"></i> Nhiệm vụ đang chờ đánh giá:</b> Bạn đã gửi xác nhận hoàn thành, đang chờ người giao việc hoặc người theo dõi chỉ đạo đánh giá kết quả.
+                </div>
+                <div id="alertDaHoanThanh" class="alert alert-success d-none">
+                    <b><i class="fa fa-check-circle"></i> Đã hoàn thành (Đạt):</b> Nhiệm vụ đã được đánh giá Đạt, khóa không cho cập nhật hoặc hủy xác nhận.
+                </div>
 
                 <div class="row">
                     <div class="col-sm-6 col-xs-12">
@@ -63,6 +74,9 @@
 
 <script>
     function resetGiaoViecCanXuLyModal() {
+        $("#NoiDungXuLy").prop("readonly", false);
+        $("#btnAddFileDinhKem, #capNhatDropZone").removeClass("d-none");
+        $("#alertChuaDat, #alertChoDanhGia, #alertDaHoanThanh").addClass("d-none");
         $("#CanXuLy_Id").val(0);
         $("#CanXuLy_GiaoViecId").val(0);
         $("#CanXuLy_GiaoViecThanhVienId").val(0);
@@ -102,10 +116,28 @@
                 $("#CanXuLy_HanXuLyThanhVienCanXuLyStr").val(item.HanXuLyThanhVienCanXuLyStr || '');
                 $("#CanXuLy_TenVaiTroXuLyThanhVienCanXuLy").val(item.TenVaiTroXuLyThanhVienCanXuLy || '');
 
-                if (item.IsHoanThanhThanhVienCanXuLy === true) {
+                $("#alertChuaDat, #alertChoDanhGia, #alertDaHoanThanh").addClass("d-none");
+
+                if (item.TrangThaiThanhVienCanXuLy === 2 || item.IsHoanThanhThanhVienCanXuLy === true) {
                     $("#btnSaveXuLyCongViec").addClass("d-none");
+                    $("#alertDaHoanThanh").removeClass("d-none");
+                    $("#NoiDungXuLy").prop("readonly", true).val('');
+                    $("#btnAddFileDinhKem, #capNhatDropZone").addClass("d-none");
+                } else if (item.TrangThaiThanhVienCanXuLy === 1) {
+                    $("#btnSaveXuLyCongViec").addClass("d-none");
+                    $("#alertChoDanhGia").removeClass("d-none");
+                    $("#NoiDungXuLy").prop("readonly", true);
+                    $("#btnAddFileDinhKem, #capNhatDropZone").addClass("d-none");
+                } else if (item.TrangThaiThanhVienCanXuLy === 3) {
+                    $("#btnSaveXuLyCongViec").removeClass("d-none");
+                    $("#textLyDoChuaDat").text(item.YKienDanhGiaThanhVienCanXuLy || 'Chưa đạt yêu cầu, vui lòng thực hiện lại.');
+                    $("#alertChuaDat").removeClass("d-none");
+                    $("#NoiDungXuLy").prop("readonly", false);
+                    $("#btnAddFileDinhKem, #capNhatDropZone").removeClass("d-none");
                 } else {
                     $("#btnSaveXuLyCongViec").removeClass("d-none");
+                    $("#NoiDungXuLy").prop("readonly", false);
+                    $("#btnAddFileDinhKem, #capNhatDropZone").removeClass("d-none");
                 }
 
                 if (item.GiaoViecFiles && item.GiaoViecFiles.length > 0) {

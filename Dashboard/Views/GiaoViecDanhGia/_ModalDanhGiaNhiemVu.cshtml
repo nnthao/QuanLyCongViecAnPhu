@@ -1,0 +1,255 @@
+﻿@using Dashboard.HtmlHelpers;
+@using Dashboard.Models.HtmlHelpers;
+
+<div class="modal fade" id="modalDanhGiaNhiemVu" tabindex="-1" role="dialog" aria-labelledby="modalDanhGiaNhiemVuTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalDanhGiaNhiemVuTitle"><b>Đánh giá kết quả nhiệm vụ</b></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="DanhGia_GiaoViecThanhVienId" value="0" />
+
+                <!-- Thông tin nhiệm vụ -->
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <div class="txt-middle-line"><span><b>Thông tin nhiệm vụ</b></span></div>
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <p class="mb-2"><b>Tên công việc:</b> <span id="DanhGia_TenCongViec"></span></p>
+                        <p class="mb-2"><b>Nội dung giao việc:</b> <span id="DanhGia_NoiDung"></span></p>
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <p class="mb-2"><b>Người thực hiện:</b> <span id="DanhGia_ThanhVien" class="font-weight-bold"></span> (<span id="DanhGia_TenVaiTro"></span>)</p>
+                        <p class="mb-2"><b>Hạn xử lý:</b> <span id="DanhGia_HanXuLy"></span></p>
+                        <p class="mb-2"><b>Ngày xác nhận hoàn thành:</b> <span id="DanhGia_NgayXacNhan"></span></p>
+                    </div>
+                </div>
+
+                <!-- Báo cáo kết quả của thành viên -->
+                <div class="row mt-2">
+                    <div class="col-12 mb-3">
+                        <div class="txt-middle-line"><span><b>Báo cáo hoàn thành của thành viên</b></span></div>
+                    </div>
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="form-group mb-2">
+                            <label class="font-weight-bold">Nội dung thực hiện / báo cáo:</label>
+                            <div id="DanhGia_NoiDungBaoCao" class="p-2 border rounded bg-light" style="min-height: 60px; white-space: pre-wrap;"></div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold">File đính kèm báo cáo:</label>
+                            <div id="DanhGia_ListFiles" class="pl-1">
+                                <span class="text-muted font-italic">Không có file đính kèm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lịch sử các lần đánh giá trước (nếu có) -->
+                <div class="row mt-3" id="DanhGia_CardLichSu" style="display:none;">
+                    <div class="col-12 mb-3">
+                        <div class="txt-middle-line"><span><b>Lịch sử các lần đánh giá trước</b></span></div>
+                    </div>
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 160px;">Thời gian</th>
+                                        <th style="width: 150px;">Người đánh giá</th>
+                                        <th style="width: 120px;">Kết quả</th>
+                                        <th>Ý kiến / Nhận xét</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="DanhGia_TbodyLichSu"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form thực hiện đánh giá -->
+                <div class="row mt-3">
+                    <div class="col-12 mb-3">
+                        <div class="txt-middle-line"><span><b>Thực hiện đánh giá</b></span></div>
+                    </div>
+                    <div class="col-sm-12 col-xs-12">
+                        <div class="form-group row align-items-center mb-3">
+                            <label class="col-sm-3 col-xs-12 col-form-label font-weight-bold">Kết quả đánh giá: <span class="text-danger">*</span></label>
+                            <div class="col-sm-9 col-xs-12">
+                                <div class="form-check form-check-inline mr-4">
+                                    <input class="form-check-input" type="radio" name="radioKetQuaDanhGia" id="radioDanhGiaDat" value="1" checked>
+                                    <label class="form-check-label font-weight-bold" for="radioDanhGiaDat">
+                                        Đạt (Hoàn thành nhiệm vụ)
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="radioKetQuaDanhGia" id="radioDanhGiaChuaDat" value="2">
+                                    <label class="form-check-label font-weight-bold" for="radioDanhGiaChuaDat">
+                                        Chưa đạt (Yêu cầu làm lại)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-0">
+                            <label class="col-sm-3 col-xs-12 col-form-label font-weight-bold">
+                                Ý kiến / Lý do: <span id="spanRequiredYKien" class="text-danger d-none">*</span>
+                            </label>
+                            <div class="col-sm-9 col-xs-12">
+                                <textarea id="DanhGia_YKien" class="form-control" rows="3" placeholder="Nhập ý kiến nhận xét (Bắt buộc nhập nếu đánh giá Chưa đạt)"></textarea>
+                                <small class="form-text text-muted">
+                                    - Nếu đánh giá <b>Đạt</b>: Nhiệm vụ chuyển trạng thái Hoàn thành và khóa (không thể cập nhật hay hủy xác nhận).<br />
+                                    - Nếu đánh giá <b>Chưa đạt</b>: Nhiệm vụ quay lại trạng thái Chưa hoàn thành để thành viên làm lại.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Đóng
+                </button>
+                <button type="button" onclick="saveDanhGiaNhiemVuModal()" class="btn btn-success" id="btnSaveDanhGia">
+                    <i class="fa fa-save"></i> Lưu kết quả
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetModalDanhGia() {
+        $("#DanhGia_GiaoViecThanhVienId").val(0);
+        $("#DanhGia_TenCongViec").text('');
+        $("#DanhGia_NoiDung").text('');
+        $("#DanhGia_ThanhVien").text('');
+        $("#DanhGia_TenVaiTro").text('');
+        $("#DanhGia_HanXuLy").text('');
+        $("#DanhGia_NgayXacNhan").text('');
+        $("#DanhGia_NoiDungBaoCao").text('');
+        $("#DanhGia_ListFiles").html('<span class="text-muted font-italic">Không có file đính kèm</span>');
+        $("#DanhGia_TbodyLichSu").empty();
+        $("#DanhGia_CardLichSu").hide();
+        $("#radioDanhGiaDat").prop("checked", true);
+        $("#DanhGia_YKien").val('');
+        $("#spanRequiredYKien").addClass("d-none");
+    }
+
+    function openModalDanhGia(giaoViecThanhVienId) {
+        resetModalDanhGia();
+        $("#DanhGia_GiaoViecThanhVienId").val(giaoViecThanhVienId);
+
+        showLoadingModal();
+        ajaxGet(`/GiaoViecDanhGia/GetChiTietDanhGia?giaoViecThanhVienId=${giaoViecThanhVienId}`, function (res) {
+            hideLoadingModal();
+            if (res && res.Item) {
+                var it = res.Item;
+                $("#DanhGia_TenCongViec").text(it.TenCongViec || 'N/A');
+                $("#DanhGia_NoiDung").text(it.NoiDung || 'N/A');
+                $("#DanhGia_ThanhVien").text(it.ThanhVien || 'N/A');
+                $("#DanhGia_TenVaiTro").text(it.TenVaiTroXuLy || 'Xử lý chính');
+                $("#DanhGia_HanXuLy").text(it.HanXuLyStr || 'N/A');
+                $("#DanhGia_NgayXacNhan").text(it.NgayXacNhanHoanThanhStr || 'N/A');
+
+                $("#DanhGia_NoiDungBaoCao").text(it.NoiDungBaoCaoCuoi || '(Không có nội dung báo cáo)');
+
+                if (it.FilesBaoCaoCuoi && it.FilesBaoCaoCuoi.length > 0) {
+                    var filesHtml = '<ul class="list-unstyled mb-0">';
+                    it.FilesBaoCaoCuoi.forEach(function (f) {
+                        filesHtml += `<li class="mb-1"><i class="fa fa-paperclip text-muted mr-1"></i> <a href="${f.DuongDan}" target="_blank" download>${f.TenFile}</a></li>`;
+                    });
+                    filesHtml += '</ul>';
+                    $("#DanhGia_ListFiles").html(filesHtml);
+                } else {
+                    $("#DanhGia_ListFiles").html('<span class="text-muted font-italic">Không có file đính kèm</span>');
+                }
+
+                if (it.LichSuDanhGias && it.LichSuDanhGias.length > 0) {
+                    var lsHtml = '';
+                    it.LichSuDanhGias.forEach(function (ls) {
+                        var badge = ls.KetQuaDanhGia === 1 
+                            ? '<span class="badge badge-success font-weight-normal px-2 py-1">Đạt</span>' 
+                            : '<span class="badge badge-danger font-weight-normal px-2 py-1">Chưa đạt</span>';
+                        lsHtml += `<tr>
+                            <td>${ls.NgayDanhGiaStr || ''}</td>
+                            <td>${ls.NguoiDanhGia || ''}</td>
+                            <td>${badge}</td>
+                            <td>${ls.YKienDanhGia || ''}</td>
+                        </tr>`;
+                    });
+                    $("#DanhGia_TbodyLichSu").html(lsHtml);
+                    $("#DanhGia_CardLichSu").show();
+                } else {
+                    $("#DanhGia_CardLichSu").hide();
+                }
+
+                if (it.KetQuaDanhGiaGanNhat === 2) {
+                    $("#radioDanhGiaChuaDat").prop("checked", true);
+                    $("#spanRequiredYKien").removeClass("d-none");
+                } else {
+                    $("#radioDanhGiaDat").prop("checked", true);
+                    $("#spanRequiredYKien").addClass("d-none");
+                }
+                $("#DanhGia_YKien").val(it.YKienDanhGiaGanNhat || '');
+
+                $("#modalDanhGiaNhiemVu").modal("show");
+            } else {
+                toastr.error("Không tìm thấy thông tin nhiệm vụ.");
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra khi tải dữ liệu.");
+        });
+    }
+
+    function saveDanhGiaNhiemVuModal() {
+        var giaoViecThanhVienId = $("#DanhGia_GiaoViecThanhVienId").val();
+        var ketQua = $("input[name='radioKetQuaDanhGia']:checked").val();
+        var yKien = $("#DanhGia_YKien").val();
+
+        var fd = new FormData();
+        fd.append("GiaoViecThanhVienId", giaoViecThanhVienId);
+        fd.append("KetQuaDanhGia", ketQua);
+        fd.append("YKienDanhGia", yKien || '');
+
+        showLoadingModal();
+        ajaxPostFormData("/GiaoViecDanhGia/LuuDanhGia", fd, function (data) {
+            hideLoadingModal();
+            if (data.Errors && data.Errors.length > 0) {
+                var msg = data.Errors.map(function (item) { return item.Description; }).join("<br/>");
+                toastr.error(msg);
+            } else {
+                toastr.success("Lưu kết quả đánh giá thành công.");
+                $("#modalDanhGiaNhiemVu").modal("hide");
+                resetModalDanhGia();
+                if (typeof search === 'function') {
+                    search();
+                }
+                if (typeof hienMenuSoDem === 'function') {
+                    hienMenuSoDem();
+                }
+            }
+        }, function () {
+            hideLoadingModal();
+            toastr.error("Đã có lỗi xảy ra khi lưu đánh giá. Vui lòng thử lại.");
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("input[name='radioKetQuaDanhGia']").on("change", function () {
+            if ($(this).val() == "2") {
+                $("#spanRequiredYKien").removeClass("d-none");
+            } else {
+                $("#spanRequiredYKien").addClass("d-none");
+            }
+        });
+
+        $('#modalDanhGiaNhiemVu').on('hidden.bs.modal', function () {
+            resetModalDanhGia();
+        });
+    });
+</script>

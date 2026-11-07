@@ -1,4 +1,4 @@
-using Dashboard.Common;
+﻿using Dashboard.Common;
 using Dashboard.Models.Entities;
 using Dashboard.Models.Validates;
 using Dashboard.Models.ViewModel;
@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using Dashboard.Services;
 
 namespace Dashboard.Controllers
 {

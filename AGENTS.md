@@ -1,4 +1,4 @@
----
+﻿---
 alwaysApply: true
 ---
 
@@ -32,6 +32,7 @@ alwaysApply: true
 - Nếu một trường int cho phép null (int?) thì dùng .GetValueOrDefault() để kiểm tra và lấy giá trị. Nếu .GetValueOrDefault() khác 0 thì truy vấn theo trường đó, nếu bằng 0 thì bỏ qua điều kiện filter đó
 - Khi tạo file script SQL trong folder /DataScripts, tên file phải có format YYYYMMDDHHmmss_mota.sql (ví dụ: 20251124221417_them_IsTuGiao.sql) và phải lấy thời gian hiện tại (Get-Date -Format 'yyyyMMddHHmmss') làm timestamp, không được dùng thời gian cố định. Giá trị trong INSERT INTO DatabaseVersion(Name) cũng phải khớp với timestamp trong tên file
 - KHÔNG BAO GIỜ dùng lệnh GO trong file script SQL. Tất cả các câu lệnh SQL phải được viết liên tiếp không có GO. Nếu cần thực thi nhiều câu lệnh riêng biệt, hãy sử dụng BEGIN...END block hoặc viết các câu lệnh tuần tự
+- Viết script SQL trong folder /DataScripts phải đơn giản, KHÔNG tạo khóa ngoại (foreign key/REFERENCES), KHÔNG tạo index
 - Frontend (FE) chỉ có nhiệm vụ gửi dữ liệu lên Backend (BE) và hiển thị kết quả trả về từ BE. Tất cả validation, kiểm tra logic, xử lý nghiệp vụ đều phải thực hiện ở BE. FE không được thực hiện validation hoặc kiểm tra logic nghiệp vụ (như kiểm tra phòng ban có trưởng phòng không, kiểm tra dữ liệu hợp lệ, tìm thành viên gốc, filter dữ liệu, v.v.). Nếu có lỗi, BE sẽ trả về và FE chỉ hiển thị lỗi đó cho người dùng. FE chỉ map dữ liệu từ BE vào các field trên form để hiển thị, không có logic xử lý nghiệp vụ
 - Nếu prompt của tôi có chứa chữ "plan" (hoặc "kế hoạch") thì bạn hãy lên kế hoạch trước (dùng CreatePlan / plan mode), không code ngay; chỉ khi tôi xác nhận hoặc yêu cầu thực hiện thì mới bắt đầu viết code
 - Khi lên plan (kế hoạch), luôn tạo file .md (ví dụ trong .cursor/plans/ hoặc thư mục phù hợp) ghi rõ mục tiêu, các bước, file cần sửa/tạo để tôi dễ hình dung và theo dõi
@@ -42,6 +43,12 @@ alwaysApply: true
 - Khi trả lời sau khi code xong, không cần liệt kê chi tiết code thay đổi ở dòng nào. Chỉ tóm tắt ngắn gọn những gì đã làm, kết quả kiểm tra/build, và lưu ý quan trọng nếu có vì tôi đã có tool để review diff.
 - Khi tạo mới hoặc cập nhật source code có chứa chuỗi ký tự tiếng Việt, luôn đảm bảo file được ghi xuống/lưu trữ ở định dạng chuẩn bảng mã UTF-8 (ưu tiên UTF-8 with BOM). Không sử dụng định dạng ANSI.
 - Các modal luôn được tạo thành file partial view (.cshtml) riêng biệt, chứa đầy đủ code HTML, CSS và JavaScript liên quan trực tiếp đến modal đó ngay bên trong file partial.
+- Quy chuẩn thiết kế giao diện Form / Modal (chuẩn theo hình ảnh /Data/UI/Form.png và /Views/User/FormModal.cshtml):
+    + Tuyệt đối KHÔNG màu mè, không lạm dụng các class màu sắc lòe loẹt (text-primary, text-info, text-danger, text-secondary) trên các nhãn text hiển thị thông tin hoặc gắn nhiều icon FontAwesome không cần thiết.
+    + Modal Header: Sử dụng nền `bg-primary text-white`, tiêu đề `<h5><b>...</b></h5>` KHÔNG gắn icon, nút đóng màu trắng `<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>`.
+    + Phân cách giữa các nhóm thông tin/section: Dùng `<div class="txt-middle-line"><span><b>Tiêu đề section</b></span></div>`, KHÔNG dùng các card bao lồng màu mè (`card card-outline card-info`, `card-secondary`,...).
+    + Bố cục bên trong modal-body: Thiết kế phẳng, gọn gàng, sử dụng grid Bootstrap 4 (`col-sm-.. col-xs-12` hoặc `col-md-..`).
+    + Modal Footer: Nút đóng bên trái dùng `btn btn-light` với `<i class="fa fa-times"></i> Đóng`; Nút hành động chính (Lưu/Thêm mới/Cập nhật) bên phải dùng `btn btn-success` với `<i class="fa fa-save"></i>` hoặc icon hành động tương ứng.
 
 # 6. Clean Code & Formatting
 # QUY TẮC PHÁT TRIỂN MÃ NGUỒN (SOLID PRINCIPLES)

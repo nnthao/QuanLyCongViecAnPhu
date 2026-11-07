@@ -73,8 +73,6 @@
                                 </div>
                             </div>
                             @Html.CustomTextBox(id: "HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
-                            @Html.CustomTextBox(id: "TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
-                            @Html.CustomTextBox(id: "TenNguoiTheoDoiChiDaoThanhVienCanXuLy", label: "Người theo dõi chỉ đạo", col: 2, isReadonly: true, length: 100, moreClass: "col-sm-2 col-xs-12 hanXuLy")
                         </div>
                         <div class="row">
                             @Html.CustomTextArea(id: "GhiChu", label: "Ghi chú", col: 6, moreClass: "col-sm-6 col-xs-12", row: 2, isReadonly: true)
@@ -107,7 +105,7 @@
 </section>
 
 <script>
-    const textFields = ["Id", "TenCongViec", "GhiChu", "NoiDungXuLy", "NoiDungThanhVienCanXuLy", "HanXuLyThanhVienCanXuLyStr", "TenVaiTroXuLyThanhVienCanXuLy", "TenNguoiTheoDoiChiDaoThanhVienCanXuLy"];
+    const textFields = ["Id", "TenCongViec", "GhiChu", "NoiDungXuLy", "NoiDungThanhVienCanXuLy", "HanXuLyThanhVienCanXuLyStr", "TenNguoiTheoDoiChiDaoThanhVienCanXuLy"];
     const selectFields = [];
     const radioFields = [];
     const checkBoxFields = [];
@@ -214,7 +212,6 @@
             toastr.error("Đã có lỗi xảy ra. Vui lòng tải lại trang.");
         });
     }
-
 
     document.addEventListener("DOMContentLoaded", function () {
         loadData();

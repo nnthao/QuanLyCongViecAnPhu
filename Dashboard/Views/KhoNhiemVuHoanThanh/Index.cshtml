@@ -111,8 +111,7 @@
 
     function thanhVienFormatter(value, row, index) {
         var name = value || 'N/A';
-        var vt = row.TenVaiTroXuLy ? ` <small class="text-muted">(${row.TenVaiTroXuLy})</small>` : '';
-        return `<b>${name}</b>${vt}`;
+        return `<b>${name}</b>`;
     }
 
     function tenCongViecFormatter(value, row, index) {

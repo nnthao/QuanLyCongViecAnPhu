@@ -1,4 +1,4 @@
-using Dashboard.AdoNetHelper;
+﻿using Dashboard.AdoNetHelper;
 using Dashboard.Common;
 using Dashboard.Models;
 using Dashboard.Models.CommonModel;
@@ -43,36 +43,10 @@ namespace Dashboard.Repository
                 .Include(o => o.GiaoViec)
                 .Where(o => o.IsDeleted != true
                     && (o.GiaoViec.IsDeleted == null || o.GiaoViec.IsDeleted == false)
+                    && o.TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia
                     && (o.GiaoViec.NguoiGiaoId == queryParams.CurrentUserId || o.NguoiTheoDoiChiDaoId == queryParams.CurrentUserId))
                 .AsNoTracking()
                 .AsQueryable();
-
-            // Lọc theo trạng thái
-            if (queryParams.TrangThaiSearch.HasValue)
-            {
-                int tt = queryParams.TrangThaiSearch.Value;
-                if (tt == (int)EnumTrangThaiGiaoViec.ChoDanhGia)
-                {
-                    query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia);
-                }
-                else if (tt == (int)EnumTrangThaiGiaoViec.HoanThanh)
-                {
-                    query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.HoanThanh || (o.IsHoanThanh == true && o.TrangThai == null));
-                }
-                else if (tt == (int)EnumTrangThaiGiaoViec.ChuaDat)
-                {
-                    query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.ChuaDat);
-                }
-                else if (tt == (int)EnumTrangThaiGiaoViec.ChuaHoanThanh)
-                {
-                    query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.ChuaHoanThanh || (o.TrangThai == null && o.IsHoanThanh != true));
-                }
-            }
-            else
-            {
-                // Mặc định: lấy các nhiệm vụ đang Chờ đánh giá
-                query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia);
-            }
 
             // Lọc theo khoảng ngày
             if (queryParams.TuNgay.HasValue)

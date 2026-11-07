@@ -168,6 +168,11 @@
             }, function errFunct(err) {
 
             });
+            ajaxGet("/GiaoViecDanhGia/DemSoLuongChoDanhGia", function (res) {
+                $("#GiaoViecDanhGiaCount")
+                    .text(res.count)
+                    .toggleClass("d-none", res.count === 0);
+            });
         }, 300)
     }
 
@@ -175,6 +180,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         ajaxGet("/CauHinhMenu/LayDanhSachMenuTheoQuyen", function callbackFunc(res) {
             generateMenu(res, "menuContainer");
+            hienMenuSoDem();
 
             setTimeout(function () {
                 var currentUrl = window.location.pathname.toLowerCase();
@@ -203,7 +209,5 @@
         }, function errorFunc(res) {
 
         })
-
-        hienMenuSoDem();
     });
 </script>

@@ -1,4 +1,4 @@
-using Dashboard.Common;
+﻿using Dashboard.Common;
 using Dashboard.Models.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -72,8 +72,6 @@ namespace Dashboard.Models.Entities
 
     public class GiaoViecDanhGiaQueryViewModel : QueryParamViewModel
     {
-        public int? TrangThaiSearch { get; set; }
-        public int CurrentUserId { get; set; }
     }
 
     public class ChiTietDanhGiaItemVo

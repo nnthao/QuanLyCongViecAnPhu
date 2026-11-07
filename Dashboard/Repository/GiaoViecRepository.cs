@@ -635,7 +635,10 @@ namespace Dashboard.Repository
             // Lấy các công việc được giao cho người dùng, loại bỏ công việc tự giao
             var query = _context.GiaoViecThanhViens
                 .Where(o => o.ThanhVienId == queryParams.NguoiDuocGiaoId
-                    && (o.GiaoViec.IsDeleted == null || o.GiaoViec.IsDeleted == false))
+                    && (o.GiaoViec.IsDeleted == null || o.GiaoViec.IsDeleted == false)
+                    && (o.TrangThai == null
+                        ? o.IsHoanThanh != true
+                        : o.TrangThai != (int)EnumTrangThaiGiaoViec.HoanThanh))
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -644,16 +647,7 @@ namespace Dashboard.Repository
             else
                 query = query.Where(o => o.IsDeleted != true);
 
-            // Thêm điều kiện tìm kiếm theo trạng thái
-            if (queryParams.TrangThaiSearch == 1) // Đã hoàn thành (Đạt)
-            {
-                query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.HoanThanh || (o.IsHoanThanh == true && o.TrangThai == null));
-            }
-            else if (queryParams.TrangThaiSearch == 2) // Chưa hoàn thành
-            {
-                query = query.Where(o => o.TrangThai != (int)EnumTrangThaiGiaoViec.HoanThanh && (o.IsHoanThanh != true || o.TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia || o.TrangThai == (int)EnumTrangThaiGiaoViec.ChuaDat));
-            }
-            else if (queryParams.TrangThaiSearch == 3) // Chờ đánh giá
+            if (queryParams.TrangThaiSearch == 3) // Chờ đánh giá
             {
                 query = query.Where(o => o.TrangThai == (int)EnumTrangThaiGiaoViec.ChoDanhGia);
             }
@@ -1054,35 +1048,9 @@ namespace Dashboard.Repository
                     };
                 }
             }
-            var hasNoiDung = !string.IsNullOrWhiteSpace(viewModel.NoiDungXuLy);
             var hasFile = viewModel.FileDinhKems != null && viewModel.FileDinhKems.Any(f => f != null && f.ContentLength > 0);
 
-            if (viewModel.GiaoViecThanhVienId.GetValueOrDefault() > 0)
-            {
-                var thanhVien = _context.GiaoViecThanhViens.AsNoTracking()
-                    .FirstOrDefault(o => o.Id == viewModel.GiaoViecThanhVienId && o.IsDeleted != true);
-
-                if (thanhVien != null && thanhVien.VaiTroXuLyId.GetValueOrDefault() > 0)
-                {
-                    var vaiTroXuLy = CacheManagerHelper.GetVaiTroXuLyByIdFromCache(thanhVien.VaiTroXuLyId.Value);
-                    if (vaiTroXuLy != null && vaiTroXuLy.IsCanDinhKemFileKhiXacNhanHoanThanh == true && !hasFile)
-                    {
-                        return new
-                        {
-                            Errors = new List<ValidateError>
-                            {
-                                new ValidateError
-                                {
-                                    Id = "NoiDungXuLy",
-                                    Description = "Vai trò xử lý của bạn bắt buộc phải đính kèm file khi xác nhận hoàn thành công việc."
-                                }
-                            }
-                        };
-                    }
-                }
-            }
-
-            if (!hasNoiDung && !hasFile)
+            if (!hasFile)
             {
                 return new
                 {
@@ -1090,8 +1058,8 @@ namespace Dashboard.Repository
                     {
                         new ValidateError
                         {
-                            Id = "NoiDungXuLy",
-                            Description = "Vui lòng nhập nội dung xử lý hoặc đính kèm file để xác nhận hoàn thành"
+                            Id = "FileDinhKems",
+                            Description = "Vui lòng đính kèm ít nhất một file khi xác nhận hoàn thành công việc."
                         }
                     }
                 };
@@ -1639,7 +1607,11 @@ namespace Dashboard.Repository
             return _context.GiaoViecThanhViens
                 .Where(x => x.ThanhVienId == thanhVienId &&
                            x.IsDeleted != true &&
-                           x.IsHoanThanh != true && (x.GiaoViec.NguoiGiaoId != thanhVienId && x.GiaoViec.IsTuGiao != true))
+                           (x.GiaoViec.IsDeleted == null || x.GiaoViec.IsDeleted == false) &&
+                           (x.TrangThai == null
+                               ? x.IsHoanThanh != true
+                               : x.TrangThai != (int)EnumTrangThaiGiaoViec.HoanThanh) &&
+                           x.GiaoViec.NguoiGiaoId != thanhVienId && x.GiaoViec.IsTuGiao != true)
                 .Count();
         }
 

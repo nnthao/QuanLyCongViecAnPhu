@@ -38,7 +38,6 @@
                         <div class="row">
                             @Html.CustomTextArea(id: "NoiDungThanhVienCanXuLy", label: "Nội dung cần xử lý", col: 6, moreClass: "col-sm-6 col-xs-12 hanXuLy", row: 3, isReadonly: true)
                             @Html.CustomTextBox(id: "HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
-                            @Html.CustomTextBox(id: "TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
                         </div>
 
                         @Html.Partial("~/Views/GiaoViecCanXuLy/NguoiNhanViecTiepTuc.cshtml")
@@ -70,7 +69,6 @@
                 $("#GhiChu").val(res.Item.GhiChu);
                 $("#NoiDungThanhVienCanXuLy").val(res.Item.NoiDungThanhVienCanXuLy || "");
                 $("#HanXuLyThanhVienCanXuLyStr").val(res.Item.HanXuLyThanhVienCanXuLyStr || "");
-                $("#TenVaiTroXuLyThanhVienCanXuLy").val(res.Item.TenVaiTroXuLyThanhVienCanXuLy || "");
                 hideLoadingModal();
             }
         }, function funcError() {

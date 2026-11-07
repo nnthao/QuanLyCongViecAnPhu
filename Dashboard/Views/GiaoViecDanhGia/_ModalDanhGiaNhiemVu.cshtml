@@ -23,7 +23,7 @@
                         <p class="mb-2"><b>Nội dung giao việc:</b> <span id="DanhGia_NoiDung"></span></p>
                     </div>
                     <div class="col-sm-6 col-xs-12">
-                        <p class="mb-2"><b>Người thực hiện:</b> <span id="DanhGia_ThanhVien" class="font-weight-bold"></span> (<span id="DanhGia_TenVaiTro"></span>)</p>
+                        <p class="mb-2"><b>Người thực hiện:</b> <span id="DanhGia_ThanhVien" class="font-weight-bold"></span></p>
                         <p class="mb-2"><b>Hạn xử lý:</b> <span id="DanhGia_HanXuLy"></span></p>
                         <p class="mb-2"><b>Ngày xác nhận hoàn thành:</b> <span id="DanhGia_NgayXacNhan"></span></p>
                     </div>
@@ -127,7 +127,6 @@
         $("#DanhGia_TenCongViec").text('');
         $("#DanhGia_NoiDung").text('');
         $("#DanhGia_ThanhVien").text('');
-        $("#DanhGia_TenVaiTro").text('');
         $("#DanhGia_HanXuLy").text('');
         $("#DanhGia_NgayXacNhan").text('');
         $("#DanhGia_NoiDungBaoCao").text('');
@@ -151,7 +150,6 @@
                 $("#DanhGia_TenCongViec").text(it.TenCongViec || 'N/A');
                 $("#DanhGia_NoiDung").text(it.NoiDung || 'N/A');
                 $("#DanhGia_ThanhVien").text(it.ThanhVien || 'N/A');
-                $("#DanhGia_TenVaiTro").text(it.TenVaiTroXuLy || 'Xử lý chính');
                 $("#DanhGia_HanXuLy").text(it.HanXuLyStr || 'N/A');
                 $("#DanhGia_NgayXacNhan").text(it.NgayXacNhanHoanThanhStr || 'N/A');
 

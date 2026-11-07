@@ -27,7 +27,7 @@
                     <br/><small class="font-italic">Vui lòng cập nhật bổ sung tiến trình thực hiện và bấm "Xác nhận hoàn thành" để gửi đánh giá lại.</small>
                 </div>
                 <div id="alertChoDanhGia" class="alert alert-info d-none">
-                    <b><i class="fa fa-clock-o"></i> Nhiệm vụ đang chờ đánh giá:</b> Bạn đã gửi xác nhận hoàn thành, đang chờ người giao việc hoặc người theo dõi chỉ đạo đánh giá kết quả.
+                    <b><i class="fa fa-clock-o"></i> Nhiệm vụ đang chờ đánh giá:</b> Bạn đã gửi xác nhận hoàn thành, đang chờ người giao việc đánh giá kết quả.
                 </div>
                 <div id="alertDaHoanThanh" class="alert alert-success d-none">
                     <b><i class="fa fa-check-circle"></i> Đã hoàn thành (Đạt):</b> Nhiệm vụ đã được đánh giá Đạt, khóa không cho cập nhật hoặc hủy xác nhận.
@@ -46,7 +46,6 @@
                         </div>
                     </div>
                     @Html.CustomTextBox(id: "CanXuLy_HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
-                    @Html.CustomTextBox(id: "CanXuLy_TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 3, isReadonly: true, length: 100, moreClass: "col-sm-3 col-xs-12 hanXuLy")
                 </div>
                 <div class="row">
                     @Html.CustomTextArea(id: "CanXuLy_GhiChu", label: "Ghi chú", col: 6, moreClass: "col-sm-6 col-xs-12", row: 2, isReadonly: true)
@@ -84,7 +83,6 @@
         $("#CanXuLy_GhiChu").val('');
         $("#CanXuLy_NoiDungThanhVienCanXuLy").val('');
         $("#CanXuLy_HanXuLyThanhVienCanXuLyStr").val('');
-        $("#CanXuLy_TenVaiTroXuLyThanhVienCanXuLy").val('');
         $("#CanXuLy_btnLinkIoffice").addClass("d-none").attr("href", "#");
 
         TaiLieuDinhKemDatas = [];
@@ -114,7 +112,6 @@
                 $("#CanXuLy_GhiChu").val(item.GhiChu || '');
                 $("#CanXuLy_NoiDungThanhVienCanXuLy").val(item.NoiDungThanhVienCanXuLy || '');
                 $("#CanXuLy_HanXuLyThanhVienCanXuLyStr").val(item.HanXuLyThanhVienCanXuLyStr || '');
-                $("#CanXuLy_TenVaiTroXuLyThanhVienCanXuLy").val(item.TenVaiTroXuLyThanhVienCanXuLy || '');
 
                 $("#alertChuaDat, #alertChoDanhGia, #alertDaHoanThanh").addClass("d-none");
 

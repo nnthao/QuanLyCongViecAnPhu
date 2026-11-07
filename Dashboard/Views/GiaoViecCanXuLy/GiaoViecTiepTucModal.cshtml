@@ -47,7 +47,6 @@
                     @Html.CustomTextBox(id: "TiepTuc_TenCongViec", label: "Tên công việc", col: 12, isReadonly: true, length: 10000, moreClass: "col-md-12 col-sm-12 col-xs-12")
                     @Html.CustomTextArea(id: "TiepTuc_GhiChu", label: "Ghi chú", col: 12, moreClass: "col-md-12 col-sm-12 col-xs-12", row: 2, isReadonly: true)
                     @Html.CustomTextBox(id: "TiepTuc_HanXuLyThanhVienCanXuLyStr", label: "Hạn xử lý", col: 6, isReadonly: true, length: 100, moreClass: "col-md-6 col-sm-6 col-xs-12 hanXuLy")
-                    @Html.CustomTextBox(id: "TiepTuc_TenVaiTroXuLyThanhVienCanXuLy", label: "Vai trò xử lý", col: 6, isReadonly: true, length: 100, moreClass: "col-md-6 col-sm-6 col-xs-12 hanXuLy")
                     @Html.CustomTextArea(id: "TiepTuc_NoiDungThanhVienCanXuLy", label: "Nội dung cần xử lý", col: 12, moreClass: "col-md-12 col-sm-12 col-xs-12 hanXuLy", row: 2, isReadonly: true)
                 </div>
 
@@ -82,7 +81,6 @@
                 $("#TiepTuc_GhiChu").val(res.Item.GhiChu || '');
                 $("#TiepTuc_NoiDungThanhVienCanXuLy").val(res.Item.NoiDungThanhVienCanXuLy || '');
                 $("#TiepTuc_HanXuLyThanhVienCanXuLyStr").val(res.Item.HanXuLyThanhVienCanXuLyStr || '');
-                $("#TiepTuc_TenVaiTroXuLyThanhVienCanXuLy").val(res.Item.TenVaiTroXuLyThanhVienCanXuLy || '');
 
                 $("#giaoViecTiepTucModal").modal("show");
             }

@@ -52,18 +52,6 @@
                             <input type="text" class="form-control" id="modal_HanXuLyThanhVienCanXuLyStr" readonly />
                         </div>
                     </div>
-                    <div class="col-sm-2 col-xs-12 hanXuLy">
-                        <div class="form-group">
-                            <label>Vai trò xử lý</label>
-                            <input type="text" class="form-control" id="modal_TenVaiTroXuLyThanhVienCanXuLy" readonly />
-                        </div>
-                    </div>
-                    <div class="col-sm-2 col-xs-12 hanXuLy">
-                        <div class="form-group">
-                            <label>Người theo dõi chỉ đạo</label>
-                            <input type="text" class="form-control" id="modal_TenNguoiTheoDoiChiDaoThanhVienCanXuLy" readonly />
-                        </div>
-                    </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-sm-6 col-xs-12">
@@ -173,7 +161,6 @@
         $("#modal_TenCongViec").val('');
         $("#modal_NoiDung").val('');
         $("#modal_HanXuLyThanhVienCanXuLyStr").val('');
-        $("#modal_TenVaiTroXuLyThanhVienCanXuLy").val('');
         $("#modal_GhiChu").val('');
         $("#modal_NoiDungThanhVienCanXuLy").val('');
         $("#modal_btnLinkIoffice").addClass("d-none").attr("href", "#");
@@ -186,7 +173,6 @@
                 $("#modal_TenCongViec").val(item.TenCongViec || '');
                 $("#modal_NoiDung").val(item.NoiDung || '');
                 $("#modal_HanXuLyThanhVienCanXuLyStr").val(item.HanXuLyThanhVienCanXuLyStr || '');
-                $("#modal_TenVaiTroXuLyThanhVienCanXuLy").val(item.TenVaiTroXuLyThanhVienCanXuLy || '');
                 $("#modal_TenNguoiTheoDoiChiDaoThanhVienCanXuLy").val(item.TenNguoiTheoDoiChiDaoThanhVienCanXuLy || '');
                 $("#modal_GhiChu").val(item.GhiChu || '');
                 $("#modal_NoiDungThanhVienCanXuLy").val(item.NoiDungThanhVienCanXuLy || '');

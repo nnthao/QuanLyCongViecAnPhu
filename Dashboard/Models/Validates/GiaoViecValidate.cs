@@ -1,4 +1,4 @@
-using Dashboard.Models.Entities;
+﻿using Dashboard.Models.Entities;
 using System.Collections.Generic;
 
 namespace Dashboard.Models.Validates
@@ -43,11 +43,6 @@ namespace Dashboard.Models.Validates
                     if (thanhVien.HanXuLy == null)
                     {
                         errorThanhViens.Add($@"{thanhVien.ThanhVien} - Hạn xử lý không được trống");
-                    }
-
-                    if (thanhVien.VaiTroXuLyId == null || thanhVien.VaiTroXuLyId <= 0)
-                    {
-                        errorThanhViens.Add($@"{thanhVien.ThanhVien} - Vai trò xử lý không được trống");
                     }
                 }
 

@@ -41,6 +41,7 @@
                         </div>
                         <div class="row">
                             @Html.CustomCheckBox(id: "IsLanhDaoPhong", label: "Lãnh đạo phòng", col: 4, moreClass: "col-sm-4 col-xs-12 p-t-15")
+                            @Html.CustomCheckBox(id: "IsTruongPhong", label: "Trưởng phòng", col: 4, moreClass: "col-sm-4 col-xs-12 p-t-15")
                         </div>
                         <div class="row">
                             <div class="txt-middle-line"><span><b>Mật khẩu</b></span></div>
@@ -78,7 +79,7 @@
     const textFields = ["Id", "Name", "Email", "Phone", "NewPassword", "RePassword", "TelegramId", "UserZaloId"];
     const selectFields = ["VaiTroId", "PhongBanId", "ChucDanhId"];
     const radioFields = [];
-    const checkBoxFields = ["IsLanhDaoPhong"];
+    const checkBoxFields = ["IsLanhDaoPhong", "IsTruongPhong"];
     const select2MultiFields = ["NhomVaiTroId"];
 
     function loadData() {

@@ -63,7 +63,7 @@ namespace Dashboard.AdoNetHelper
             {
                 conn.Open();
 
-                string sql = $@"SELECT Id, Email, Name, Phone, VaiTroId, IsSystemUser, IsDeleted, PhongBanId, ChucDanhId, NhomVaiTroId, TelegramId, UserZaloId, IsLanhDaoPhong
+                string sql = $@"SELECT Id, Email, Name, Phone, VaiTroId, IsSystemUser, IsDeleted, PhongBanId, ChucDanhId, NhomVaiTroId, TelegramId, UserZaloId, IsLanhDaoPhong, IsTruongPhong
                         FROM Users WHERE IsSystemUser != 1 or IsSystemUser is null ";
 
                 using (var cmd = new SqlCommand(sql, conn))
@@ -86,7 +86,8 @@ namespace Dashboard.AdoNetHelper
                                 NhomVaiTroId = SqlServeHelper.LayGiaTriCuaCotLaString(reader, "NhomVaiTroId"),
                                 TelegramId = SqlServeHelper.LayGiaTriCuaCotLaString(reader, "TelegramId"),
                                 UserZaloId = SqlServeHelper.LayGiaTriCuaCotLaString(reader, "UserZaloId"),
-                                IsLanhDaoPhong = SqlServeHelper.LayGiaTriCuaCotLaBoolean(reader, "IsLanhDaoPhong")
+                                IsLanhDaoPhong = SqlServeHelper.LayGiaTriCuaCotLaBoolean(reader, "IsLanhDaoPhong"),
+                                IsTruongPhong = SqlServeHelper.LayGiaTriCuaCotLaBoolean(reader, "IsTruongPhong")
                             });
                         }
                     }

@@ -27,7 +27,7 @@ namespace Dashboard.Models.Validates
                 errors.Add(new ValidateError
                 {
                     Id = "ThanhVien",
-                    Description = "Người được giao việc không được trống"
+                    Description = "Phòng được giao việc không được trống"
                 });
             }
             else
@@ -35,6 +35,11 @@ namespace Dashboard.Models.Validates
                 var errorThanhViens = new List<string>();
                 foreach (var thanhVien in viewModel.ThanhViens)
                 {
+                    if (thanhVien.ThanhVienId.GetValueOrDefault() == 0)
+                    {
+                        errorThanhViens.Add("Phòng được giao việc chưa có người nhận hợp lệ");
+                    }
+
                     if (string.IsNullOrWhiteSpace(thanhVien.NoiDungNhiemVu))
                     {
                         errorThanhViens.Add($@"{thanhVien.ThanhVien} - Nội dung thực hiện không được trống");

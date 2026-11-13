@@ -97,7 +97,7 @@
         var btnXoa = `<button id='btn-delete-item' class='btn btn-danger btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-trash'></i> Xóa</button>`;
 
         if (row.IsHoanThanh) {
-            var btnXemThongTin = `<a href="/GiaoViecCanXuLy/XemThongTin?id=${row.Id}&giaoViecId=${row.GiaoViecId}" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Xem thông tin</a>`;
+            var btnXemThongTin = ``;
             return btnSua + btnXemThongTin + btnXoa;
         }
 

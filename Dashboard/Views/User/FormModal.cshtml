@@ -31,6 +31,7 @@
                 </div>
                 <div class="row">
                     @Html.CustomCheckBox(id: "User_IsLanhDaoPhong", label: "Lãnh đạo phòng", col: 6, moreClass: "col-sm-6 col-xs-12 p-t-15")
+                    @Html.CustomCheckBox(id: "User_IsTruongPhong", label: "Trưởng phòng", col: 6, moreClass: "col-sm-6 col-xs-12 p-t-15")
                 </div>
                 <div class="row mt-2" id="divPasswordSection">
                     <div class="col-12"><div class="txt-middle-line"><span><b>Mật khẩu</b></span></div></div>
@@ -53,7 +54,6 @@
 <script>
     const userTextFields = ["User_Id", "User_Name", "User_Email", "User_Phone", "User_NewPassword", "User_RePassword", "User_TelegramId", "User_UserZaloId"];
     const userSelectFields = ["User_VaiTroId", "User_PhongBanId", "User_ChucDanhId"];
-    const userCheckBoxFields = ["User_IsLanhDaoPhong"];
 
     function resetUserModalForm() {
         $("#User_Id").val(0);
@@ -65,6 +65,7 @@
         $("#User_NewPassword").val('');
         $("#User_RePassword").val('');
         $("#User_IsLanhDaoPhong").prop('checked', false);
+        $("#User_IsTruongPhong").prop('checked', false);
         $("#User_VaiTroId").val('').trigger('change');
         $("#User_NhomVaiTroId").val(null).trigger('change');
         $("#User_ChucDanhId").val('').trigger('change');
@@ -113,6 +114,7 @@
                     $("#User_TelegramId").val(item.TelegramId || '');
                     $("#User_UserZaloId").val(item.UserZaloId || '');
                     $("#User_IsLanhDaoPhong").prop('checked', !!item.IsLanhDaoPhong);
+                    $("#User_IsTruongPhong").prop('checked', !!item.IsTruongPhong);
 
                     $("#User_VaiTroId").val(item.VaiTroId).trigger('change');
                     $("#User_ChucDanhId").val(item.ChucDanhId).trigger('change');
@@ -147,6 +149,7 @@
         fd.append("ChucDanhId", $("#User_ChucDanhId").val() || 0);
         fd.append("PhongBanId", $("#User_PhongBanId").val() || 0);
         fd.append("IsLanhDaoPhong", $("#User_IsLanhDaoPhong").is(':checked'));
+        fd.append("IsTruongPhong", $("#User_IsTruongPhong").is(':checked'));
         fd.append("NewPassword", $("#User_NewPassword").val());
         fd.append("RePassword", $("#User_RePassword").val());
 

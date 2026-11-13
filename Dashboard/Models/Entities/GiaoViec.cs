@@ -87,17 +87,20 @@ namespace Dashboard.Models.Entities
         }
 
         public string ThanhVienStr { get; set; }
+        private List<GiaoViecThanhVienViewModel> _thanhViens;
         public List<GiaoViecThanhVienViewModel> ThanhViens
         {
             get
             {
-                if (!string.IsNullOrEmpty(ThanhVienStr))
+                if (_thanhViens == null)
                 {
-                    return JsonConvert.DeserializeObject<List<GiaoViecThanhVienViewModel>>(ThanhVienStr);
+                    _thanhViens = !string.IsNullOrEmpty(ThanhVienStr)
+                        ? JsonConvert.DeserializeObject<List<GiaoViecThanhVienViewModel>>(ThanhVienStr) ?? new List<GiaoViecThanhVienViewModel>()
+                        : new List<GiaoViecThanhVienViewModel>();
                 }
-
-                return new List<GiaoViecThanhVienViewModel>();
+                return _thanhViens;
             }
+            set { _thanhViens = value; }
         }
     }
 

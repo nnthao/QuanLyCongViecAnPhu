@@ -1,19 +1,33 @@
 ﻿<style>
+    #xemThongTinThanhVienModal .form-group > label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
     #xemThongTinThanhVienModal .hanXuLy label {
         font-weight: bold !important;
         color: red;
     }
 
-    #xemThongTinThanhVienModal .hanXuLy input,
-    #xemThongTinThanhVienModal .hanXuLy textarea {
+    #xemThongTinThanhVienModal .hanXuLy .thong-tin-text {
         color: red;
         font-weight: bold;
     }
 
-    #xemThongTinThanhVienModal .auto-resize-textarea {
-        overflow: hidden;
-        resize: vertical;
-        min-height: 38px;
+    #xemThongTinThanhVienModal .thong-tin-text {
+        display: block;
+        min-width: 0;
+        min-height: 2rem;
+        padding: 0.25rem 0 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    #xemThongTinThanhVienModal #modal_TenCongViec {
+        font-weight: 600;
     }
 
     #xemThongTinThanhVienModal .table-scroll {
@@ -23,7 +37,7 @@
 </style>
 
 <div class="modal fade" id="xemThongTinThanhVienModal" tabindex="-1" role="dialog" aria-labelledby="xemThongTinThanhVienModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="xemThongTinThanhVienModalLabel"><b>Thông tin công việc</b></h5>
@@ -36,20 +50,18 @@
                     <div class="col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label>Tên công việc:</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="modal_TenCongViec" readonly />
-                                <div class="input-group-append">
-                                    <a id="modal_btnLinkIoffice" class="btn btn-info d-none" href="#" target="_blank" rel="noopener noreferrer">
-                                        <i class="fa fa-external-link"></i> Mở iOffice
-                                    </a>
-                                </div>
+                            <div class="d-flex align-items-center flex-wrap">
+                                <output class="thong-tin-text flex-grow-1" id="modal_TenCongViec"></output>
+                                <a id="modal_btnLinkIoffice" class="btn btn-info d-none ml-2" href="#" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa fa-external-link"></i> Mở iOffice
+                                </a>
                             </div>
                         </div>
                     </div>
                     <div class="col-sm-2 col-xs-12 hanXuLy">
                         <div class="form-group">
                             <label>Hạn xử lý</label>
-                            <input type="text" class="form-control" id="modal_HanXuLyThanhVienCanXuLyStr" readonly />
+                            <output class="thong-tin-text" id="modal_HanXuLyThanhVienCanXuLyStr"></output>
                         </div>
                     </div>
                 </div>
@@ -57,31 +69,31 @@
                     <div class="col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label>Nội dung công việc</label>
-                            <textarea class="form-control auto-resize-textarea" id="modal_NoiDung" rows="2" readonly></textarea>
+                            <output class="thong-tin-text" id="modal_NoiDung"></output>
                         </div>
                     </div>
                     <div class="col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label>Ghi chú</label>
-                            <textarea class="form-control auto-resize-textarea" id="modal_GhiChu" rows="2" readonly></textarea>
+                            <output class="thong-tin-text" id="modal_GhiChu"></output>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-xs-12 hanXuLy">
+                    <div class="col-sm-12 col-xs-12 hanXuLy">
                         <div class="form-group">
                             <label>Nội dung cần xử lý</label>
-                            <textarea class="form-control auto-resize-textarea" id="modal_NoiDungThanhVienCanXuLy" rows="2" readonly></textarea>
+                            <output class="thong-tin-text" id="modal_NoiDungThanhVienCanXuLy"></output>
                         </div>
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-sm-12 col-xs-12">
-                        <label>File đính kèm công việc:</label>
+                        <label class="font-weight-bold">File đính kèm công việc:</label>
                         <div id="modal_listFileDinhKem" class="border p-2 rounded bg-light" style="min-height: 40px;">
                             <span class="text-muted">Không có file đính kèm</span>
                         </div>
                     </div>
                 </div>
-                <div class="row">
+                <div class="row d-none">
                     <div class="col-sm-12">
                         <div class="txt-middle-line mb-3">
                             <span><b>Tiến trình thực hiện</b></span>
@@ -105,7 +117,7 @@
                         <div class="txt-middle-line"><span><b>Lịch sử xử lý công việc</b></span></div>
                         <div class="table-scroll">
                             <table class="table table-bordered table-striped">
-                                <thead>
+                                <thead class="thead-light">
                                     <tr>
                                         <th>Thời gian</th>
                                         <th>Thao tác</th>
@@ -119,7 +131,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer justify-content-start">
+            <div class="modal-footer ">
                 <button type="button" class="btn btn-light" data-dismiss="modal">
                     <i class="fa fa-times"></i> Đóng
                 </button>

@@ -97,7 +97,7 @@
     var hasQuyenChuyenGiao = @(ViewBag.HasQuyenChuyenGiao != null && (bool)ViewBag.HasQuyenChuyenGiao ? "true" : "false");
 
     function operateFormatter(value, row, index) {
-        var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, 0)" class='btn btn-info btn-sm m-l-5 m-r-5 m-t-5 m-b-5'><i class='fa fa-eye'></i> Xem thông tin</button>`;
+        var btnXemThongTin = ``;
 
         // Khi đã đánh giá đạt -> Hoàn thành: KHÔNG CÒN CẬP NHẬT ĐƯỢC HAY HỦY XÁC NHẬN ĐƯỢC
         if (row.TrangThai === 2 || (row.IsHoanThanh && !row.TrangThai)) {

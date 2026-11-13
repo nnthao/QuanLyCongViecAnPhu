@@ -1,9 +1,5 @@
-﻿@using System.Linq
-@{
+﻿@{
     var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
-    var currentUserId = Dashboard.Common.UserClaimHelper.GetCurrentUserId(identity);
-    var users = Dashboard.Common.CacheManagerHelper.GetListUserFromCacheNotDeleted().Where(x => x.Id != currentUserId).ToList();
-    var chucDanhs = Dashboard.Common.CacheManagerHelper.GetChucDanhCache();
     var currentPhongBanId = Dashboard.Common.UserClaimHelper.GetPhongBanId(identity);
     var isSystemUser = Dashboard.Common.UserClaimHelper.GetIsSystemUser(identity);
     var isQuyenGiaoViecTatCaPhongBan = Dashboard.Common.UserClaimHelper.IsQuyenAllow(identity, Dashboard.Common.QuyenMoRong.QuyenGiaoViecTatCaPhongBan.ToString());
@@ -28,56 +24,6 @@
         box-shadow: inset 0 -1px 0 #dee2e6;
     }
 
-    #nhomNguoiNhan .table-container {
-        margin: 20px auto;
-        max-width: 800px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    #nhomNguoiNhan .table-header {
-        background: linear-gradient(90deg, #4a90e2, #357abd);
-        color: white;
-        font-weight: bold;
-    }
-
-        #nhomNguoiNhan .table-header th {
-            border: none;
-            padding: 12px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-    #nhomNguoiNhan .expandable-row {
-        cursor: pointer;
-        background-color: #f8f9fa;
-        transition: background-color 0.2s;
-    }
-
-        #nhomNguoiNhan .expandable-row:hover {
-            background-color: #e9ecef;
-        }
-
-        #nhomNguoiNhan .expandable-row td {
-            padding: 10px 12px;
-            vertical-align: middle;
-        }
-
-    #nhomNguoiNhan .child-row {
-        background-color: white;
-        display: table-row;
-    }
-
-        #nhomNguoiNhan .child-row td {
-            padding: 8px;
-            border-top: 1px solid #dee2e6;
-        }
-
-    #nhomNguoiNhan .expand-icon {
-        transition: transform 0.3s ease;
-        margin-right: 8px;
-        color: #007bff;
-    }
-
     #nhomNguoiNhan .checkbox-cell {
         text-align: center;
         width: 80px;
@@ -85,11 +31,6 @@
 
     #nhomNguoiNhan .unit-name {
         font-weight: bold;
-    }
-
-    .child-unit-name {
-        color: #666;
-        font-size: 0.95em;
     }
 
     #nhomNguoiNhan .table tbody tr:last-child td {
@@ -100,7 +41,7 @@
         transform: scale(1.2);
     }
 
-    /* Style cho bảng thông tin nhân viên */
+    /* Style cho bảng thông tin nhận việc */
     #thongTinNhanViec table {
         margin-top: 0;
     }
@@ -178,75 +119,45 @@
 </style>
 <div class="row">
     <div class="col-sm-12">
-        <div class="txt-middle-line"><span><b>Người được giao việc <span class="text-danger mr-2">*</span> </b></span></div>
+        <div class="txt-middle-line"><span><b>Phòng được giao việc <span class="text-danger mr-2">*</span> </b></span></div>
     </div>
 </div>
 <div class="row">
     <div class="col-sm-6" id="nhomNguoiNhan">
-        <span id="UserIdsError" class="text-danger m-b-0"></span>
         <!-- Ô tìm kiếm -->
         <div class="mb-2">
-            <input type="text" id="searchUserInput" class="form-control" placeholder="Tìm kiếm nhân viên...">
+            <input type="text" id="searchPhongBanInput" class="form-control" placeholder="Tìm kiếm phòng...">
         </div>
         <div class="table-scroll">
             <table class="table mt-2 ">
                 <thead class="thead-light">
                     <tr>
-                        <th>Tên</th>
-                        <th>Chức danh</th>
+                        <th>Phòng</th>
                         <th class="checkbox-cell">Chọn</th>
                     </tr>
                 </thead>
-                <tbody id="userBody">
+                <tbody id="phongBanBody">
                     @foreach (var pb in phongBans)
                     {
                         var pbPadding = pb.Level > 0 ? $"padding-left: {pb.Level * 25}px !important;" : "";
-                        <tr class="expandable-row" data-group="group-@pb.Id">
-                            <td class="unit-name" colspan="2" style="@pbPadding">
-                                <span>
-                                    <i class="fa fa-caret-down expand-icon expanded"></i>
-                                    <span>@pb.Ten</span>
-                                </span>
-                            </td>
+                        <tr class="phong-ban-row">
+                            <td class="unit-name" style="@pbPadding">@pb.Ten</td>
                             <td class="checkbox-cell">
-                                <input type="checkbox" class="custom-checkbox parent-checkbox" id="group-@pb.Id">
+                                <input type="checkbox" class="custom-checkbox phong-ban-checkbox" data-id="@pb.Id" data-name="@pb.Ten">
                             </td>
                         </tr>
-
-                        var useCoquans = users.Where(o => o.PhongBanId == pb.Id)
-                            .OrderBy(us =>
-                            {
-                                var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
-                                return chucDanh != null && chucDanh.ThuTu.HasValue ? chucDanh.ThuTu.Value : int.MaxValue;
-                            })
-                            .ThenBy(us => us.Name)
-                            .ToList();
-                        foreach (var us in useCoquans)
-                        {
-                            var chucDanh = chucDanhs.FirstOrDefault(c => c.Id == us.ChucDanhId);
-                            var chucDanhTen = chucDanh != null ? chucDanh.Ten : "";
-                            var emailDisplay = !string.IsNullOrEmpty(us.Email) ? " (" + us.Email + ")" : "";
-                            <tr class="child-row" data-parent="group-@pb.Id">
-                                <td class="child-unit-name" style="@pbPadding">@us.Name@emailDisplay</td>
-                                <td>@chucDanhTen</td>
-                                <td class="checkbox-cell">
-                                    <input type="checkbox" id="User_@us.Id" data-id="@us.Id" data-name="@us.Name" data-email="@us.Email" data-chucdanh="@chucDanhTen" data-parent="group-@pb.Id" class="custom-checkbox child-checkbox">
-                                </td>
-                            </tr>
-                        }
                     }
                 </tbody>
             </table>
         </div>
     </div>
     <div class="col-sm-6 col-xs-12">
-        <p class="text-right"><button class="btn btn-primary" id="btnOpenChonNhomNguoiNhanModal"><i class="fa fa-users"></i> Chọn nhóm người nhận</button></p>
         <span id="ThanhVienError" class="text-danger"></span>
         <div class="table-scroll">
             <table class="table table-bordered table-striped">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width: 25%">Người nhận <span class="text-danger mr-2">*</span></th>
+                        <th style="width: 25%">Phòng nhận <span class="text-danger mr-2">*</span></th>
                         <th style="width: 40%">Nội dung thực hiện <span class="text-danger mr-2">*</span></th>
                         <th style="width: 25%">Hạn xử lý <span class="text-danger mr-2">*</span></th>
                         <th style="width: 10%">Thao tác</th>
@@ -259,120 +170,35 @@
     </div>
 </div>
 
-@Html.Partial("~/Views/GiaoViec/NhomNguoiNhanViecModal.cshtml")
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Chức năng tìm kiếm
-        $('#searchUserInput').on('input', function () {
+        $('#searchPhongBanInput').on('input', function () {
             var searchTerm = $(this).val().toLowerCase().trim();
-
-            if (searchTerm === '') {
-                // Hiển thị tất cả
-                $('#userBody tr').show();
-            } else {
-                $('#userBody tr').each(function () {
-                    var $row = $(this);
-                    var isExpandableRow = $row.hasClass('expandable-row');
-                    var isChildRow = $row.hasClass('child-row');
-
-                    if (isExpandableRow) {
-                        // Đối với hàng phòng ban, tìm trong tên phòng ban
-                        var phongBanText = $row.find('.unit-name span:last').text().toLowerCase();
-                        var hasMatch = phongBanText.includes(searchTerm);
-
-                        // Kiểm tra xem có nhân viên nào trong phòng ban này khớp không
-                        var groupName = $row.data('group');
-                        var childRows = $('#userBody tr.child-row[data-parent="' + groupName + '"]');
-                        var hasChildMatch = false;
-
-                        childRows.each(function () {
-                            var childText = $(this).find('.child-unit-name').text().toLowerCase();
-                            var chucDanhText = $(this).find('td').eq(1).text().toLowerCase();
-                            var email = $(this).find('input.child-checkbox').data('email') || '';
-                            var fullText = childText + ' ' + chucDanhText + ' ' + email.toLowerCase();
-                            if (fullText.includes(searchTerm)) {
-                                hasChildMatch = true;
-                                $(this).show(); // Hiển thị nhân viên khớp
-                            } else {
-                                $(this).hide(); // Ẩn nhân viên không khớp
-                            }
-                        });
-
-                        if (hasMatch || hasChildMatch) {
-                            $row.show();
-                        } else {
-                            $row.hide();
-                        }
-                    } else if (isChildRow) {
-                        // Đối với hàng nhân viên, tìm trong tên nhân viên, email và chức danh
-                        var userText = $row.find('.child-unit-name').text().toLowerCase();
-                        var chucDanhText = $row.find('td').eq(1).text().toLowerCase();
-                        var email = $row.find('input.child-checkbox').data('email') || '';
-                        var fullText = userText + ' ' + chucDanhText + ' ' + email.toLowerCase();
-                        if (fullText.includes(searchTerm)) {
-                            $row.show();
-                        } else {
-                            $row.hide();
-                        }
-                    }
-                });
-            }
+            $('#phongBanBody .phong-ban-row').each(function () {
+                $(this).toggle($(this).find('.unit-name').text().toLowerCase().includes(searchTerm));
+            });
         });
 
-        $('#nhomNguoiNhan .unit-name').click(function (e) {
-            // Không xử lý nếu click vào checkbox
-            var $row = $(this).closest(".expandable-row");
-            var groupName = $row.data("group");
-            var $icon = $row.find(".expand-icon");
-
-            // Toggle các hàng con
-            $("tr.child-row[data-parent='" + groupName + "']").toggle();
-
-            // Đổi icon
-            $icon.toggleClass("fa-caret-right fa-caret-down");
-        });
-
-        $("#nhomNguoiNhan .parent-checkbox").on("change", function () {
-            var isChecked = $(this).prop("checked");
-            var parentId = $(this).attr("id");
-
-            // check/uncheck toàn bộ checkbox con cùng nhóm
-            $("input.child-checkbox[data-parent='" + parentId + "']").prop("checked", isChecked);
-
-            taoDanhSachNhanViec()
-        });
-
-        // Khi checkbox con thay đổi
-        $("#nhomNguoiNhan .child-checkbox").on("change", function () {
-            var parentId = $(this).data("parent");
-            var $parent = $("#" + parentId);
-
-            // Nếu tất cả con đều check thì cha cũng check
-            // Nếu có ít nhất 1 con chưa check thì cha bỏ check
-            var allChecked = $("input.child-checkbox[data-parent='" + parentId + "']").length ===
-                $("input.child-checkbox[data-parent='" + parentId + "']:checked").length;
-
-            $parent.prop("checked", allChecked);
-
-            taoDanhSachNhanViec()
+        $('#nhomNguoiNhan .phong-ban-checkbox').on('change', function () {
+            taoDanhSachNhanViec();
         });
 
         window.nhanViecs = [];
 
-        function getCheckedUserData() {
-            var checkedInputs = document.querySelectorAll('#userBody input.child-checkbox:checked');
-            var userData = [];
+        function getCheckedPhongBanData() {
+            var checkedInputs = document.querySelectorAll('#phongBanBody input.phong-ban-checkbox:checked');
+            var phongBanData = [];
 
             checkedInputs.forEach(function (input) {
-                var userInfo = {
+                var phongBanInfo = {
                     id: input.dataset.id,
-                    name: input.dataset.name,
-                    parent: input.dataset.parent
+                    name: input.dataset.name
                 };
-                userData.push(userInfo);
+                phongBanData.push(phongBanInfo);
             });
 
-            return userData;
+            return phongBanData;
         }
 
         function saveCurrentData() {
@@ -396,26 +222,22 @@
         function taoDanhSachNhanViec() {
             saveCurrentData();
 
-            // Lấy danh sách user hiện tại được chọn
-            var currentCheckedUsers = getCheckedUserData();
-            var currentUserIds = currentCheckedUsers.map(function (user) { return String(user.id); });
+            var selectedPhongBans = getCheckedPhongBanData();
+            var selectedPhongBanIds = selectedPhongBans.map(function (phongBan) { return String(phongBan.id); });
 
-            // Xóa những user cũ không được chọn lại
             window.nhanViecs = window.nhanViecs.filter(function (existingUser) {
-                return currentUserIds.includes(String(existingUser.id));
+                return selectedPhongBanIds.includes(String(existingUser.id));
             });
 
-            // Thêm user mới được chọn
-            currentCheckedUsers.forEach(function (newUser) {
+            selectedPhongBans.forEach(function (phongBan) {
                 var existingUser = window.nhanViecs.find(function (user) {
-                    return String(user.id) === String(newUser.id);
+                    return String(user.id) === String(phongBan.id);
                 });
 
                 if (!existingUser) {
                     window.nhanViecs.push({
-                        id: String(newUser.id),
-                        name: newUser.name,
-                        parent: newUser.parent,
+                        id: String(phongBan.id),
+                        name: phongBan.name,
                         hanXuLy: '',
                         noiDungNhiemVu: '',
                         vaiTroXuLyId: null
@@ -423,7 +245,6 @@
                 }
             });
 
-            // Cập nhật hiển thị danh sách nhân viên
             updateNhanViecDisplay(true);
         }
 
@@ -487,7 +308,7 @@
             var html = '';
 
             if (!window.nhanViecs || window.nhanViecs.length === 0) {
-                html = '<tr><td colspan="4" class="text-center text-muted">Chưa có nhân viên nào được chọn</td></tr>';
+                html = '<tr><td colspan="4" class="text-center text-muted">Chưa có phòng nào được chọn</td></tr>';
             } else {
                 window.nhanViecs.forEach(function (nhanViec) {
                     var safeName = $('<div>').text(nhanViec.name || '').html();
@@ -576,35 +397,7 @@
                     }
                 });
 
-                // Validation format ngày
-                input.addEventListener('blur', function () {
-                    var value = this.value.trim();
-                    if (value && !isValidDateFormat(value)) {
-                        this.style.borderColor = '#dc3545';
-                        this.title = 'Vui lòng nhập đúng định dạng dd/MM/yyyy';
-                    } else {
-                        this.style.borderColor = '';
-                        this.title = '';
-                    }
-                });
             });
-        }
-
-        function isValidDateFormat(dateString) {
-            var regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-            var match = dateString.match(regex);
-
-            if (!match) return false;
-
-            var day = parseInt(match[1], 10);
-            var month = parseInt(match[2], 10);
-            var year = parseInt(match[3], 10);
-
-            if (month < 1 || month > 12) return false;
-            if (day < 1 || day > 31) return false;
-
-            var date = new Date(year, month - 1, day);
-            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
         }
 
         window.xoaNhanViec = function (userId) {
@@ -614,18 +407,9 @@
             window.nhanViecs = window.nhanViecs.filter(function (nv) { return String(nv.id) !== String(userId); });
 
             // 2) Bỏ check checkbox tương ứng ở danh sách bên trái
-            var checkbox = document.querySelector('#userBody input.child-checkbox[data-id="' + userId + '"]');
+            var checkbox = document.querySelector('#phongBanBody input.phong-ban-checkbox[data-id="' + userId + '"]');
             if (checkbox) {
                 checkbox.checked = false;
-
-                // 2.1) Cập nhật trạng thái checkbox cha
-                var parentId = checkbox.getAttribute('data-parent');
-                if (parentId) {
-                    var totalChildren = document.querySelectorAll("#userBody input.child-checkbox[data-parent='" + parentId + "']").length;
-                    var totalChecked = document.querySelectorAll("#userBody input.child-checkbox[data-parent='" + parentId + "']:checked").length;
-                    var parentCb = document.getElementById(parentId);
-                    if (parentCb) parentCb.checked = (totalChildren > 0 && totalChildren === totalChecked);
-                }
             }
 
             // 3) Re-render bảng
@@ -635,11 +419,9 @@
         window.resetNguoiNhanViecForm = function () {
             window.nhanViecs = [];
             hideAllNhiemVuSuggestions();
-            $("#userBody input.child-checkbox").prop("checked", false);
-            $("#userBody input.parent-checkbox").prop("checked", false);
-            $("#searchUserInput").val("");
-            $("#userBody tr").show();
-            $("#UserIdsError").text("");
+            $("#phongBanBody input.phong-ban-checkbox").prop("checked", false);
+            $("#searchPhongBanInput").val("");
+            $("#phongBanBody tr").show();
             $("#ThanhVienError").text("");
             updateNhanViecDisplay(true);
         };
@@ -650,35 +432,20 @@
 
             if (!Array.isArray(thanhViens) || thanhViens.length === 0) return;
 
-            // Check các checkbox theo danh sách
             thanhViens.forEach(function (tv) {
-                var $cb = $("#userBody input.child-checkbox[data-id='" + tv.ThanhVienId + "']");
+                var $cb = $("#phongBanBody input.phong-ban-checkbox[data-id='" + tv.PhongBanId + "']");
                 if ($cb.length) {
                     $cb.prop("checked", true);
-
-                    var parentId = $cb.data("parent");
-                    if (parentId) {
-                        var totalChildren = $("#userBody input.child-checkbox[data-parent='" + parentId + "']").length;
-                        var totalChecked = $("#userBody input.child-checkbox[data-parent='" + parentId + "']:checked").length;
-                        var $parent = $("#" + parentId);
-                        if ($parent.length) {
-                            $parent.prop("checked", totalChildren > 0 && totalChildren === totalChecked);
-                        }
-                    }
                 }
             });
 
-            // Gán dữ liệu trực tiếp vào window.nhanViecs từ danh sách thanhViens
             window.nhanViecs = [];
             thanhViens.forEach(function (tv) {
-                var $cb = $("#userBody input.child-checkbox[data-id='" + tv.ThanhVienId + "']");
-                var name = ($cb.length && $cb.data("name")) ? $cb.data("name") : (tv.ThanhVien || '');
-                var parent = ($cb.length && $cb.data("parent")) ? $cb.data("parent") : '';
-
+                var $cb = $("#phongBanBody input.phong-ban-checkbox[data-id='" + tv.PhongBanId + "']");
+                if (!$cb.length || window.nhanViecs.some(function (item) { return item.id === String(tv.PhongBanId); })) return;
                 window.nhanViecs.push({
-                    id: String(tv.ThanhVienId),
-                    name: name,
-                    parent: parent,
+                    id: String(tv.PhongBanId),
+                    name: $cb.data('name'),
                     hanXuLy: tv.HanXuLyStr || '',
                     noiDungNhiemVu: tv.NoiDungNhiemVu || '',
                     vaiTroXuLyId: tv.VaiTroXuLyId ? parseInt(tv.VaiTroXuLyId, 10) : null
@@ -694,8 +461,7 @@
             var arr = [];
             (window.nhanViecs || []).forEach(function (nv) {
                 arr.push({
-                    ThanhVienId: parseInt(nv.id, 10),
-                    ThanhVien: nv.name || '',
+                    PhongBanId: parseInt(nv.id, 10),
                     NoiDungNhiemVu: nv.noiDungNhiemVu || '',
                     HanXuLyStr: nv.hanXuLy || '',
                     VaiTroXuLyId: nv.vaiTroXuLyId ? parseInt(nv.vaiTroXuLyId, 10) : null

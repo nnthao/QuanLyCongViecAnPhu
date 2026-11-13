@@ -1,0 +1,4 @@
+ALTER TABLE Users
+ADD IsTruongPhong BIT NULL;
+
+INSERT INTO DatabaseVersion(Name) VALUES(N'20261107221201');

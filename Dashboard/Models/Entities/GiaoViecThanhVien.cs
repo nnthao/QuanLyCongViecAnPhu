@@ -251,6 +251,7 @@ namespace Dashboard.Models.Entities
         public int Id { get; set; }
         public string ThanhVien { get; set; }
         public int? ThanhVienId { get; set; }
+        public int? PhongBanId { get; set; }
         public string HanXuLyStr { get; set; }
         public DateTime? HanXuLy
         {

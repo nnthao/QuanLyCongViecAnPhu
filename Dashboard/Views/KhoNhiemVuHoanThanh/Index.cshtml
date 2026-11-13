@@ -135,7 +135,7 @@
         if (row.CanHuyDanhGia) {
             btnHuy = `<button type="button" onclick="openHuyDanhGiaModalFromRow(${row.Id})" class="btn btn-warning btn-sm m-1" title="Huỷ đánh giá để đánh giá lại"><i class="fa fa-undo"></i> Huỷ đánh giá</button>`;
         }
-        var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId || 0})" class="btn btn-info btn-sm m-1" title="Xem chi tiết"><i class="fa fa-eye"></i> Xem thông tin</button>`;
+        var btnXemThongTin = ``;
         return btnHuy + btnXemThongTin;
     }
 

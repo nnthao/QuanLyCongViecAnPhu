@@ -136,6 +136,17 @@ namespace Dashboard.Models.Validates
                 });
             }
 
+            if (user.IsTruongPhong == true && user.PhongBanId.GetValueOrDefault() != 0
+                && _context.Users.AsNoTracking().Any(o => o.Id != user.Id && o.PhongBanId == user.PhongBanId
+                    && o.IsTruongPhong == true && o.IsDeleted != true))
+            {
+                errors.Add(new ValidateError
+                {
+                    Id = "IsTruongPhong",
+                    Description = "Phòng ban đã có trưởng phòng."
+                });
+            }
+
             return errors;
         }
     }

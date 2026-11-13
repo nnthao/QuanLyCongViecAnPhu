@@ -134,7 +134,7 @@
 
     function operateFormatter(value, row, index) {
         var btnDanhGia = `<button type="button" onclick="openModalDanhGia(${row.Id})" class="btn btn-primary btn-sm m-1"><i class="fa fa-pencil-square-o"></i> Đánh giá</button>`;
-        var btnXemThongTin = `<button type="button" onclick="openXemThongTinModal(${row.Id}, ${row.GiaoViecId}, ${row.ThanhVienId || 0})" class="btn btn-info btn-sm m-1"><i class="fa fa-eye"></i> Xem thông tin</button>`;
+        var btnXemThongTin = ``;
         return btnDanhGia + btnXemThongTin;
     }
 

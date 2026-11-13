@@ -1,5 +1,6 @@
 ﻿using Dashboard.Common;
 using Dashboard.Models.Entities;
+using Dashboard.Models.Validates;
 using Dashboard.Models.ViewModel;
 using Dashboard.Repository;
 using System.Collections.Generic;
@@ -113,6 +114,7 @@ namespace Dashboard.Services
                         if (user != null)
                         {
                             tv.ThanhVien = user.Name;
+                            tv.PhongBanId = user.PhongBanId.GetValueOrDefault();
                         }
                     }
 
@@ -348,6 +350,45 @@ namespace Dashboard.Services
 
         public dynamic ThemOrCapNhat(GiaoViecViewModel viewModel)
         {
+            var phongBans = CacheManagerHelper.GetPhongBanNhanViecCacheNotDeleted();
+            var users = CacheManagerHelper.GetListUserFromCacheNotDeleted();
+            var errors = new List<ValidateError>();
+
+            foreach (var thanhVien in viewModel.ThanhViens.Where(o => o.PhongBanId.GetValueOrDefault() != 0))
+            {
+                var phongBan = phongBans.FirstOrDefault(o => o.Id == thanhVien.PhongBanId.GetValueOrDefault());
+                if (phongBan == null)
+                {
+                    errors.Add(new ValidateError { Id = "ThanhVien", Description = "Phòng được chọn không tồn tại hoặc không nhận việc." });
+                    continue;
+                }
+
+                var truongPhongs = users.Where(o => o.PhongBanId == phongBan.Id && o.IsTruongPhong == true).ToList();
+                var nguoiNhan = truongPhongs.Count == 1 ? truongPhongs[0] : null;
+                if (nguoiNhan == null)
+                {
+                    errors.Add(new ValidateError
+                    {
+                        Id = "ThanhVien",
+                        Description = $"Phòng {phongBan.Ten} chưa xác định được một trưởng phòng nhận việc."
+                    });
+                    continue;
+                }
+
+                thanhVien.ThanhVienId = nguoiNhan.Id;
+                thanhVien.ThanhVien = nguoiNhan.Name;
+            }
+
+            if (errors.Count > 0)
+            {
+                return new { Errors = errors };
+            }
+
+            if (viewModel.ThanhViens.GroupBy(o => o.ThanhVienId).Any(o => o.Key.GetValueOrDefault() != 0 && o.Count() > 1))
+            {
+                return new { Errors = new List<ValidateError> { new ValidateError { Id = "ThanhVien", Description = "Một trưởng phòng đang nhận việc từ nhiều phòng được chọn." } } };
+            }
+
             return _repository.ThemOrCapNhat(viewModel);
         }
 

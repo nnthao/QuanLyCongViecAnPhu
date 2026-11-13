@@ -2917,6 +2917,7 @@
     <Content Include="Content\vendor\timepicker\bootstrap\js\npm.js" />
     <Content Include="Content\vendor\timepicker\index.html" />
     <Content Include="DataScripts\20250101000000_them_IsLanhDaoPhong.sql" />
+    <Content Include="DataScripts\20261107221201_them_IsTruongPhong.sql" />
     <Content Include="DataScripts\20251028164000_them_danhmucbaocao.sql" />
     <Content Include="DataScripts\20251013151400_them_QuanLyCongTrinhHuHong.sql" />
     <Content Include="DataScripts\20251014130000_them_DanhSachCongTrinh.sql" />

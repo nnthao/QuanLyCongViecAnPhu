@@ -220,6 +220,7 @@ namespace Dashboard.Repository
                 user.TelegramId = item.TelegramId;
                 user.UserZaloId = item.UserZaloId;
                 user.IsLanhDaoPhong = item.IsLanhDaoPhong;
+                user.IsTruongPhong = item.IsTruongPhong;
                 MapThongTinVaiTroChucDanhPhongBanChoUser(user, item);
             }
 

@@ -36,8 +36,8 @@ namespace Dashboard.Models.Entities
         public string NhomVaiTroId { get; set; }
         public string TelegramId { get; set; }
         public bool? IsLanhDaoPhong { get; set; }
+        public bool? IsTruongPhong { get; set; }
         public string UserZaloId { get; set; }
-        //public bool? IsTruongDonVi { get; set; }
 
         [NotMapped]
         public string NewPassword { get; set; }
@@ -94,8 +94,8 @@ namespace Dashboard.Models.Entities
         public bool? IsNguoiCoQuyenDuyetLichHop { get; set; }
         public bool? IsLaiXeKhuVuc { get; set; }
         public bool? IsLanhDaoPhong { get; set; }
+        public bool? IsTruongPhong { get; set; }
         public string UserZaloId { get; set; }
-        //public bool? IsTruongDonVi { get; set; }
     }
 
     public class UserViewModel
@@ -114,10 +114,10 @@ namespace Dashboard.Models.Entities
         public bool? IsTaiXe { get; set; }
         public string NhomVaiTroId { get; set; }
         public bool? IsNguoiCoQuyenDuyetLichHop { get; set; }
-        //public bool? IsTruongDonVi { get; set; }
         public string TelegramId { get; set; }
         public int? CoQuanId { get; set; }
         public bool? IsLanhDaoPhong { get; set; }
+        public bool? IsTruongPhong { get; set; }
         public string UserZaloId { get; set; }
     }
 }
